@@ -25,9 +25,11 @@ BIT_XOR : '^';
 LPAREN : '(';
 RPAREN : ')';
 SEMICOLON : ';';
+WS: [ \n\t\r]+ -> skip;
 
 // Parser rules
-expression : logicalExpression SEMICOLON;
+program : (expression SEMICOLON)*;
+expression : logicalExpression ;
 logicalExpression : equalityExpression ((AND | OR) equalityExpression)*;
 equalityExpression : relationalExpression ((EQ | NEQ | GTE | LTE) relationalExpression)*;
 relationalExpression : additiveExpression ((GT | LT) additiveExpression)*;
