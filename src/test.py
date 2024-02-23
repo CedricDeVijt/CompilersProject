@@ -1,8 +1,8 @@
 import antlr4
-from src.antlr_files.mathematical_expressionsLexer import mathematical_expressionsLexer
-from src/antlr_files/mathematical_expressionsLexer.py import ExpressionLexer
-from ExpressionParser import ExpressionParser
-from ExpressionVisitor import ExpressionVisitor
+from src.antlr_files import mathematical_expressionsLexer as ExpressionLexer
+from src.antlr_files import mathematical_expressionsParser as ExpressionParser
+from src.antlr_files import mathematical_expressionsVisitor as ExpressionVisitor
+
 
 class MyVisitor(ExpressionVisitor):
     def visitExpression(self, ctx:ExpressionParser.ExpressionContext):
@@ -21,6 +21,7 @@ class MyVisitor(ExpressionVisitor):
         print("Primary Expression:", ctx.getText())
 
     # Define visit methods for logicalExpression, equalityExpression, relationalExpression if needed
+
 
 def main():
     input_file = "input.txt"  # Specify the path to your input file
