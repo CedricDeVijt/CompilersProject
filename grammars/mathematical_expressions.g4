@@ -1,41 +1,57 @@
 grammar mathematical_expressions;
 
-// Lexer rules
-INTEGER : [0-9]+ ('.' [0-9]+)?;
-PLUS : '+';
-MINUS : '-';
-MULTIPLY : '*';
-DIVIDE : '/';
-MODULO : '%';
-GT : '>';
-LT : '<';
-EQ : '==';
-GTE : '>=';
-LTE : '<=';
-NEQ : '!=';
-AND : '&&';
-OR : '||';
-NOT : '!';
-LSHIFT : '<<';
-RSHIFT : '>>';
-BIT_AND : '&';
-BIT_OR : '|';
-BIT_NOT : '~';
-BIT_XOR : '^';
-LPAREN : '(';
-RPAREN : ')';
-SEMICOLON : ';';
-WS: [ \n\t\r]+ -> skip;
+program: expression (SEMICOLON expression)* SEMICOLON?;
 
-// Parser rules
-program : (expression SEMICOLON)*;
-expression : logicalExpression ;
-logicalExpression : equalityExpression ((AND | OR) equalityExpression)*;
-equalityExpression : relationalExpression ((EQ | NEQ | GTE | LTE) relationalExpression)*;
-relationalExpression : additiveExpression ((GT | LT) additiveExpression)*;
-additiveExpression : multiplicativeExpression ((PLUS | MINUS) multiplicativeExpression)*;
-multiplicativeExpression : unaryExpression ((MULTIPLY | DIVIDE | MODULO) unaryExpression)*;
-unaryExpression : (PLUS | MINUS | NOT | BIT_NOT) unaryExpression
-                | primaryExpression;
-primaryExpression : INTEGER
-                  | LPAREN expression RPAREN;
+expression: unaryExpression
+    | expression MULT expression
+    | expression DIV expression
+    | expression MOD expression
+    | expression PLUS expression
+    | expression MINUS expression
+    | expression GREATER_THAN expression
+    | expression LESS_THAN expression
+    | expression GREATER_EQUAL expression
+    | expression LESS_EQUAL expression
+    | expression EQUALS expression
+    | expression NOT_EQUAL expression
+    | expression SHIFT_LEFT expression
+    | expression SHIFT_RIGHT expression
+    | expression BITWISE_AND expression
+    | expression BITWISE_OR expression
+    | expression BITWISE_XOR expression
+    | expression LOGICAL_AND expression
+    | expression LOGICAL_OR expression
+    | LOGICAL_NOT expression
+    | LPAREN expression RPAREN
+    | INT;
+
+unaryExpression: PLUS expression
+    | MINUS expression
+    | INT;
+
+LPAREN: '(';
+RPAREN: ')';
+PLUS: '+';
+MINUS: '-';
+MULT: '*';
+DIV: '/';
+MOD: '%';
+GREATER_THAN: '>';
+LESS_THAN: '<';
+GREATER_EQUAL: '>=';
+LESS_EQUAL: '<=';
+EQUALS: '==';
+NOT_EQUAL: '!=';
+SHIFT_LEFT: '<<';
+SHIFT_RIGHT: '>>';
+BITWISE_AND: '&';
+BITWISE_OR: '|';
+BITWISE_XOR: '^';
+LOGICAL_AND: '&&';
+LOGICAL_OR: '||';
+LOGICAL_NOT: '!';
+
+SEMICOLON: ';';
+INT: [0-9]+;
+
+WHITESPACE: [ \t\r\n]+ -> skip;
