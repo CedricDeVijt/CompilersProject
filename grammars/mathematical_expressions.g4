@@ -1,7 +1,7 @@
 grammar mathematical_expressions;
 
-// Lexer rules
-INTEGER : [0-9]+ ('.' [0-9]+)?;
+// Lexer Rules
+INTEGER : [0-9]+;
 PLUS : '+';
 MINUS : '-';
 MULTIPLY : '*';
@@ -27,15 +27,43 @@ RPAREN : ')';
 SEMICOLON : ';';
 WS: [ \n\t\r]+ -> skip;
 
-// Parser rules
-program : (expression SEMICOLON)*;
-expression : logicalExpression ;
-logicalExpression : equalityExpression ((AND | OR) equalityExpression)*;
-equalityExpression : relationalExpression ((EQ | NEQ | GTE | LTE) relationalExpression)*;
-relationalExpression : additiveExpression ((GT | LT) additiveExpression)*;
-additiveExpression : multiplicativeExpression ((PLUS | MINUS) multiplicativeExpression)*;
-multiplicativeExpression : unaryExpression ((MULTIPLY | DIVIDE | MODULO) unaryExpression)*;
-unaryExpression : (PLUS | MINUS | NOT | BIT_NOT) unaryExpression
-                | primaryExpression;
-primaryExpression : INTEGER
-                  | LPAREN expression RPAREN;
+// Parser Rules
+start
+    : (programLine)*
+    ;
+
+programLine
+    : expression SEMICOLON
+    ;
+
+expression
+    : expression GT expression
+    | expression LT expression
+    | expression EQ expression
+    | expression GTE expression
+    | expression LTE expression
+    | expression NEQ expression
+    | expression AND expression
+    | expression OR expression
+    | NOT expression
+    | expression LSHIFT expression
+    | expression RSHIFT expression
+    | expression BIT_AND expression
+    | expression BIT_OR expression
+    | expression BIT_XOR expression
+    | BIT_NOT expression
+    | operation
+    ;
+operation
+    : operation PLUS operation
+    | operation MINUS operation
+    | term
+    ;
+
+term
+    : LPAREN expression RPAREN
+    | term MULTIPLY term
+    | term DIVIDE term
+    | term MODULO term
+    | MINUS? INTEGER
+    ;
