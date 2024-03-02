@@ -1,4 +1,4 @@
-grammar mathematical_expressions;
+grammar grammarC;
 
 // Lexer Rules
 INTEGER : [0-9]+;

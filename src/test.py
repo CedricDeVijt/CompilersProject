@@ -1,40 +1,40 @@
 import antlr4
-from src.antlr_files.mathematical_expressionsLexer import mathematical_expressionsLexer as ExpressionLexer
-from src.antlr_files.mathematical_expressionsParser import mathematical_expressionsParser as ExpressionParser
-from src.antlr_files.mathematical_expressionsVisitor import mathematical_expressionsVisitor as ExpressionVisitor
+from src.antlr_files.grammarCLexer import grammarCLexer as Lexer
+from src.antlr_files.grammarCParser import grammarCParser as Parser
+from src.antlr_files.grammarCVisitor import grammarCVisitor as Visitor
+from src.antlr_files.grammarCListener import grammarCListener as Listener
 
 
-class MyVisitor(ExpressionVisitor):
-    def visitExpression(self, ctx:ExpressionParser.ExpressionContext):
+class MyVisitor(Visitor):
+    def visitStart(self, ctx:Parser.StartContext):
+        print("Start:", ctx.getText())
+
+    def visitProgramLine(self, ctx:Parser.ProgramLineContext):
+        print("ProgramLine:", ctx.getText())
+
+    def visitExpression(self, ctx:Parser.ExpressionContext):
         print("Expression:", ctx.getText())
 
-    def visitAdditiveExpression(self, ctx:ExpressionParser.AdditiveExpressionContext):
-        print("Additive Expression:", ctx.getText())
+    def visitOperation(self, ctx:Parser.OperationContext):
+        print("Operation:", ctx.getText())
 
-    def visitMultiplicativeExpression(self, ctx:ExpressionParser.MultiplicativeExpressionContext):
-        print("Multiplicative Expression:", ctx.getText())
+    def visitTerm(self, ctx:Parser.TermContext):
+        print("Term:", ctx.getText())
 
-    def visitUnaryExpression(self, ctx:ExpressionParser.UnaryExpressionContext):
-        print("Unary Expression:", ctx.getText())
-
-    def visitPrimaryExpression(self, ctx:ExpressionParser.PrimaryExpressionContext):
-        print("Primary Expression:", ctx.getText())
-
-    # Define visit methods for logicalExpression, equalityExpression, relationalExpression if needed
 
 
 def main():
-    input_file = "../tests/proj_1/proj1_man_pass_operators.c"  # Specify the path to your input file
+    input_file = "../tests/proj_1/proj1_man_pass_constantFolding.c"  # Specify the path to your input file
     input_stream = antlr4.FileStream(input_file)
-    lexer = ExpressionLexer(input_stream)
+    lexer = Lexer(input_stream)
     stream = antlr4.CommonTokenStream(lexer)
-    parser = ExpressionParser(stream)
-    tree = parser.expression()
+    parser = Parser(stream)
+    tree = parser.start()
 
     # Create a visitor instance
     visitor = MyVisitor()
-    visitor.visit(tree)
-    print('t')
+    visitor.visitChildren(tree)
+
 
 if __name__ == '__main__':
     main()
