@@ -1,65 +1,17 @@
 class AST:
-    def __init__(self):
-        self.root = None
+    def __init__(self, root, line, pos):
+        self.root = root
+        self.nodes = []
+        self.line = line
+        self.pos = pos
 
-    def setRoot(self, node):
-        self.root = node
-
-
-class Node:
-    def __init__(self):
-        self.children = []
+    def addNode(self, node):
+        self.nodes.append(node)
 
 
-class ProgramNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
+class ASTOperation:
 
-
-class ExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
-
-
-class LogicalExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
-
-
-class EqualityExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
-
-
-class RelationalExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
-
-
-class AdditiveExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
-
-
-class MultiplicativeExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
-
-
-class UnaryExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
-
-
-class PrimaryExpressionNode(Node):
-    def __init__(self):
-        super().__init__()
-        ...
+    def __init__(self, root, line, pos):
+        self.root = root
+        self.line = line
+        self.pos = pos

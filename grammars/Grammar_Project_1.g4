@@ -1,4 +1,4 @@
-grammar Grammer_Project_1;
+grammar Grammar_Project_1;
 
 program: (programLine)*;
 
