@@ -29,5 +29,10 @@ class Grammar_Project_1Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by Grammar_Project_1Parser#number.
+    def visitNumber(self, ctx:Grammar_Project_1Parser.NumberContext):
+        return self.visitChildren(ctx)
+
+
 
 del Grammar_Project_1Parser

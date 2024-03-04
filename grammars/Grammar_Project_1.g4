@@ -5,11 +5,11 @@ program: (programLine)*;
 programLine: expression SEMICOLON;
 
 expression: unaryExpression
-    | expression MINUS expression
-    | expression PLUS expression
     | expression DIV expression
     | expression MOD expression
     | expression MULT expression
+    | expression MINUS expression
+    | expression PLUS expression
     | expression GREATER_THAN expression
     | expression LESS_THAN expression
     | expression GREATER_EQUAL expression

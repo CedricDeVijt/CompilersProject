@@ -44,5 +44,14 @@ class Grammar_Project_1Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Grammar_Project_1Parser#number.
+    def enterNumber(self, ctx:Grammar_Project_1Parser.NumberContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_1Parser#number.
+    def exitNumber(self, ctx:Grammar_Project_1Parser.NumberContext):
+        pass
+
+
 
 del Grammar_Project_1Parser

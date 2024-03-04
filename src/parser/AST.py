@@ -9,9 +9,13 @@ class AST:
         self.nodes.append(node)
 
 
-class ASTOperation:
+class ASTOperation(AST):
 
     def __init__(self, root, line, pos):
-        self.root = root
-        self.line = line
-        self.pos = pos
+        super() .__init__(root, line, pos)
+
+
+class ASTNumber(AST):
+
+    def __init__(self, root, line, pos):
+        super() .__init__(root, line, pos)
