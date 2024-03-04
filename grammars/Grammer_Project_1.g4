@@ -1,4 +1,4 @@
-grammar mathematical_expressions;
+grammar Grammer_Project_1;
 
 program: (programLine)*;
 
