@@ -55,5 +55,6 @@ LOGICAL_NOT: '!';
 
 SEMICOLON: ';';
 INT: [0-9]+;
+FLOAT: [0-9]+ ('.' [0-9]+)?;
 
 WHITESPACE: [ \t\r\n]+ -> skip;
