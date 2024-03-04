@@ -5,8 +5,8 @@ program: (programLine)*;
 programLine: expression SEMICOLON;
 
 expression: unaryExpression
-    | expression PLUS expression
     | expression MINUS expression
+    | expression PLUS expression
     | expression DIV expression
     | expression MOD expression
     | expression MULT expression
