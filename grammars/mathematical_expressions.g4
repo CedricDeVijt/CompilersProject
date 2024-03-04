@@ -1,6 +1,8 @@
 grammar mathematical_expressions;
 
-program: expression (SEMICOLON expression)* SEMICOLON?;
+program: (programLine)*;
+
+programLine: expression SEMICOLON;
 
 expression: unaryExpression
     | expression MULT expression
