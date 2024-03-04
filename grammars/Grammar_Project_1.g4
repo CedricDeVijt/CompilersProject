@@ -27,7 +27,13 @@ expression: unaryExpression
     | LPAREN expression RPAREN
     | INT;
 
-unaryExpression: (PLUS | MINUS)? INT;
+unaryExpression: (PLUS | MINUS)? number
+    | (PLUS MINUS)+ (PLUS)? number
+    | (MINUS PLUS)+ (MINUS)? number;
+
+number: INT;
+
+
 
 LPAREN: '(';
 RPAREN: ')';
