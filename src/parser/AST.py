@@ -12,6 +12,12 @@ class Node:
             dot += child.to_dot()
         return dot
 
+    def to_dot_file(self, filename):
+        dot_representation = "digraph AST {\n" + self.to_dot() + "}\n"
+        with open(filename, "w") as dot_file:
+            dot_file.write(dot_representation)
+        print(f"DOT file generated successfully at {filename}")
+
 
 class ProgramNode(Node):
     def __init__(self, line: int, pos: int, children=None):
