@@ -1,21 +1,21 @@
 class AST:
-    def __init__(self, root, line, pos):
-        self.root = root
-        self.nodes = []
+    def __init__(self, value, line, pos):
+        self.value = value
+        self.children = []
         self.line = line
         self.pos = pos
 
-    def addNode(self, node):
-        self.nodes.append(node)
+    def addChildren(self, node):
+        self.children.append(node)
 
 
 class ASTOperation(AST):
 
-    def __init__(self, root, line, pos):
-        super() .__init__(root, line, pos)
+    def __init__(self, value, line, pos):
+        super().__init__(value, line, pos)
 
 
 class ASTNumber(AST):
 
-    def __init__(self, root, line, pos):
-        super() .__init__(root, line, pos)
+    def __init__(self, value, line, pos):
+        super().__init__(value, line, pos)
