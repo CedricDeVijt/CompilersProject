@@ -27,7 +27,7 @@ class Node:
             case DivNode():
                 if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode) and str(self.children[1].value) != "0":
                     self.__class__ = IntNode
-                    self.value = str(int(self.children[0].value) / int(self.children[1].value))
+                    self.value = str(int(self.children[0].value) // int(self.children[1].value))
                     self.children = []
                 return
             case ModNode():
