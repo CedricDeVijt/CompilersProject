@@ -11,17 +11,24 @@ from src.antlr_files.Grammar_Project_1Visitor import Grammar_Project_1Visitor as
 from src.parser.ASTGenerator import ASTGenerator as Generator
 
 
-def compile_llvm(input_file, visitor):
-    input_stream = antlr4.FileStream(input_file)
+def generate_ast(path, visitor):
+    input_stream = antlr4.FileStream(path)
     lexer = Lexer(input_stream)
     stream = antlr4.CommonTokenStream(lexer)
     parser = Parser(stream)
     tree = parser.program()
 
-    visitor.visit(tree)
+    ast = visitor.visit(tree)
+    return ast
+
+
+def compile_llvm(input_file, visitor):
+    ast = generate_ast(input_file, visitor)
 
 
 def compile_mips(input_file, visitor):
+    ast = generate_ast(input_file, visitor)
+    print("NOT IMPLEMENTED YET")
     exit(1)
 
 
