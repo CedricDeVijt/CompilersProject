@@ -5,6 +5,19 @@ class Node:
         self.line = line
         self.pos = pos
 
+    def to_dot(self):
+        dot = f'"{id(self)}" [label="{self.value}"];\n'
+        for child in self.children:
+            dot += f'"{id(self)}" -> "{id(child)}";\n'
+            dot += child.to_dot()
+        return dot
+
+    def to_dot_file(self, filename):
+        dot_representation = "digraph AST {\n" + self.to_dot() + "}\n"
+        with open(filename, "w") as dot_file:
+            dot_file.write(dot_representation)
+        print(f"DOT file generated successfully at {filename}")
+
 
 class ProgramNode(Node):
     def __init__(self, line: int, pos: int, children=None):
