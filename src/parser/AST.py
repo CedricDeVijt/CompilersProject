@@ -18,6 +18,131 @@ class Node:
             dot_file.write(dot_representation)
         print(f"DOT file generated successfully at {filename}")
 
+    def constantFold(self):
+        for node in self.children:
+            node.constantFold()
+        match self:
+            case IntNode():
+                return
+            case DivNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode) and self.children[1].value != 1:
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) / int(self.children[1].value))
+                    self.children = []
+                return
+            case ModNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) % int(self.children[1].value))
+                    self.children = []
+                return
+            case MultNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) * int(self.children[1].value))
+                    self.children = []
+                    return
+                if isinstance(self.children[0], IntNode) and self.children[0].value == 0:
+                    self.__class__ = IntNode
+                    self.children = []
+                    self.value = "0"
+                    return
+                if isinstance(self.children[1], IntNode) and self.children[1].value == 0:
+                    self.__class__ = IntNode
+                    self.children = []
+                    self.value = "0"
+                return
+            case MinusNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) - int(self.children[1].value))
+                    self.children = []
+                return
+            case PlusNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) + int(self.children[1].value))
+                    self.children = []
+                return
+            case GTNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) > int(self.children[1].value))
+                    self.children = []
+                return
+            case LTNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) < int(self.children[1].value))
+                    self.children = []
+            case GTEQNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) >= int(self.children[1].value))
+                    self.children = []
+                return
+            case LTEQNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) <= int(self.children[1].value))
+                    self.children = []
+                return
+            case NEQNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) != int(self.children[1].value))
+                    self.children = []
+                return
+            case SLNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) << int(self.children[1].value))
+                    self.children = []
+                return
+            case SRNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) >> int(self.children[1].value))
+                    self.children = []
+                return
+            case BitwiseAndNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) & int(self.children[1].value))
+                    self.children = []
+                return
+            case BitwiseOrNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) | int(self.children[1].value))
+                    self.children = []
+                return
+            case BitwiseXorNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) ^ int(self.children[1].value))
+                    self.children = []
+                return
+            case LogicalAndNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) and int(self.children[1].value))
+                    self.children = []
+                return
+            case LogicalOrNode():
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) or int(self.children[1].value))
+                    self.children = []
+                return
+            case LogicalNotNode():
+                if isinstance(self.children[0], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(not int(self.children[0].value))
+                    self.children = []
+                return
+        return
+
 
 class ProgramNode(Node):
     def __init__(self, line: int, pos: int, children=None):

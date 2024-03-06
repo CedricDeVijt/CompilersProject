@@ -19,6 +19,7 @@ def generate_ast(path, visitor):
     tree = parser.program()
 
     ast = visitor.visit(tree)
+    ast.constantFold()
     return ast
 
 
