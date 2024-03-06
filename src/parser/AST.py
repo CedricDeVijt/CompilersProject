@@ -5,6 +5,13 @@ class Node:
         self.line = line
         self.pos = pos
 
+    def to_dot(self):
+        dot = f'"{id(self)}" [label="{self.value}"];\n'
+        for child in self.children:
+            dot += f'"{id(self)}" -> "{id(child)}";\n'
+            dot += child.to_dot()
+        return dot
+
 
 class ProgramNode(Node):
     def __init__(self, line: int, pos: int, children=None):
