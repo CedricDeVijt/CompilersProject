@@ -6,13 +6,12 @@ from src.parser.AST import *
 
 class ASTGenerator(Visitor):
     def visitProgram(self, ctx):
-        root = AST("Program", ctx.start.line, ctx.start.column)
+        children = []
         for line in ctx.getChildren():
             node = self.visit(line)
             if node is not None:
-                root.addNode(node)
-        print("Program:", ctx.getText())
-        return root
+                children.append(node)
+        return ProgramNode(ctx.start.line, ctx.start.column, children)
 
     def visitProgramLine(self, ctx):
         lines = []
@@ -29,22 +28,50 @@ class ASTGenerator(Visitor):
             if str(lines[0]) == "(" and ")" == str(lines[2]):
                 node = self.visit(lines[1])
                 return node
-            node = ASTOperation(str(lines[1]), ctx.start.line, ctx.start.column)
-            child1 = self.visit(lines[0])
-            child2 = self.visit(lines[2])
-            node.addNode(child1)
-            node.addNode(child2)
+            node = ProgramNode(0, 0)
+            match str(lines[1]):
+                case "/":
+                    node = DivNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "%":
+                    node = ModNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "*":
+                    node = MultNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "-":
+                    node = MinusNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "+":
+                    node = PlusNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case ">":
+                    node = GTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "<":
+                    node = LTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case ">=":
+                    node = GTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "<=":
+                    node = LTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "!=":
+                    node = NEQNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "<<":
+                    node = SLNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case ">>":
+                    node = SRNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "&":
+                    node = BitwiseAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "|":
+                    node = BitwiseOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "^":
+                    node = BitwiseXorNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "&&":
+                    node = LogicalAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "||":
+                    node = LogicalOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
             return node
         if len(lines) == 2:
-            node = ASTOperation(str(lines[0]), ctx.start.line, ctx.start.column)
-            child = self.visit(lines[1])
-            node.addNode(child)
-            return node
-        print("Expression:", ctx.getText())
+            if str(lines[0]) == "!":
+                node = LogicalNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
+                return node
         node = self.visitChildren(ctx)
         return node
 
     def visitNumber(self, ctx):
-        print("Number:", ctx.getText())
-        node = ASTNumber(ctx.getText(), ctx.start.line, ctx.start.column)
+        node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
