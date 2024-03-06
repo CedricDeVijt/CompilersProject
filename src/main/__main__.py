@@ -24,12 +24,14 @@ def generate_ast(path, visitor):
 
 def compile_llvm(input_file, visitor):
     ast = generate_ast(input_file, visitor)
+    # TODO: CONVERT TO LLVM
+    raise Exception("NOT IMPLEMENTED YET!")
 
 
 def compile_mips(input_file, visitor):
     ast = generate_ast(input_file, visitor)
-    print("NOT IMPLEMENTED YET")
-    exit(1)
+    # TODO: CONVERT TO MIPS
+    raise Exception("NOT IMPLEMENTED YET!")
 
 
 def run(language, path):
@@ -54,7 +56,7 @@ def run(language, path):
 def main(argv):
     arg_len = 2
     if len(argv) != arg_len+1 or (argv[1] != 'LLVM' and argv[1] != 'MIPS') or not (os.path.isdir(argv[2]) or os.path.isfile(argv[2])):
-        print('Usage: test.py [\'LLVM\' | \'MIPS\'] [FILE | DIRECTORY]')
+        print('Usage: test.py [\'LLVM\' | \'MIPS\'] [INPUT_FILE | INPUT_DIRECTORY]')
         exit(1)
     run(argv[1], argv[2])
 

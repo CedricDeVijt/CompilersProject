@@ -5,6 +5,7 @@ program: (programLine)*;
 programLine: expression SEMICOLON;
 
 expression: unaryExpression
+    | LOGICAL_NOT expression
     | expression DIV expression
     | expression MOD expression
     | expression MULT expression
@@ -23,7 +24,6 @@ expression: unaryExpression
     | expression BITWISE_XOR expression
     | expression LOGICAL_AND expression
     | expression LOGICAL_OR expression
-    | LOGICAL_NOT expression
     | LPAREN expression RPAREN
     | INT;
 

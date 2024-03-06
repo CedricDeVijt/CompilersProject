@@ -26,11 +26,19 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             lines.append(line)
         if len(lines) == 3:
+            if str(lines[0]) == "(" and ")" == str(lines[2]):
+                node = self.visit(lines[1])
+                return node
             node = ASTOperation(str(lines[1]), ctx.start.line, ctx.start.column)
             child1 = self.visit(lines[0])
             child2 = self.visit(lines[2])
             node.addNode(child1)
             node.addNode(child2)
+            return node
+        if len(lines) == 2:
+            node = ASTOperation(str(lines[0]), ctx.start.line, ctx.start.column)
+            child = self.visit(lines[1])
+            node.addNode(child)
             return node
         print("Expression:", ctx.getText())
         node = self.visitChildren(ctx)

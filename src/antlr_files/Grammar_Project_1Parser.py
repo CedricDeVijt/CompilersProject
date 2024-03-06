@@ -22,22 +22,22 @@ def serializedATN():
         0,2,16,1,0,0,0,4,28,1,0,0,0,6,113,1,0,0,0,8,115,1,0,0,0,10,12,3,
         2,1,0,11,10,1,0,0,0,12,15,1,0,0,0,13,11,1,0,0,0,13,14,1,0,0,0,14,
         1,1,0,0,0,15,13,1,0,0,0,16,17,3,4,2,0,17,18,5,22,0,0,18,3,1,0,0,
-        0,19,20,6,2,-1,0,20,29,3,6,3,0,21,22,5,21,0,0,22,29,3,4,2,3,23,24,
-        5,1,0,0,24,25,3,4,2,0,25,26,5,2,0,0,26,29,1,0,0,0,27,29,5,23,0,0,
-        28,19,1,0,0,0,28,21,1,0,0,0,28,23,1,0,0,0,28,27,1,0,0,0,29,86,1,
-        0,0,0,30,31,10,21,0,0,31,32,5,6,0,0,32,85,3,4,2,22,33,34,10,20,0,
-        0,34,35,5,7,0,0,35,85,3,4,2,21,36,37,10,19,0,0,37,38,5,5,0,0,38,
-        85,3,4,2,20,39,40,10,18,0,0,40,41,5,4,0,0,41,85,3,4,2,19,42,43,10,
-        17,0,0,43,44,5,3,0,0,44,85,3,4,2,18,45,46,10,16,0,0,46,47,5,8,0,
-        0,47,85,3,4,2,17,48,49,10,15,0,0,49,50,5,9,0,0,50,85,3,4,2,16,51,
-        52,10,14,0,0,52,53,5,10,0,0,53,85,3,4,2,15,54,55,10,13,0,0,55,56,
-        5,11,0,0,56,85,3,4,2,14,57,58,10,12,0,0,58,59,5,12,0,0,59,85,3,4,
-        2,13,60,61,10,11,0,0,61,62,5,13,0,0,62,85,3,4,2,12,63,64,10,10,0,
-        0,64,65,5,14,0,0,65,85,3,4,2,11,66,67,10,9,0,0,67,68,5,15,0,0,68,
-        85,3,4,2,10,69,70,10,8,0,0,70,71,5,16,0,0,71,85,3,4,2,9,72,73,10,
-        7,0,0,73,74,5,17,0,0,74,85,3,4,2,8,75,76,10,6,0,0,76,77,5,18,0,0,
-        77,85,3,4,2,7,78,79,10,5,0,0,79,80,5,19,0,0,80,85,3,4,2,6,81,82,
-        10,4,0,0,82,83,5,20,0,0,83,85,3,4,2,5,84,30,1,0,0,0,84,33,1,0,0,
+        0,19,20,6,2,-1,0,20,29,3,6,3,0,21,22,5,21,0,0,22,29,3,4,2,21,23,
+        24,5,1,0,0,24,25,3,4,2,0,25,26,5,2,0,0,26,29,1,0,0,0,27,29,5,23,
+        0,0,28,19,1,0,0,0,28,21,1,0,0,0,28,23,1,0,0,0,28,27,1,0,0,0,29,86,
+        1,0,0,0,30,31,10,20,0,0,31,32,5,6,0,0,32,85,3,4,2,21,33,34,10,19,
+        0,0,34,35,5,7,0,0,35,85,3,4,2,20,36,37,10,18,0,0,37,38,5,5,0,0,38,
+        85,3,4,2,19,39,40,10,17,0,0,40,41,5,4,0,0,41,85,3,4,2,18,42,43,10,
+        16,0,0,43,44,5,3,0,0,44,85,3,4,2,17,45,46,10,15,0,0,46,47,5,8,0,
+        0,47,85,3,4,2,16,48,49,10,14,0,0,49,50,5,9,0,0,50,85,3,4,2,15,51,
+        52,10,13,0,0,52,53,5,10,0,0,53,85,3,4,2,14,54,55,10,12,0,0,55,56,
+        5,11,0,0,56,85,3,4,2,13,57,58,10,11,0,0,58,59,5,12,0,0,59,85,3,4,
+        2,12,60,61,10,10,0,0,61,62,5,13,0,0,62,85,3,4,2,11,63,64,10,9,0,
+        0,64,65,5,14,0,0,65,85,3,4,2,10,66,67,10,8,0,0,67,68,5,15,0,0,68,
+        85,3,4,2,9,69,70,10,7,0,0,70,71,5,16,0,0,71,85,3,4,2,8,72,73,10,
+        6,0,0,73,74,5,17,0,0,74,85,3,4,2,7,75,76,10,5,0,0,76,77,5,18,0,0,
+        77,85,3,4,2,6,78,79,10,4,0,0,79,80,5,19,0,0,80,85,3,4,2,5,81,82,
+        10,3,0,0,82,83,5,20,0,0,83,85,3,4,2,4,84,30,1,0,0,0,84,33,1,0,0,
         0,84,36,1,0,0,0,84,39,1,0,0,0,84,42,1,0,0,0,84,45,1,0,0,0,84,48,
         1,0,0,0,84,51,1,0,0,0,84,54,1,0,0,0,84,57,1,0,0,0,84,60,1,0,0,0,
         84,63,1,0,0,0,84,66,1,0,0,0,84,69,1,0,0,0,84,72,1,0,0,0,84,75,1,
@@ -358,7 +358,7 @@ class Grammar_Project_1Parser ( Parser ):
                 self.state = 21
                 self.match(Grammar_Project_1Parser.LOGICAL_NOT)
                 self.state = 22
-                self.expression(3)
+                self.expression(21)
                 pass
 
             elif la_ == 3:
@@ -392,234 +392,234 @@ class Grammar_Project_1Parser ( Parser ):
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 30
-                        if not self.precpred(self._ctx, 21):
+                        if not self.precpred(self._ctx, 20):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 21)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 20)")
                         self.state = 31
                         self.match(Grammar_Project_1Parser.DIV)
                         self.state = 32
-                        self.expression(22)
+                        self.expression(21)
                         pass
 
                     elif la_ == 2:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 33
-                        if not self.precpred(self._ctx, 20):
+                        if not self.precpred(self._ctx, 19):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 20)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 19)")
                         self.state = 34
                         self.match(Grammar_Project_1Parser.MOD)
                         self.state = 35
-                        self.expression(21)
+                        self.expression(20)
                         pass
 
                     elif la_ == 3:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 36
-                        if not self.precpred(self._ctx, 19):
+                        if not self.precpred(self._ctx, 18):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 19)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 18)")
                         self.state = 37
                         self.match(Grammar_Project_1Parser.MULT)
                         self.state = 38
-                        self.expression(20)
+                        self.expression(19)
                         pass
 
                     elif la_ == 4:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 39
-                        if not self.precpred(self._ctx, 18):
+                        if not self.precpred(self._ctx, 17):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 18)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 17)")
                         self.state = 40
                         self.match(Grammar_Project_1Parser.MINUS)
                         self.state = 41
-                        self.expression(19)
+                        self.expression(18)
                         pass
 
                     elif la_ == 5:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 42
-                        if not self.precpred(self._ctx, 17):
+                        if not self.precpred(self._ctx, 16):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 17)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 16)")
                         self.state = 43
                         self.match(Grammar_Project_1Parser.PLUS)
                         self.state = 44
-                        self.expression(18)
+                        self.expression(17)
                         pass
 
                     elif la_ == 6:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 45
-                        if not self.precpred(self._ctx, 16):
+                        if not self.precpred(self._ctx, 15):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 16)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 15)")
                         self.state = 46
                         self.match(Grammar_Project_1Parser.GREATER_THAN)
                         self.state = 47
-                        self.expression(17)
+                        self.expression(16)
                         pass
 
                     elif la_ == 7:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 48
-                        if not self.precpred(self._ctx, 15):
+                        if not self.precpred(self._ctx, 14):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 15)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 14)")
                         self.state = 49
                         self.match(Grammar_Project_1Parser.LESS_THAN)
                         self.state = 50
-                        self.expression(16)
+                        self.expression(15)
                         pass
 
                     elif la_ == 8:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 51
-                        if not self.precpred(self._ctx, 14):
+                        if not self.precpred(self._ctx, 13):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 14)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 13)")
                         self.state = 52
                         self.match(Grammar_Project_1Parser.GREATER_EQUAL)
                         self.state = 53
-                        self.expression(15)
+                        self.expression(14)
                         pass
 
                     elif la_ == 9:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 54
-                        if not self.precpred(self._ctx, 13):
+                        if not self.precpred(self._ctx, 12):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 13)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 12)")
                         self.state = 55
                         self.match(Grammar_Project_1Parser.LESS_EQUAL)
                         self.state = 56
-                        self.expression(14)
+                        self.expression(13)
                         pass
 
                     elif la_ == 10:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 57
-                        if not self.precpred(self._ctx, 12):
+                        if not self.precpred(self._ctx, 11):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 12)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 11)")
                         self.state = 58
                         self.match(Grammar_Project_1Parser.EQUALS)
                         self.state = 59
-                        self.expression(13)
+                        self.expression(12)
                         pass
 
                     elif la_ == 11:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 60
-                        if not self.precpred(self._ctx, 11):
+                        if not self.precpred(self._ctx, 10):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 11)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 10)")
                         self.state = 61
                         self.match(Grammar_Project_1Parser.NOT_EQUAL)
                         self.state = 62
-                        self.expression(12)
+                        self.expression(11)
                         pass
 
                     elif la_ == 12:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 63
-                        if not self.precpred(self._ctx, 10):
+                        if not self.precpred(self._ctx, 9):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 10)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 9)")
                         self.state = 64
                         self.match(Grammar_Project_1Parser.SHIFT_LEFT)
                         self.state = 65
-                        self.expression(11)
+                        self.expression(10)
                         pass
 
                     elif la_ == 13:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 66
-                        if not self.precpred(self._ctx, 9):
+                        if not self.precpred(self._ctx, 8):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 9)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
                         self.state = 67
                         self.match(Grammar_Project_1Parser.SHIFT_RIGHT)
                         self.state = 68
-                        self.expression(10)
+                        self.expression(9)
                         pass
 
                     elif la_ == 14:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 69
-                        if not self.precpred(self._ctx, 8):
+                        if not self.precpred(self._ctx, 7):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
                         self.state = 70
                         self.match(Grammar_Project_1Parser.BITWISE_AND)
                         self.state = 71
-                        self.expression(9)
+                        self.expression(8)
                         pass
 
                     elif la_ == 15:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 72
-                        if not self.precpred(self._ctx, 7):
+                        if not self.precpred(self._ctx, 6):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
                         self.state = 73
                         self.match(Grammar_Project_1Parser.BITWISE_OR)
                         self.state = 74
-                        self.expression(8)
+                        self.expression(7)
                         pass
 
                     elif la_ == 16:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 75
-                        if not self.precpred(self._ctx, 6):
+                        if not self.precpred(self._ctx, 5):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
                         self.state = 76
                         self.match(Grammar_Project_1Parser.BITWISE_XOR)
                         self.state = 77
-                        self.expression(7)
+                        self.expression(6)
                         pass
 
                     elif la_ == 17:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 78
-                        if not self.precpred(self._ctx, 5):
+                        if not self.precpred(self._ctx, 4):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
                         self.state = 79
                         self.match(Grammar_Project_1Parser.LOGICAL_AND)
                         self.state = 80
-                        self.expression(6)
+                        self.expression(5)
                         pass
 
                     elif la_ == 18:
                         localctx = Grammar_Project_1Parser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 81
-                        if not self.precpred(self._ctx, 4):
+                        if not self.precpred(self._ctx, 3):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 3)")
                         self.state = 82
                         self.match(Grammar_Project_1Parser.LOGICAL_OR)
                         self.state = 83
-                        self.expression(5)
+                        self.expression(4)
                         pass
 
              
@@ -837,75 +837,75 @@ class Grammar_Project_1Parser ( Parser ):
 
     def expression_sempred(self, localctx:ExpressionContext, predIndex:int):
             if predIndex == 0:
-                return self.precpred(self._ctx, 21)
-         
-
-            if predIndex == 1:
                 return self.precpred(self._ctx, 20)
          
 
-            if predIndex == 2:
+            if predIndex == 1:
                 return self.precpred(self._ctx, 19)
          
 
-            if predIndex == 3:
+            if predIndex == 2:
                 return self.precpred(self._ctx, 18)
          
 
-            if predIndex == 4:
+            if predIndex == 3:
                 return self.precpred(self._ctx, 17)
          
 
-            if predIndex == 5:
+            if predIndex == 4:
                 return self.precpred(self._ctx, 16)
          
 
-            if predIndex == 6:
+            if predIndex == 5:
                 return self.precpred(self._ctx, 15)
          
 
-            if predIndex == 7:
+            if predIndex == 6:
                 return self.precpred(self._ctx, 14)
          
 
-            if predIndex == 8:
+            if predIndex == 7:
                 return self.precpred(self._ctx, 13)
          
 
-            if predIndex == 9:
+            if predIndex == 8:
                 return self.precpred(self._ctx, 12)
          
 
-            if predIndex == 10:
+            if predIndex == 9:
                 return self.precpred(self._ctx, 11)
          
 
-            if predIndex == 11:
+            if predIndex == 10:
                 return self.precpred(self._ctx, 10)
          
 
-            if predIndex == 12:
+            if predIndex == 11:
                 return self.precpred(self._ctx, 9)
          
 
-            if predIndex == 13:
+            if predIndex == 12:
                 return self.precpred(self._ctx, 8)
          
 
-            if predIndex == 14:
+            if predIndex == 13:
                 return self.precpred(self._ctx, 7)
          
 
-            if predIndex == 15:
+            if predIndex == 14:
                 return self.precpred(self._ctx, 6)
          
 
-            if predIndex == 16:
+            if predIndex == 15:
                 return self.precpred(self._ctx, 5)
          
 
-            if predIndex == 17:
+            if predIndex == 16:
                 return self.precpred(self._ctx, 4)
+         
+
+            if predIndex == 17:
+                return self.precpred(self._ctx, 3)
          
 
 
