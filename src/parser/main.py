@@ -2,14 +2,17 @@ from antlr4 import *
 
 from src.antlr_files.Grammar_Project_1Lexer import Grammar_Project_1Lexer as MyGrammarLexer
 from src.antlr_files.Grammar_Project_1Parser import Grammar_Project_1Parser as MyGrammarParser
-from src.antlr_files.Grammar_Project_1Visitor import Grammar_Project_1Visitor as MyGrammerVisitor
 
 from ASTGenerator import ASTGenerator
 
 
 def main():
-    # Your input string to parse
-    input_string = ("(5+5)/3+8*(5+2);\n8+8;")
+    # Read input from a file
+    with open("../../tests/Example1.txt", "r") as file:
+        input_string = file.read()
+
+    # Create a CharStream that reads from the input file
+    input_stream = InputStream(input_string)
 
     # Create a CharStream that reads from standard input
     input_stream = InputStream(input_string)
