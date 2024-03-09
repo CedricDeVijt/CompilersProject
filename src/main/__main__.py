@@ -3,6 +3,7 @@ import os
 
 import antlr4
 
+import src.parser.AST
 from src.antlr_files.Grammar_Project_1Lexer import Grammar_Project_1Lexer as Lexer
 from src.antlr_files.Grammar_Project_1Parser import Grammar_Project_1Parser as Parser
 from src.antlr_files.Grammar_Project_1Visitor import Grammar_Project_1Visitor as Visitor
@@ -20,6 +21,10 @@ def generate_ast(path, visitor):
 
     ast = visitor.visit(tree)
     ast.constantFold()
+    if len(ast.children) == 0:
+        return ast
+    if isinstance(ast.children[0], src.parser.AST.IntNode):
+        print("RESULT: " + str(ast.children[0].value))
     return ast
 
 
