@@ -28,10 +28,12 @@ class Node:
             case UnaryExpressionNode():
                 if len(self.children) == 2:
                     self.__class__ = IntNode
+                    # self.children[1] is NumberContext, the first child of this is the actual value and is called by getText()
                     self.value = -int(self.children[1].children[0].getText())
                     self.children = []
                 else:
                     self.__class__ = IntNode
+                    # self.children[0] is NumberContext, the first child of this is the actual value and is called by getText()
                     self.value = self.children[0].children[0].getText()
                     self.children = []
             case NegativeNode():
