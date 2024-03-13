@@ -1,8 +1,11 @@
 grammar Grammar_Project_2;
 
-program: (programLine)*;
+program: main;
 
-programLine: expression SEMICOLON;
+main: TYPE 'main' LPAREN RPAREN LBRACE statement+ RBRACE;
+
+statement: expression SEMICOLON;
+
 
 expression: unaryExpression
     | LOGICAL_NOT expression
@@ -25,18 +28,25 @@ expression: unaryExpression
     | expression LOGICAL_AND expression
     | expression LOGICAL_OR expression
     | LPAREN expression RPAREN
-    | INT;
+    | INT
+    | variable;
 
-unaryExpression: (PLUS | MINUS)? number
-    | (PLUS MINUS)+ (PLUS)? number
-    | (MINUS PLUS)+ (MINUS)? number;
+variable: TYPE CHAR;
 
-number: INT;
 
+unaryExpression: (PLUS | MINUS)? literal
+    | (PLUS MINUS)+ (PLUS)? literal
+    | (MINUS PLUS)+ (MINUS)? literal;
+
+literal: INT | FLOAT | CHAR;
+
+TYPE: 'int' | 'const' | 'char' | 'float';
 
 
 LPAREN: '(';
 RPAREN: ')';
+LBRACE: '{';
+RBRACE: '}';
 PLUS: '+';
 MINUS: '-';
 MULT: '*';
@@ -60,5 +70,6 @@ LOGICAL_NOT: '!';
 SEMICOLON: ';';
 INT: [0-9]+;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
+CHAR: [a-zA-Z0-9];
 
 WHITESPACE: [ \t\r\n]+ -> skip;
