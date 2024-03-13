@@ -1,7 +1,7 @@
 from antlr4 import *
 
-from src.antlr_files.Grammar_Project_1Lexer import Grammar_Project_1Lexer as MyGrammarLexer
-from src.antlr_files.Grammar_Project_1Parser import Grammar_Project_1Parser as MyGrammarParser
+from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as MyGrammarLexer
+from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as MyGrammarParser
 
 from ASTGenerator import ASTGenerator
 

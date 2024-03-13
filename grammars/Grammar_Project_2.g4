@@ -1,10 +1,12 @@
 grammar Grammar_Project_2;
 
-program: (programLine)*;
+program: main;
 
-programLine: expression SEMICOLON;
+main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 
-expression: unaryExpression
+statement: expression SEMICOLON;
+
+expression: unaryExpression | IDENTIFIER | deref | addr
     | LOGICAL_NOT expression
     | expression DIV expression
     | expression MOD expression
@@ -27,16 +29,34 @@ expression: unaryExpression
     | LPAREN expression RPAREN
     | INT;
 
-unaryExpression: (PLUS | MINUS)? number
-    | (PLUS MINUS)+ (PLUS)? number
-    | (MINUS PLUS)+ (MINUS)? number;
+unaryExpression: (PLUS | MINUS)? literal
+    | (PLUS MINUS)+ (PLUS)? literal
+    | (MINUS PLUS)+ (MINUS)? literal;
 
-number: INT;
+literal: INT | FLOAT | CHAR;
 
+decl: (TYPE | pointer) IDENTIFIER;
 
+def: (TYPE | pointer) IDENTIFIER '=' expression;
+
+ass: IDENTIFIER '=' expression;
+
+pointer: TYPE '*'+;
+
+deref: '*'+ IDENTIFIER;
+
+addr: '&'+ IDENTIFIER;
+
+TYPE: 'int' | 'char' | 'float';
+
+CONST: 'const';
+
+IDENTIFIER: [a-zA-Z][a-zA-Z0-9]*;
 
 LPAREN: '(';
 RPAREN: ')';
+LBRACE: '{';
+RBRACE: '}';
 PLUS: '+';
 MINUS: '-';
 MULT: '*';
@@ -60,5 +80,6 @@ LOGICAL_NOT: '!';
 SEMICOLON: ';';
 INT: [0-9]+;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
+CHAR : [a-zA-Z0-9];
 
 WHITESPACE: [ \t\r\n]+ -> skip;

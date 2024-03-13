@@ -1,5 +1,5 @@
-from src.antlr_files.Grammar_Project_1Parser import Grammar_Project_1Parser
-from src.antlr_files.Grammar_Project_1Visitor import Grammar_Project_1Visitor as Visitor
+from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser
+from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
 
 from src.parser.AST import *
 
@@ -13,7 +13,15 @@ class ASTGenerator(Visitor):
                 children.append(node)
         return ProgramNode(ctx.start.line, ctx.start.column, children)
 
-    def visitProgramLine(self, ctx):
+    def visitMain(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            node = self.visit(line)
+            if node is not None:
+                children.append(node)
+        return MainNode(ctx.start.line, ctx.start.column, children)
+
+    def visitStatement(self, ctx):
         lines = []
         for line in ctx.getChildren():
             lines.append(line)
@@ -72,6 +80,6 @@ class ASTGenerator(Visitor):
         node = self.visitChildren(ctx)
         return node
 
-    def visitNumber(self, ctx):
-        node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
+    def visitLiteral(self, ctx):
+        node = LiteralNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node

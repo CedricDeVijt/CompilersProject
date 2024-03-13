@@ -3,10 +3,10 @@ import os
 
 import antlr4
 
-from src.antlr_files.Grammar_Project_1Lexer import Grammar_Project_1Lexer as Lexer
-from src.antlr_files.Grammar_Project_1Parser import Grammar_Project_1Parser as Parser
-from src.antlr_files.Grammar_Project_1Visitor import Grammar_Project_1Visitor as Visitor
-from src.antlr_files.Grammar_Project_1Visitor import Grammar_Project_1Visitor as Listener
+from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
+from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
+from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
+from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Listener
 
 from src.parser.ASTGenerator import ASTGenerator as Generator
 
