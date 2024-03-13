@@ -154,6 +154,11 @@ class MainNode(Node):
         super().__init__("Main", line, pos, children=children)
 
 
+class IdentifierNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("Identifier", line, pos, children=children)
+
+
 class LogicalNotNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("LogicalNot", line, pos, children=children)

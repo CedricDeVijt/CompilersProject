@@ -32,8 +32,7 @@ expression: unaryExpression
     | expression BITWISE_XOR expression
     | expression LOGICAL_AND expression
     | expression LOGICAL_OR expression
-    | LPAREN expression RPAREN
-    | INT;
+    | LPAREN expression RPAREN;
 
 unaryExpression: (PLUS | MINUS)? literal
     | (PLUS MINUS)+ (PLUS)? literal
