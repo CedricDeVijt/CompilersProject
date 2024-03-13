@@ -21,10 +21,6 @@ def generate_ast(path, visitor):
 
     ast = visitor.visit(tree)
     ast.constantFold()
-    if len(ast.children) == 0:
-        return ast
-    if isinstance(ast.children[0], src.parser.AST.IntNode):
-        print("RESULT: " + str(ast.children[0].value))
     return ast
 
 
