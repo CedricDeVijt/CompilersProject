@@ -255,5 +255,5 @@ class LogicalOrNode(Node):
 
 
 class LiteralNode(Node):
-    def __init__(self, value: str, line: int, pos: int, children=None):
-        super().__init__(value, line, pos, children=children)
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("Literal", line, pos, children=children)
