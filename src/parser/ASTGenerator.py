@@ -85,5 +85,13 @@ class ASTGenerator(Visitor):
         return node
 
     def visitLiteral(self, ctx):
-        node = LiteralNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        literal = ctx.getText()
+        if literal.startswith("\'"):
+            for i in literal:
+                if i.isalnum():
+                    literal = ord(i)
+        if float(literal) % 1 == 0:
+            node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
+            return node
+        node = FloatNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
