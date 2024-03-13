@@ -72,6 +72,20 @@ class ASTGenerator(Visitor):
         node = self.visitChildren(ctx)
         return node
 
+    def visitUnaryExpression(self, ctx):
+        node = UnaryExpressionNode(ctx.start.line, ctx.start.column)
+        negatives = 0
+        for child in ctx.getChildren():
+            if child.getText() == "-":
+                negatives += 1
+        if negatives % 2 == 1:
+            child = NegativeNode(ctx.start.line, ctx.start.column)
+            node.children.append(child)
+        for child in ctx.getChildren():
+            if child.getText() != "-" and child.getText() != '+':
+                node.children.append(child)
+        return node
+
     def visitNumber(self, ctx):
         node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node

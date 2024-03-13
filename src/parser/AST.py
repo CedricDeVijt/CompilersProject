@@ -20,9 +20,23 @@ class Node:
 
     def constantFold(self):
         for node in self.children:
-            node.constantFold()
+            if not isinstance(self, UnaryExpressionNode):
+                node.constantFold()
         match self:
             case IntNode():
+                return
+            case UnaryExpressionNode():
+                if len(self.children) == 2:
+                    self.__class__ = IntNode
+                    # self.children[1] is NumberContext, the first child of this is the actual value and is called by getText()
+                    self.value = -int(self.children[1].children[0].getText())
+                    self.children = []
+                else:
+                    self.__class__ = IntNode
+                    # self.children[0] is NumberContext, the first child of this is the actual value and is called by getText()
+                    self.value = self.children[0].children[0].getText()
+                    self.children = []
+            case NegativeNode():
                 return
             case DivNode():
                 if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode) and str(self.children[1].value) != "0":
@@ -242,6 +256,16 @@ class LogicalAndNode(Node):
 class LogicalOrNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("LogicalOr", line, pos, children=children)
+
+
+class UnaryExpressionNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("unaryExpression", line, pos, children=children)
+
+
+class NegativeNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("Negative", line, pos, children=children)
 
 
 class IntNode(Node):
