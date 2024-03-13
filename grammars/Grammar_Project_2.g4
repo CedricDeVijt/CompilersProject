@@ -2,11 +2,17 @@ grammar Grammar_Project_2;
 
 program: main;
 
-main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
+main: 'int ' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 
 statement: expression SEMICOLON;
 
-expression: unaryExpression | IDENTIFIER | deref | addr
+expression: unaryExpression
+    | IDENTIFIER
+    | decl
+    | def
+    | deref
+    | ass
+    | addr
     | LOGICAL_NOT expression
     | expression DIV expression
     | expression MOD expression
@@ -82,7 +88,7 @@ LOGICAL_NOT: '!';
 SEMICOLON: ';';
 INT: [0-9]+;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
-CHAR : [a-zA-Z0-9];
+CHAR : '\'' [a-zA-Z0-9] '\'' ;
 INTTYPE: 'int';
 FLOATTYPE: 'float';
 CHARTYPE: 'char';
