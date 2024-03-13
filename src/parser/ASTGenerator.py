@@ -80,6 +80,8 @@ class ASTGenerator(Visitor):
         node = self.visitChildren(ctx)
         return node
 
+    def visit
+
     def visitLiteral(self, ctx):
         node = LiteralNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node

@@ -35,21 +35,23 @@ unaryExpression: (PLUS | MINUS)? literal
 
 literal: INT | FLOAT | CHAR;
 
-decl: (TYPE | pointer) IDENTIFIER;
+decl: (type | pointer) IDENTIFIER;
 
-def: (TYPE | pointer) IDENTIFIER '=' expression;
+def: (type | pointer) IDENTIFIER '=' expression;
 
 ass: IDENTIFIER '=' expression;
 
-pointer: TYPE '*'+;
+pointer: type '*'+;
 
 deref: '*'+ IDENTIFIER;
 
 addr: '&'+ IDENTIFIER;
 
-TYPE: 'int' | 'char' | 'float';
+type: INTTYPE | CHARTYPE | FLOATTYPE;
 
-CONST: 'const';
+const: CONST;
+
+identifier: IDENTIFIER;
 
 IDENTIFIER: [a-zA-Z][a-zA-Z0-9]*;
 
@@ -81,5 +83,10 @@ SEMICOLON: ';';
 INT: [0-9]+;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
 CHAR : [a-zA-Z0-9];
+INTTYPE: 'int';
+FLOATTYPE: 'float';
+CHARTYPE: 'char';
+
+CONST: 'const';
 
 WHITESPACE: [ \t\r\n]+ -> skip;
