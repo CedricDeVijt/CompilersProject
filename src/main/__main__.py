@@ -3,6 +3,7 @@ import os
 
 import antlr4
 
+import src.parser.AST
 from src.antlr_files.Grammar_Project_1Lexer import Grammar_Project_1Lexer as Lexer
 from src.antlr_files.Grammar_Project_1Parser import Grammar_Project_1Parser as Parser
 from src.antlr_files.Grammar_Project_1Visitor import Grammar_Project_1Visitor as Visitor

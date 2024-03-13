@@ -4,6 +4,8 @@ program: (programLine)*;
 
 programLine: expression SEMICOLON;
 
+// TODO: make 5++5; illegal.
+
 expression: unaryExpression
     | LOGICAL_NOT expression
     | expression DIV expression
