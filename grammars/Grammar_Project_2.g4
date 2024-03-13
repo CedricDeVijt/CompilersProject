@@ -7,7 +7,7 @@ main: 'int ' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 statement: expression SEMICOLON;
 
 expression: unaryExpression
-    | IDENTIFIER
+    | identifier
     | decl
     | def
     | deref
@@ -41,19 +41,19 @@ unaryExpression: (PLUS | MINUS)? literal
 
 literal: INT | FLOAT | CHAR;
 
-decl: (type | pointer) IDENTIFIER;
+decl: (type | pointer) identifier;
 
-def: (type | pointer) IDENTIFIER '=' expression;
+def: (type | pointer) identifier '=' expression;
 
-ass: IDENTIFIER '=' expression;
+ass: identifier '=' expression;
 
 pointer: type '*'+;
 
-deref: '*'+ IDENTIFIER;
+deref: '*'+ identifier;
 
-addr: '&'+ IDENTIFIER;
+addr: '&'+ identifier;
 
-type: INTTYPE | CHARTYPE | FLOATTYPE;
+type: const* (INTTYPE | CHARTYPE | FLOATTYPE);
 
 const: CONST;
 
