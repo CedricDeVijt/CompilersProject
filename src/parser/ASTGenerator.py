@@ -4,6 +4,10 @@ from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Vis
 from src.parser.AST import *
 
 class ASTGenerator(Visitor):
+
+    def __init__(self):
+        self.scope = SymbolTable()
+
     def visitProgram(self, ctx):
         children = []
         for line in ctx.getChildren():
@@ -31,6 +35,20 @@ class ASTGenerator(Visitor):
                 children.extend(self.visit(line))
             else:
                 children.append(self.visit(line))
+        if len(children) == 2:
+            if isinstance(children[0], TypeNode) and isinstance(children[1], IdentifierNode):
+                if self.scope.lookup(children[1].value) is not None:
+                    raise Exception("Variable \'" + children[1].value + "\' not declared yet!")
+        if children.__contains__("=") and (children.index("=") == 2):
+            node = IdentifierNode(children[children.index("=")-1].value, children[0].line, children[0].pos)
+            if self.scope.lookup(node.value) is None:
+                self.scope.insert(node.value, children[(children.index("=")+1)].value, children[children.index("=")-2].value)
+                return node
+            else:
+                raise Exception("Variable \'" + node.value + "\' already declared!")
+        if children.__contains__("="):
+            if self.scope.lookup(children[children.index("=")-1].value) is None:
+                raise Exception("Variable \'" + children[children.index("=")-1].value + "\' not declared yet!")
         node = StatementNode(ctx.start.line, ctx.start.column, children)
         return node
 

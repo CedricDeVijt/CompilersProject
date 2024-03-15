@@ -1,3 +1,21 @@
+class SymbolTable:
+    def __init__(self):
+        self.table = dict()
+        self.parent = None
+
+    def insert(self, name, value, varType):
+        self.table[name] = {value, varType}
+
+    def lookup(self, name):
+        if name in self.table:
+            return self.table[name]
+        if self.parent is not None:
+            return self.parent.lookup(name)
+        return None
+
+    def set_parent(self, parent):
+        self.parent = parent
+
 class Node:
     def __init__(self, value: str, line: int, pos: int, children=None):
         self.value = value
@@ -170,7 +188,6 @@ class ProgramNode(Node):
 class MainNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("Main", line, pos, children=children)
-        self.table = dict()
 
 class StatementNode(Node):
     def __init__(self, line: int, pos: int, children=None):
