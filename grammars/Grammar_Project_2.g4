@@ -6,45 +6,44 @@ program: main;
 main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON
-    | lvalue SEMICOLON
-    | lvalue '=' rvalue SEMICOLON
-    | postfixIncrement SEMICOLON
-    | postfixDecrement SEMICOLON;
+         | lvalue SEMICOLON
+         | lvalue '=' rvalue SEMICOLON
+         | postfixIncrement SEMICOLON
+         | postfixDecrement SEMICOLON;
 
 lvalue: IDENTIFIER
-    | type IDENTIFIER
-    | pointer IDENTIFIER
-    | deref;
-
+      | type IDENTIFIER
+      | pointer IDENTIFIER
+      | deref;
 
 rvalue: unaryExpression
-    | IDENTIFIER
-    | deref
-    | addr
-    | LOGICAL_NOT rvalue
-    | rvalue DIV rvalue
-    | rvalue MOD rvalue
-    | rvalue MULT rvalue
-    | rvalue MINUS rvalue
-    | rvalue PLUS rvalue
-    | rvalue GREATER_THAN rvalue
-    | rvalue LESS_THAN rvalue
-    | rvalue GREATER_EQUAL rvalue
-    | rvalue LESS_EQUAL rvalue
-    | rvalue EQUALS rvalue
-    | rvalue NOT_EQUAL rvalue
-    | rvalue SHIFT_LEFT rvalue
-    | rvalue SHIFT_RIGHT rvalue
-    | rvalue BITWISE_AND rvalue
-    | rvalue BITWISE_OR rvalue
-    | rvalue BITWISE_XOR rvalue
-    | rvalue LOGICAL_AND rvalue
-    | rvalue LOGICAL_OR rvalue
-    | LPAREN rvalue RPAREN;
+      | IDENTIFIER
+      | deref
+      | addr
+      | LOGICAL_NOT rvalue
+      | rvalue DIV rvalue
+      | rvalue MOD rvalue
+      | rvalue MULT rvalue
+      | rvalue MINUS rvalue
+      | rvalue PLUS rvalue
+      | rvalue GREATER_THAN rvalue
+      | rvalue LESS_THAN rvalue
+      | rvalue GREATER_EQUAL rvalue
+      | rvalue LESS_EQUAL rvalue
+      | rvalue EQUALS rvalue
+      | rvalue NOT_EQUAL rvalue
+      | rvalue SHIFT_LEFT rvalue
+      | rvalue SHIFT_RIGHT rvalue
+      | rvalue BITWISE_AND rvalue
+      | rvalue BITWISE_OR rvalue
+      | rvalue BITWISE_XOR rvalue
+      | rvalue LOGICAL_AND rvalue
+      | rvalue LOGICAL_OR rvalue
+      | LPAREN rvalue RPAREN;
 
 unaryExpression: (PLUS | MINUS)? literal
-    | (PLUS MINUS)+ (PLUS)? literal
-    | (MINUS PLUS)+ (MINUS)? literal;
+               | (PLUS MINUS)+ (PLUS)? literal
+               | (MINUS PLUS)+ (MINUS)? literal;
 
 literal: INT | FLOAT | CHAR;
 
@@ -56,8 +55,9 @@ addr: '&'+ IDENTIFIER;
 
 type: 'const'* ('int' | 'float' | 'char');
 
-postfixIncrement: lvalue '++';
-postfixDecrement: lvalue '--';
+postfixIncrement: lvalue INCREMENT;
+
+postfixDecrement: lvalue DECREMENT;
 
 // lexer rules
 LPAREN: '(';
@@ -95,3 +95,5 @@ IDENTIFIER: [a-zA-Z] [a-zA-Z_0-9]*;
 
 INCREMENT: '++';
 DECREMENT: '--';
+
+COMMENT: '//' ~[\r\n]* -> skip;
