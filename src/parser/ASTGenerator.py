@@ -3,7 +3,6 @@ from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Vis
 
 from src.parser.AST import *
 
-
 class ASTGenerator(Visitor):
     def visitProgram(self, ctx):
         children = []

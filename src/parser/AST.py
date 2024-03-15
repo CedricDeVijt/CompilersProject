@@ -170,6 +170,7 @@ class ProgramNode(Node):
 class MainNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("Main", line, pos, children=children)
+        self.table = dict()
 
 class StatementNode(Node):
     def __init__(self, line: int, pos: int, children=None):
