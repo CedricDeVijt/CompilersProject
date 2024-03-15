@@ -7,7 +7,9 @@ main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON
     | lvalue SEMICOLON
-    | lvalue '=' rvalue SEMICOLON;
+    | lvalue '=' rvalue SEMICOLON
+    | postfixIncrement SEMICOLON
+    | postfixDecrement SEMICOLON;
 
 lvalue: identifier
     | type identifier
@@ -54,7 +56,11 @@ addr: '&'+ identifier;
 
 type: 'const'* ('int' | 'float' | 'char');
 
+postfixIncrement: lvalue '++';
+postfixDecrement: lvalue '--';
+
 identifier: IDENTIFIER;
+
 
 // lexer rules
 LPAREN: '(';
@@ -89,3 +95,6 @@ CHAR : '\'' [a-zA-Z0-9] '\'' ;
 WHITESPACE: [ \t\n\r]+ -> skip;
 
 IDENTIFIER: [a-zA-Z] [a-zA-Z_0-9]*;
+
+INCREMENT: '++';
+DECREMENT: '--';
