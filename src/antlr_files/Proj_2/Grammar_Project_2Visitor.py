@@ -24,8 +24,13 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by Grammar_Project_2Parser#expression.
-    def visitExpression(self, ctx:Grammar_Project_2Parser.ExpressionContext):
+    # Visit a parse tree produced by Grammar_Project_2Parser#lvalue.
+    def visitLvalue(self, ctx:Grammar_Project_2Parser.LvalueContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Grammar_Project_2Parser#rvalue.
+    def visitRvalue(self, ctx:Grammar_Project_2Parser.RvalueContext):
         return self.visitChildren(ctx)
 
 
@@ -36,21 +41,6 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by Grammar_Project_2Parser#literal.
     def visitLiteral(self, ctx:Grammar_Project_2Parser.LiteralContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by Grammar_Project_2Parser#decl.
-    def visitDecl(self, ctx:Grammar_Project_2Parser.DeclContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by Grammar_Project_2Parser#def.
-    def visitDef(self, ctx:Grammar_Project_2Parser.DefContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by Grammar_Project_2Parser#ass.
-    def visitAss(self, ctx:Grammar_Project_2Parser.AssContext):
         return self.visitChildren(ctx)
 
 
@@ -71,16 +61,6 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by Grammar_Project_2Parser#type.
     def visitType(self, ctx:Grammar_Project_2Parser.TypeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by Grammar_Project_2Parser#const.
-    def visitConst(self, ctx:Grammar_Project_2Parser.ConstContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by Grammar_Project_2Parser#identifier.
-    def visitIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
         return self.visitChildren(ctx)
 
 

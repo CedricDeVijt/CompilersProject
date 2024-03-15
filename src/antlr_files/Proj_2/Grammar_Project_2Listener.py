@@ -35,12 +35,21 @@ class Grammar_Project_2Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by Grammar_Project_2Parser#expression.
-    def enterExpression(self, ctx:Grammar_Project_2Parser.ExpressionContext):
+    # Enter a parse tree produced by Grammar_Project_2Parser#lvalue.
+    def enterLvalue(self, ctx:Grammar_Project_2Parser.LvalueContext):
         pass
 
-    # Exit a parse tree produced by Grammar_Project_2Parser#expression.
-    def exitExpression(self, ctx:Grammar_Project_2Parser.ExpressionContext):
+    # Exit a parse tree produced by Grammar_Project_2Parser#lvalue.
+    def exitLvalue(self, ctx:Grammar_Project_2Parser.LvalueContext):
+        pass
+
+
+    # Enter a parse tree produced by Grammar_Project_2Parser#rvalue.
+    def enterRvalue(self, ctx:Grammar_Project_2Parser.RvalueContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#rvalue.
+    def exitRvalue(self, ctx:Grammar_Project_2Parser.RvalueContext):
         pass
 
 
@@ -59,33 +68,6 @@ class Grammar_Project_2Listener(ParseTreeListener):
 
     # Exit a parse tree produced by Grammar_Project_2Parser#literal.
     def exitLiteral(self, ctx:Grammar_Project_2Parser.LiteralContext):
-        pass
-
-
-    # Enter a parse tree produced by Grammar_Project_2Parser#decl.
-    def enterDecl(self, ctx:Grammar_Project_2Parser.DeclContext):
-        pass
-
-    # Exit a parse tree produced by Grammar_Project_2Parser#decl.
-    def exitDecl(self, ctx:Grammar_Project_2Parser.DeclContext):
-        pass
-
-
-    # Enter a parse tree produced by Grammar_Project_2Parser#def.
-    def enterDef(self, ctx:Grammar_Project_2Parser.DefContext):
-        pass
-
-    # Exit a parse tree produced by Grammar_Project_2Parser#def.
-    def exitDef(self, ctx:Grammar_Project_2Parser.DefContext):
-        pass
-
-
-    # Enter a parse tree produced by Grammar_Project_2Parser#ass.
-    def enterAss(self, ctx:Grammar_Project_2Parser.AssContext):
-        pass
-
-    # Exit a parse tree produced by Grammar_Project_2Parser#ass.
-    def exitAss(self, ctx:Grammar_Project_2Parser.AssContext):
         pass
 
 
@@ -122,24 +104,6 @@ class Grammar_Project_2Listener(ParseTreeListener):
 
     # Exit a parse tree produced by Grammar_Project_2Parser#type.
     def exitType(self, ctx:Grammar_Project_2Parser.TypeContext):
-        pass
-
-
-    # Enter a parse tree produced by Grammar_Project_2Parser#const.
-    def enterConst(self, ctx:Grammar_Project_2Parser.ConstContext):
-        pass
-
-    # Exit a parse tree produced by Grammar_Project_2Parser#const.
-    def exitConst(self, ctx:Grammar_Project_2Parser.ConstContext):
-        pass
-
-
-    # Enter a parse tree produced by Grammar_Project_2Parser#identifier.
-    def enterIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
-        pass
-
-    # Exit a parse tree produced by Grammar_Project_2Parser#identifier.
-    def exitIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
         pass
 
 
