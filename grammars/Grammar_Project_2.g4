@@ -17,6 +17,7 @@ lvalue: IDENTIFIER
 
 rvalue: unaryExpression
     | IDENTIFIER
+    | deref
     | addr
     | LOGICAL_NOT rvalue
     | rvalue DIV rvalue
