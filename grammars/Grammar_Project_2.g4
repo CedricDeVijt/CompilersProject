@@ -1,5 +1,6 @@
 grammar Grammar_Project_2;
 
+// parser rules
 program: main;
 
 main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
@@ -52,6 +53,7 @@ addr: '&'+ IDENTIFIER;
 
 type: 'const'* ('int' | 'float' | 'char');
 
+// lexer rules
 LPAREN: '(';
 RPAREN: ')';
 LBRACE: '{';
