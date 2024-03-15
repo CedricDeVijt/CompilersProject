@@ -2,49 +2,46 @@ grammar Grammar_Project_2;
 
 program: main;
 
-main: 'int ' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
+main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 
-statement: expression SEMICOLON;
+statement: rvalue SEMICOLON
+    | lvalue SEMICOLON
+    | lvalue '=' rvalue SEMICOLON;
 
-expression: unaryExpression
-    | identifier
-    | decl
-    | def
+lvalue: type identifier
+    | pointer identifier
     | deref
-    | ass
-    | addr
-    | LOGICAL_NOT expression
-    | expression DIV expression
-    | expression MOD expression
-    | expression MULT expression
-    | expression MINUS expression
-    | expression PLUS expression
-    | expression GREATER_THAN expression
-    | expression LESS_THAN expression
-    | expression GREATER_EQUAL expression
-    | expression LESS_EQUAL expression
-    | expression EQUALS expression
-    | expression NOT_EQUAL expression
-    | expression SHIFT_LEFT expression
-    | expression SHIFT_RIGHT expression
-    | expression BITWISE_AND expression
-    | expression BITWISE_OR expression
-    | expression BITWISE_XOR expression
-    | expression LOGICAL_AND expression
-    | expression LOGICAL_OR expression
-    | LPAREN expression RPAREN;
+    | addr;
+
+
+rvalue: unaryExpression
+    | identifier
+    | LOGICAL_NOT rvalue
+    | rvalue DIV rvalue
+    | rvalue MOD rvalue
+    | rvalue MULT rvalue
+    | rvalue MINUS rvalue
+    | rvalue PLUS rvalue
+    | rvalue GREATER_THAN rvalue
+    | rvalue LESS_THAN rvalue
+    | rvalue GREATER_EQUAL rvalue
+    | rvalue LESS_EQUAL rvalue
+    | rvalue EQUALS rvalue
+    | rvalue NOT_EQUAL rvalue
+    | rvalue SHIFT_LEFT rvalue
+    | rvalue SHIFT_RIGHT rvalue
+    | rvalue BITWISE_AND rvalue
+    | rvalue BITWISE_OR rvalue
+    | rvalue BITWISE_XOR rvalue
+    | rvalue LOGICAL_AND rvalue
+    | rvalue LOGICAL_OR rvalue
+    | LPAREN rvalue RPAREN;
 
 unaryExpression: (PLUS | MINUS)? literal
     | (PLUS MINUS)+ (PLUS)? literal
     | (MINUS PLUS)+ (MINUS)? literal;
 
 literal: INT | FLOAT | CHAR;
-
-decl: (type | pointer) identifier;
-
-def: (type | pointer) identifier '=' expression;
-
-ass: identifier '=' expression;
 
 pointer: type '*'+;
 
@@ -94,4 +91,4 @@ CHARTYPE: 'char';
 
 CONST: 'const';
 
-WHITESPACE: [ \t\r\n]+ -> skip;
+WHITESPACE: [ \t\n\r]+ -> skip;
