@@ -8,6 +8,8 @@ main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 statement: rvalue SEMICOLON
     | lvalue SEMICOLON
     | lvalue '=' rvalue SEMICOLON
+    | lvalue '=' rvalueCast SEMICOLON
+    | lvalue '=' rvalue SEMICOLON
     | postfixIncrement SEMICOLON
     | postfixDecrement SEMICOLON;
 
@@ -15,7 +17,6 @@ lvalue: identifier
     | type identifier
     | pointer identifier
     | deref;
-
 
 rvalue: unaryExpression
     | identifier
@@ -42,9 +43,12 @@ rvalue: unaryExpression
     | rvalue LOGICAL_OR rvalue
     | LPAREN rvalue RPAREN;
 
+
+rvalueCast:  LPAREN type RPAREN rvalue;
+
 unaryExpression: (PLUS | MINUS)? literal
-    | (PLUS MINUS)+ (PLUS)? literal
-    | (MINUS PLUS)+ (MINUS)? literal;
+               | (PLUS MINUS)+ (PLUS)? literal
+               | (MINUS PLUS)+ (MINUS)? literal;
 
 literal: INT | FLOAT | CHAR;
 
@@ -56,8 +60,9 @@ addr: '&'+ identifier;
 
 type: 'const'* ('int' | 'float' | 'char');
 
-postfixIncrement: lvalue '++';
-postfixDecrement: lvalue '--';
+postfixIncrement: lvalue INCREMENT;
+
+postfixDecrement: lvalue DECREMENT;
 
 identifier: IDENTIFIER;
 
@@ -98,3 +103,5 @@ IDENTIFIER: [a-zA-Z] [a-zA-Z_0-9]*;
 
 INCREMENT: '++';
 DECREMENT: '--';
+
+COMMENT: '//' ~[\r\n]* -> skip;
