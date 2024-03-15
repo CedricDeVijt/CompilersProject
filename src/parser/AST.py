@@ -20,7 +20,8 @@ class Node:
 
     def constantFold(self):
         for node in self.children:
-            node.constantFold()
+            if not isinstance(node, str):
+                node.constantFold()
         match self:
             case IntNode():
                 return
@@ -170,10 +171,17 @@ class MainNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("Main", line, pos, children=children)
 
+class StatementNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("Statement", line, pos, children=children)
 
 class IdentifierNode(Node):
-    def __init__(self, line: int, pos: int, children=None):
-        super().__init__("Identifier", line, pos, children=children)
+    def __init__(self, value, line: int, pos: int, children=None):
+        super().__init__(value, line, pos, children=children)
+
+class TypeNode(Node):
+    def __init__(self, value, line: int, pos: int, children=None):
+        super().__init__(value, line, pos, children=children)
 
 
 class LogicalNotNode(Node):

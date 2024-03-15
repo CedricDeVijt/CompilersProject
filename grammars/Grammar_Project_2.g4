@@ -9,14 +9,14 @@ statement: rvalue SEMICOLON
     | lvalue SEMICOLON
     | lvalue '=' rvalue SEMICOLON;
 
-lvalue: IDENTIFIER
-    | type IDENTIFIER
-    | pointer IDENTIFIER
+lvalue: identifier
+    | type identifier
+    | pointer identifier
     | deref;
 
 
 rvalue: unaryExpression
-    | IDENTIFIER
+    | identifier
     | deref
     | addr
     | LOGICAL_NOT rvalue
@@ -48,11 +48,13 @@ literal: INT | FLOAT | CHAR;
 
 pointer: type '*'+;
 
-deref: '*'+ IDENTIFIER;
+deref: '*'+ identifier;
 
-addr: '&'+ IDENTIFIER;
+addr: '&'+ identifier;
 
 type: 'const'* ('int' | 'float' | 'char');
+
+identifier: IDENTIFIER;
 
 // lexer rules
 LPAREN: '(';

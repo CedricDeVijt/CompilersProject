@@ -107,5 +107,14 @@ class Grammar_Project_2Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Grammar_Project_2Parser#identifier.
+    def enterIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#identifier.
+    def exitIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
+        pass
+
+
 
 del Grammar_Project_2Parser

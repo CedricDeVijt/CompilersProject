@@ -64,5 +64,10 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by Grammar_Project_2Parser#identifier.
+    def visitIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
+        return self.visitChildren(ctx)
+
+
 
 del Grammar_Project_2Parser
