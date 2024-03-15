@@ -19,29 +19,6 @@ lvalue: identifier
     | deref;
 
 rvalue: unaryExpression
-      | IDENTIFIER
-      | deref
-      | addr
-      | LOGICAL_NOT rvalue
-      | rvalue DIV rvalue
-      | rvalue MOD rvalue
-      | rvalue MULT rvalue
-      | rvalue MINUS rvalue
-      | rvalue PLUS rvalue
-      | rvalue GREATER_THAN rvalue
-      | rvalue LESS_THAN rvalue
-      | rvalue GREATER_EQUAL rvalue
-      | rvalue LESS_EQUAL rvalue
-      | rvalue EQUALS rvalue
-      | rvalue NOT_EQUAL rvalue
-      | rvalue SHIFT_LEFT rvalue
-      | rvalue SHIFT_RIGHT rvalue
-      | rvalue BITWISE_AND rvalue
-      | rvalue BITWISE_OR rvalue
-      | rvalue BITWISE_XOR rvalue
-      | rvalue LOGICAL_AND rvalue
-      | rvalue LOGICAL_OR rvalue
-      | LPAREN rvalue RPAREN;
     | identifier
     | deref
     | addr
