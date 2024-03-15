@@ -8,6 +8,8 @@ main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 statement: rvalue SEMICOLON
     | lvalue SEMICOLON
     | lvalue '=' rvalue SEMICOLON
+    | lvalue '=' rvalueCast SEMICOLON
+    | lvalue '=' rvalue SEMICOLON
     | postfixIncrement SEMICOLON
     | postfixDecrement SEMICOLON;
 
@@ -41,6 +43,9 @@ rvalue: unaryExpression
     | rvalue LOGICAL_AND rvalue
     | rvalue LOGICAL_OR rvalue
     | LPAREN rvalue RPAREN;
+
+
+rvalueCast:  LPAREN type RPAREN rvalue;
 
 unaryExpression: (PLUS | MINUS)? literal
     | (PLUS MINUS)+ (PLUS)? literal
