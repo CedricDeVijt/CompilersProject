@@ -8,14 +8,14 @@ statement: rvalue SEMICOLON
     | lvalue SEMICOLON
     | lvalue '=' rvalue SEMICOLON;
 
-lvalue: type identifier
-    | pointer identifier
+lvalue: type IDENTIFIER
+    | pointer IDENTIFIER
     | deref
     | addr;
 
 
 rvalue: unaryExpression
-    | identifier
+    | IDENTIFIER
     | LOGICAL_NOT rvalue
     | rvalue DIV rvalue
     | rvalue MOD rvalue
@@ -45,17 +45,11 @@ literal: INT | FLOAT | CHAR;
 
 pointer: type '*'+;
 
-deref: '*'+ identifier;
+deref: '*'+ IDENTIFIER;
 
-addr: '&'+ identifier;
+addr: '&'+ IDENTIFIER;
 
-type: const* (INTTYPE | CHARTYPE | FLOATTYPE);
-
-const: CONST;
-
-identifier: IDENTIFIER;
-
-IDENTIFIER: [a-zA-Z][a-zA-Z0-9]*;
+type: 'const'* ('int' | 'float' | 'char');
 
 LPAREN: '(';
 RPAREN: ')';
@@ -85,10 +79,7 @@ SEMICOLON: ';';
 INT: [0-9]+;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
 CHAR : '\'' [a-zA-Z0-9] '\'' ;
-INTTYPE: 'int';
-FLOATTYPE: 'float';
-CHARTYPE: 'char';
-
-CONST: 'const';
 
 WHITESPACE: [ \t\n\r]+ -> skip;
+
+IDENTIFIER: [a-zA-Z] [a-zA-Z_0-9]*;
