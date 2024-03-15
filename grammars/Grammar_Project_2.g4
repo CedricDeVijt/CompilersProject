@@ -11,12 +11,12 @@ statement: rvalue SEMICOLON
 lvalue: IDENTIFIER
     | type IDENTIFIER
     | pointer IDENTIFIER
-    | deref
-    | addr;
+    | deref;
 
 
 rvalue: unaryExpression
     | IDENTIFIER
+    | addr
     | LOGICAL_NOT rvalue
     | rvalue DIV rvalue
     | rvalue MOD rvalue
