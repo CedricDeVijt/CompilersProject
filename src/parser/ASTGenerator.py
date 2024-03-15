@@ -3,7 +3,6 @@ from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Vis
 
 from src.parser.AST import *
 
-
 class ASTGenerator(Visitor):
     def visitProgram(self, ctx):
         children = []
@@ -22,13 +21,34 @@ class ASTGenerator(Visitor):
         return MainNode(ctx.start.line, ctx.start.column, children)
 
     def visitStatement(self, ctx):
-        lines = []
+        children = []
         for line in ctx.getChildren():
-            lines.append(line)
-        node = self.visit(lines[0])
+            if line.getText() == ";":
+                pass
+            elif line.getText() == "=":
+                children.append(line.getText())
+            elif isinstance(self.visit(line), list):
+                children.extend(self.visit(line))
+            else:
+                children.append(self.visit(line))
+        node = StatementNode(ctx.start.line, ctx.start.column, children)
         return node
 
-    def visitExpression(self, ctx):
+    def visitLvalue(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(self.visit(line))
+        return children
+
+    def visitIdentifier(self, ctx):
+        node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        return node
+
+    def visitType(self, ctx):
+        node = TypeNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        return node
+
+    def visitRvalue(self, ctx):
         lines = []
         for line in ctx.getChildren():
             lines.append(line)
@@ -78,10 +98,6 @@ class ASTGenerator(Visitor):
                 node = LogicalNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
                 return node
         node = self.visitChildren(ctx)
-        return node
-
-    def visitIdentifier(self, ctx):
-        node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
 
     def visitLiteral(self, ctx):

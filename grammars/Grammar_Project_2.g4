@@ -6,15 +6,17 @@ program: main;
 main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON
-         | lvalue SEMICOLON
-         | lvalue '=' rvalue SEMICOLON
-         | postfixIncrement SEMICOLON
-         | postfixDecrement SEMICOLON;
+    | lvalue SEMICOLON
+    | lvalue '=' rvalue SEMICOLON
+    | lvalue '=' rvalueCast SEMICOLON
+    | lvalue '=' rvalue SEMICOLON
+    | postfixIncrement SEMICOLON
+    | postfixDecrement SEMICOLON;
 
-lvalue: IDENTIFIER
-      | type IDENTIFIER
-      | pointer IDENTIFIER
-      | deref;
+lvalue: identifier
+    | type identifier
+    | pointer identifier
+    | deref;
 
 rvalue: unaryExpression
       | IDENTIFIER
@@ -40,6 +42,32 @@ rvalue: unaryExpression
       | rvalue LOGICAL_AND rvalue
       | rvalue LOGICAL_OR rvalue
       | LPAREN rvalue RPAREN;
+    | identifier
+    | deref
+    | addr
+    | LOGICAL_NOT rvalue
+    | rvalue DIV rvalue
+    | rvalue MOD rvalue
+    | rvalue MULT rvalue
+    | rvalue MINUS rvalue
+    | rvalue PLUS rvalue
+    | rvalue GREATER_THAN rvalue
+    | rvalue LESS_THAN rvalue
+    | rvalue GREATER_EQUAL rvalue
+    | rvalue LESS_EQUAL rvalue
+    | rvalue EQUALS rvalue
+    | rvalue NOT_EQUAL rvalue
+    | rvalue SHIFT_LEFT rvalue
+    | rvalue SHIFT_RIGHT rvalue
+    | rvalue BITWISE_AND rvalue
+    | rvalue BITWISE_OR rvalue
+    | rvalue BITWISE_XOR rvalue
+    | rvalue LOGICAL_AND rvalue
+    | rvalue LOGICAL_OR rvalue
+    | LPAREN rvalue RPAREN;
+
+
+rvalueCast:  LPAREN type RPAREN rvalue;
 
 unaryExpression: (PLUS | MINUS)? literal
                | (PLUS MINUS)+ (PLUS)? literal
@@ -49,15 +77,18 @@ literal: INT | FLOAT | CHAR;
 
 pointer: type '*'+;
 
-deref: '*'+ IDENTIFIER;
+deref: '*'+ identifier;
 
-addr: '&'+ IDENTIFIER;
+addr: '&'+ identifier;
 
 type: 'const'* ('int' | 'float' | 'char');
 
 postfixIncrement: lvalue INCREMENT;
 
 postfixDecrement: lvalue DECREMENT;
+
+identifier: IDENTIFIER;
+
 
 // lexer rules
 LPAREN: '(';
