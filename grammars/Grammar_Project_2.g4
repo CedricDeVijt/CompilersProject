@@ -1,7 +1,9 @@
 grammar Grammar_Project_2;
 
 // parser rules
-program: main;
+program: main
+    | comment;
+
 
 main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
 
@@ -11,7 +13,8 @@ statement: rvalue SEMICOLON
     | lvalue '=' rvalueCast SEMICOLON
     | lvalue '=' rvalue SEMICOLON
     | postfixIncrement SEMICOLON
-    | postfixDecrement SEMICOLON;
+    | postfixDecrement SEMICOLON
+    | comment;
 
 lvalue: identifier
     | type identifier
@@ -65,6 +68,7 @@ postfixIncrement: lvalue INCREMENT;
 postfixDecrement: lvalue DECREMENT;
 
 identifier: IDENTIFIER;
+comment: COMMENT;
 
 
 // lexer rules
@@ -104,4 +108,4 @@ IDENTIFIER: [a-zA-Z] [a-zA-Z_0-9]*;
 INCREMENT: '++';
 DECREMENT: '--';
 
-COMMENT: '//' ~[\r\n]* -> skip;
+COMMENT: '//' ~[\r\n]*;
