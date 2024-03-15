@@ -8,7 +8,8 @@ statement: rvalue SEMICOLON
     | lvalue SEMICOLON
     | lvalue '=' rvalue SEMICOLON;
 
-lvalue: type IDENTIFIER
+lvalue: IDENTIFIER
+    | type IDENTIFIER
     | pointer IDENTIFIER
     | deref
     | addr;
