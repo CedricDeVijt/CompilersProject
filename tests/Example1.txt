@@ -1,7 +1,4 @@
 int main(){
     const int a;
-    const int c = 7;
-    int b = 5*a+5;
-    b = b+1;
-
+    int* b = &a;
 }
