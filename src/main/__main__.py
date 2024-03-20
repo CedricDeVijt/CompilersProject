@@ -25,9 +25,6 @@ def generate_ast(path, visitor):
         ast = visit[0]
         symbolTable = visit[1]
         ast.constantFold()
-        for i in symbolTable.table:
-            if isinstance(symbolTable.table[i].value, Node):
-                symbolTable.table[i].value.to_dot_file("test")
     except Exception as e:
         print(e)
         return None
