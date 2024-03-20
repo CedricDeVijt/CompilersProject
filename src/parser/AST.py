@@ -1,10 +1,16 @@
+class SymbolValue:
+    def __init__(self, value, varType, const):
+        self.value = value
+        self.varType = varType
+        self.const = const
+
 class SymbolTable:
     def __init__(self):
         self.table = dict()
         self.parent = None
 
-    def insert(self, name, value, varType):
-        self.table[name] = {value, varType}
+    def insert(self, name, value):
+        self.table[name] = value
 
     def lookup(self, name):
         if name in self.table:

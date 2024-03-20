@@ -8,6 +8,8 @@ from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Pars
 from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
 from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Listener
 
+from src.parser.AST import Node
+
 from src.parser.ASTGenerator import ASTGenerator as Generator
 
 
@@ -18,8 +20,17 @@ def generate_ast(path, visitor):
     parser = Parser(stream)
     tree = parser.program()
 
-    ast = visitor.visit(tree)
-    ast.constantFold()
+    try:
+        visit = visitor.visit(tree)
+        ast = visit[0]
+        symbolTable = visit[1]
+        ast.constantFold()
+        for i in symbolTable.table:
+            if isinstance(symbolTable.table[i].value, Node):
+                symbolTable.table[i].value.to_dot_file("test")
+    except Exception as e:
+        print(e)
+        return None
     return ast
 
 

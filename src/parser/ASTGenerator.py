@@ -3,7 +3,36 @@ from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Vis
 
 from src.parser.AST import *
 
+def removeVariable(SymbolTable, node):
+    if isinstance(node, Node):
+        children = [node]
+        i = 0
+        while i < len(children):
+            for child in children[i].children:
+                children.append(child)
+            if isinstance(children[i], IdentifierNode):
+                var = SymbolTable.lookup(children[i].value)
+                if isinstance(var.value, int) or isinstance(var.value, str):
+                    val = str(var.value).strip('\'')
+                    if val.isalnum():
+                        children[i].__class__ = IntNode
+                        children[i].value = var.value
+                        children[i].children = []
+                    else:
+                        children[i].__class__ = FloatNode
+                        children[i].value = var.value
+                        children[i].children = []
+                else:
+                    children[i].__class__ = type(var.value)
+                    children[i].children = var.value.children
+                    children[i].value = var.value
+            i += 1
+        a = 5
+        pass
+
+
 class ASTGenerator(Visitor):
+
 
     def __init__(self):
         self.scope = SymbolTable()
@@ -14,7 +43,8 @@ class ASTGenerator(Visitor):
             node = self.visit(line)
             if node is not None:
                 children.append(node)
-        return ProgramNode(ctx.start.line, ctx.start.column, children)
+        node = ProgramNode(ctx.start.line, ctx.start.column, children)
+        return [node, self.scope]
 
     def visitMain(self, ctx):
         children = []
@@ -32,30 +62,54 @@ class ASTGenerator(Visitor):
             elif line.getText() == "=":
                 children.append(line.getText())
             elif isinstance(self.visit(line), list):
+                a = self.visit(line)
                 children.extend(self.visit(line))
             else:
                 children.append(self.visit(line))
-        if len(children) == 2:
-            if isinstance(children[0], TypeNode) and isinstance(children[1], IdentifierNode):
-                if self.scope.lookup(children[1].value) is not None:
-                    raise Exception("Variable \'" + children[1].value + "\' not declared yet!")
-        if children.__contains__("=") and (children.index("=") == 2):
-            node = IdentifierNode(children[children.index("=")-1].value, children[0].line, children[0].pos)
-            if self.scope.lookup(node.value) is None:
-                self.scope.insert(node.value, children[(children.index("=")+1)].value, children[children.index("=")-2].value)
-                return node
-            else:
-                raise Exception("Variable \'" + node.value + "\' already declared!")
-        if children.__contains__("="):
-            if self.scope.lookup(children[children.index("=")-1].value) is None:
-                raise Exception("Variable \'" + children[children.index("=")-1].value + "\' not declared yet!")
+        if len(children) >= 2:
+            # Ends with type + identifier --> declaration.
+            if isinstance(children[len(children)-2], TypeNode) and isinstance(children[len(children)-1], IdentifierNode):
+                if self.scope.lookup(children[len(children)-1].value) is not None:
+                    raise Exception("Variable \'" + children[len(children)-1].value + "\' already declared!")
+                else:
+                    value = SymbolValue(value=0, varType=children[len(children)-2].value, const=len(children) > 2)
+                    removeVariable(SymbolTable=self.scope, node=value.value)
+                    self.scope.insert(name=children[len(children)-1].value, value=value)
+            # assignment
+            if children.__contains__("="):
+                node = children[children.index("=")+1]
+                if isinstance(node, IntNode) or isinstance(node, FloatNode):
+                    node = node.value
+                # "=" is second character -> assignment and no definition.
+                if children.index("=") == 1:
+                    if self.scope.lookup(children[children.index("=")-1].value) is None:
+                        raise Exception("Variable \'" + children[children.index("=")-1].value + "\' not declared yet!")
+                    else:
+                        # If variable is constant --> error. Otherwise set value.
+                        if self.scope.lookup(children[children.index("=")-1].value).const:
+                            raise Exception("Variable \'" + children[children.index("=")-1].value + "\' is constant!")
+                        else:
+                            removeVariable(SymbolTable=self.scope, node=node)
+                            self.scope.lookup(children[children.index("=")-1].value).value = node
+                else:
+                    # "=" is not second character -> definition.
+                    if self.scope.lookup(children[children.index("=")-1].value) is not None:
+                        raise Exception("Variable \'" + children[children.index("=")-1].value + "\' already declared!")
+                    else:
+                        value = SymbolValue(value=node, varType=children[children.index("=")-2].value, const=len(children) > 4)
+                        removeVariable(SymbolTable=self.scope, node=value.value)
+                        self.scope.insert(name=children[children.index("=")-1].value, value=value)
         node = StatementNode(ctx.start.line, ctx.start.column, children)
         return node
 
     def visitLvalue(self, ctx):
         children = []
         for line in ctx.getChildren():
-            children.append(self.visit(line))
+            child = self.visit(line)
+            if isinstance(child, list):
+                children.extend(child)
+            else:
+                children.append(child)
         return children
 
     def visitIdentifier(self, ctx):
@@ -63,8 +117,10 @@ class ASTGenerator(Visitor):
         return node
 
     def visitType(self, ctx):
-        node = TypeNode(ctx.getText(), ctx.start.line, ctx.start.column)
-        return node
+        types = []
+        for type in ctx.getChildren():
+            types.append(TypeNode(type.getText(), ctx.start.line, ctx.start.column))
+        return types
 
     def visitRvalue(self, ctx):
         lines = []
