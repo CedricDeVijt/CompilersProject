@@ -103,7 +103,7 @@ CHAR : '\'' [a-zA-Z0-9] '\'' ;
 
 WHITESPACE: [ \t\n\r]+ -> skip;
 
-IDENTIFIER: [a-zA-Z] [a-zA-Z_0-9]*;
+IDENTIFIER: ([a-zA-Z] | '_') ([a-zA-Z_0-9] | '_')*;
 
 INCREMENT: '++';
 DECREMENT: '--';
