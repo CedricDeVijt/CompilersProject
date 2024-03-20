@@ -34,6 +34,8 @@ def generate_ast(path, visitor):
 def compile_llvm(input_file, visitor):
     ast = generate_ast(input_file, visitor)
     # TODO: CONVERT TO LLVM
+    ast.to_dot_file('test.dot')
+
     raise Exception("NOT IMPLEMENTED YET!")
 
 
