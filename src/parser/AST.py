@@ -32,11 +32,8 @@ class Node:
     def to_dot(self):
         dot = f'"{id(self)}" [label="{self.value}"];\n'
         for child in self.children:
-            if child != "=":
-                dot += f'"{id(self)}" -> "{id(child)}";\n'
-                dot += child.to_dot()
-            else:
-                dot += f'"{id(self)}" -> "{child}";\n'
+            dot += f'"{id(self)}" -> "{id(child)}";\n'
+            dot += child.to_dot()
         return dot
 
     def to_dot_file(self, filename):

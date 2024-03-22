@@ -19,6 +19,11 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by Grammar_Project_2Parser#scope.
+    def visitScope(self, ctx:Grammar_Project_2Parser.ScopeContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by Grammar_Project_2Parser#statement.
     def visitStatement(self, ctx:Grammar_Project_2Parser.StatementContext):
         return self.visitChildren(ctx)
@@ -31,6 +36,11 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by Grammar_Project_2Parser#rvalue.
     def visitRvalue(self, ctx:Grammar_Project_2Parser.RvalueContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Grammar_Project_2Parser#rvalueCast.
+    def visitRvalueCast(self, ctx:Grammar_Project_2Parser.RvalueCastContext):
         return self.visitChildren(ctx)
 
 
@@ -64,8 +74,23 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by Grammar_Project_2Parser#postfixIncrement.
+    def visitPostfixIncrement(self, ctx:Grammar_Project_2Parser.PostfixIncrementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Grammar_Project_2Parser#postfixDecrement.
+    def visitPostfixDecrement(self, ctx:Grammar_Project_2Parser.PostfixDecrementContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by Grammar_Project_2Parser#identifier.
     def visitIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Grammar_Project_2Parser#comment.
+    def visitComment(self, ctx:Grammar_Project_2Parser.CommentContext):
         return self.visitChildren(ctx)
 
 
