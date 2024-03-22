@@ -22,12 +22,12 @@ class SymbolTable:
         symbol = self.symbols.get(name, None)
         if symbol:
             return symbol
-        raise Exception(f"Symbol {name} not found in the table")
+        return None
 
 
 class TreeNode:
-    def __init__(self, data, parent=None):
-        self.data = data
+    def __init__(self, table, parent=None):
+        self.table = table
         self.parent = parent
         self.children = []
 
@@ -48,20 +48,24 @@ class SymbolTableBuilder:
         self.current_node = self.current_node.parent
 
     def add_symbol(self, symbol):
-        self.current_node.data.add_symbol(symbol)
+        self.current_node.table.add_symbol(symbol)
 
     def get_symbol(self, name):
-        return self._get_symbol_recursive(self.root, name)
-
-    def _get_symbol_recursive(self, node, name):
-        symbol = node.data.get_symbol(name)
+        node = self.current_node
+        symbol = node.table.get_symbol(name)
         if symbol:
             return symbol
-        for child in node.children:
-            symbol = self._get_symbol_recursive(child, name)
+        raise Exception(f"Symbol {name} not found in the current scope")
+
+    def lookup(self, name):
+        node = self.current_node
+        while node:
+            symbol = node.table.get_symbol(name)
             if symbol:
                 return symbol
-        return None
+            node = node.parent
+
+        raise Exception(f"Symbol {name} not found in tree")
 
     def current_scope(self):
-        return self.current_node.data
+        return self.current_node.table
