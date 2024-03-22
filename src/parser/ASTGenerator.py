@@ -116,6 +116,14 @@ class ASTGenerator(Visitor):
         node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
 
+    def visitPointer(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+        node = PointerNode(len(children)-1, ctx.start.line, ctx.start.column)
+        node.setType(self.visit(children[0]))
+        return node
+
     def visitType(self, ctx):
         types = []
         for type in ctx.getChildren():

@@ -1,11 +1,12 @@
 grammar Grammar_Project_2;
 
 // parser rules
-program: main
-    | comment;
+program: comment* main+ comment*;
 
 
-main: 'int' 'main' LPAREN RPAREN LBRACE statement* RBRACE;
+main: type 'main' LPAREN RPAREN scope;
+
+scope: LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON
     | lvalue SEMICOLON

@@ -32,8 +32,11 @@ class Node:
     def to_dot(self):
         dot = f'"{id(self)}" [label="{self.value}"];\n'
         for child in self.children:
-            dot += f'"{id(self)}" -> "{id(child)}";\n'
-            dot += child.to_dot()
+            if child != "=":
+                dot += f'"{id(self)}" -> "{id(child)}";\n'
+                dot += child.to_dot()
+            else:
+                dot += f'"{id(self)}" -> "{child}";\n'
         return dot
 
     def to_dot_file(self, filename):
@@ -301,6 +304,14 @@ class LogicalAndNode(Node):
 class LogicalOrNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("LogicalOr", line, pos, children=children)
+
+
+class PointerNode(Node):
+    def __init__(self, value: int, line: int, pos: int, children=None):
+        super().__init__(str(value), line, pos, children=children)
+
+    def setType(self, type: TypeNode):
+        self.type = type
 
 
 class IntNode(Node):

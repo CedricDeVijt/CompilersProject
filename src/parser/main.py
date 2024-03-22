@@ -33,9 +33,9 @@ def main():
 
     ast = generator.visit(tree)
 
-    ast.constantFold()
+    ast[0].constantFold()
 
-    ast.to_dot_file("output.dot")
+    ast[0].to_dot_file("output.dot")
 
 
 if __name__ == '__main__':
