@@ -55,7 +55,7 @@ class SymbolTableTree:
         symbol = node.table.get_symbol(name)
         if symbol:
             return symbol
-        raise None
+        return None
 
     def lookup(self, name):
         node = self.current_node
