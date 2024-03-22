@@ -49,14 +49,28 @@ class ASTGenerator(Visitor):
         return [node, self.scope]
 
     def visitMain(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            node = self.visit(line)
+            if node is not None:
+                if isinstance(node, list):
+                    children.extend(node)
+                else:
+                    children.append(node)
+        return MainNode(ctx.start.line, ctx.start.column, children)
+
+    def visitScope(self, ctx):
         self.scope.open_scope()
         children = []
         for line in ctx.getChildren():
             node = self.visit(line)
             if node is not None:
-                children.append(node)
+                if isinstance(node, list):
+                    children.extend(node)
+                else:
+                    children.append(node)
         self.scope.close_scope()
-        return MainNode(ctx.start.line, ctx.start.column, children)
+        return children
 
     def visitStatement(self, ctx):
         children = []

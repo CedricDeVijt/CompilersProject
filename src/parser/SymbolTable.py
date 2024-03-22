@@ -20,9 +20,7 @@ class SymbolTable:
 
     def get_symbol(self, name) -> Symbol:
         symbol = self.symbols.get(name, None)
-        if symbol:
-            return symbol
-        return None
+        return symbol
 
 
 class TreeNode:
@@ -53,9 +51,7 @@ class SymbolTableTree:
     def get_symbol(self, name) -> Symbol:
         node = self.current_node
         symbol = node.table.get_symbol(name)
-        if symbol:
-            return symbol
-        raise None
+        return symbol
 
     def lookup(self, name):
         node = self.current_node

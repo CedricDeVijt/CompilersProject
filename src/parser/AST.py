@@ -30,21 +30,26 @@ class Node:
         self.pos = pos
 
     def to_dot(self):
-        dot = f'"{id(self)}" [label="{self.value}"];\n'
+        dot_string = f'"{id(self)}" [label="{self.value}"];\n'
         for child in self.children:
-            dot += f'"{id(self)}" -> "{id(child)}";\n'
-            dot += child.to_dot()
-        return dot
+            if isinstance(child, Node):
+                dot_string += f'"{id(self)}" -> "{id(child)}";\n'
+                dot_string += child.to_dot()
+            elif isinstance(child, str):
+                dot_string += f'"{id(self)}" -> "{id(self)}_{child}";\n'
+                dot_string += f'"{id(self)}_{child}" [label="{child}"];\n'
+        return dot_string
 
     def to_dot_file(self, filename):
-        dot_representation = "digraph AST {\n" + self.to_dot() + "}\n"
-        with open(filename, "w") as dot_file:
-            dot_file.write(dot_representation)
-        print(f"DOT file generated successfully at {filename}")
+        with open(filename, "w") as file:
+            file.write("digraph AST {\n")
+            file.write(self.to_dot())
+            file.write("}\n")
+
 
     def constantFold(self):
         for node in self.children:
-            if not isinstance(node, str):
+            if not isinstance(node, str) and not isinstance(node, list):
                 node.constantFold()
         match self:
             case IntNode():

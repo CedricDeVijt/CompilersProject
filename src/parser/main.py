@@ -8,7 +8,7 @@ from ASTGenerator import ASTGenerator
 
 def main():
     # Read input from a file
-    with open("../../tests/Example1.txt", "r") as file:
+    with open("tests/example1.txt", "r") as file:
         input_string = file.read()
 
     # Create a CharStream that reads from the input file

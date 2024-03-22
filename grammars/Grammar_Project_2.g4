@@ -4,7 +4,7 @@ grammar Grammar_Project_2;
 program: comment* main+ comment*;
 
 
-main: type 'main' LPAREN RPAREN scope;
+main: 'int' 'main' LPAREN RPAREN scope;
 
 scope: LBRACE statement* RBRACE;
 
