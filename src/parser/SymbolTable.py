@@ -18,7 +18,7 @@ class SymbolTable:
         else:
             self.symbols[symbol.name] = symbol
 
-    def get_symbol(self, name):
+    def get_symbol(self, name) -> Symbol:
         symbol = self.symbols.get(name, None)
         if symbol:
             return symbol
@@ -32,7 +32,7 @@ class TreeNode:
         self.children = []
 
 
-class SymbolTableBuilder:
+class SymbolTableTree:
     def __init__(self):
         self.root = TreeNode(SymbolTable())
         self.current_node = self.root
@@ -50,12 +50,12 @@ class SymbolTableBuilder:
     def add_symbol(self, symbol):
         self.current_node.table.add_symbol(symbol)
 
-    def get_symbol(self, name):
+    def get_symbol(self, name) -> Symbol:
         node = self.current_node
         symbol = node.table.get_symbol(name)
         if symbol:
             return symbol
-        raise Exception(f"Symbol {name} not found in the current scope")
+        raise None
 
     def lookup(self, name):
         node = self.current_node
@@ -64,8 +64,7 @@ class SymbolTableBuilder:
             if symbol:
                 return symbol
             node = node.parent
-
-        raise Exception(f"Symbol {name} not found in tree")
+        return None
 
     def current_scope(self):
         return self.current_node.table
