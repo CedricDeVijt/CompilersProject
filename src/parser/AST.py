@@ -32,7 +32,15 @@ class Node:
     def to_dot(self):
         dot_string = f'"{id(self)}" [label="{self.value}"];\n'
         for child in self.children:
-            if isinstance(child, Node):
+            if isinstance(child, PointerNode):
+                type = ""
+                for line in child.type:
+                    type += line.value
+                    type += " "
+                pointer_label = f"{type}{'*' * int(child.value)}"
+                dot_string += f'"{id(self)}" -> "{id(self)}_{pointer_label}";\n'
+                dot_string += f'"{id(self)}_{pointer_label}" [label="{pointer_label}"];\n'
+            elif isinstance(child, Node):
                 dot_string += f'"{id(self)}" -> "{id(child)}";\n'
                 dot_string += child.to_dot()
             elif isinstance(child, str):
