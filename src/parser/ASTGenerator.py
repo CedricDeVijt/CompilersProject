@@ -1,3 +1,4 @@
+from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser
 from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
 
 from src.parser.AST import *
@@ -145,6 +146,14 @@ class ASTGenerator(Visitor):
     def visitIdentifier(self, ctx):
         node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
+
+    def visitPostfixDecrement(self, ctx):
+        # TODO: Implement this method
+        raise Exception("Postfix decrement not supported!")
+
+    def visitPostfixIncrement(self, ctx):
+        # TODO: Implement this method
+        raise Exception("Postfix increment not supported!")
 
     def visitPointer(self, ctx):
         children = []
