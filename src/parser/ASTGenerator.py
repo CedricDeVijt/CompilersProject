@@ -148,15 +148,15 @@ class ASTGenerator(Visitor):
 
     def visitPostfixDecrement(self, ctx):
         identifier = ctx.getText()[:-2]
-        value = self.scope.lookup(identifier).value
-        self.scope.lookup(identifier).value = int(self.scope.lookup(identifier).value) + 1
-        return value
+        value = int(self.scope.lookup(identifier).value) - 1
+        self.scope.lookup(identifier).value = value
+        return IntNode(value, ctx.start.line, ctx.start.column)
 
     def visitPostfixIncrement(self, ctx):
         identifier = ctx.getText()[:-2]
-        value = self.scope.lookup(identifier).value
-        self.scope.lookup(identifier).value = int(self.scope.lookup(identifier).value) + 1
-        return value
+        value = int(self.scope.lookup(identifier).value) + 1
+        self.scope.lookup(identifier).value = value
+        return IntNode(value, ctx.start.line, ctx.start.column)
 
     def visitPointer(self, ctx):
         children = []
