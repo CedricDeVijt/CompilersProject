@@ -26,6 +26,15 @@ class Grammar_Project_2Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Grammar_Project_2Parser#scope.
+    def enterScope(self, ctx:Grammar_Project_2Parser.ScopeContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#scope.
+    def exitScope(self, ctx:Grammar_Project_2Parser.ScopeContext):
+        pass
+
+
     # Enter a parse tree produced by Grammar_Project_2Parser#statement.
     def enterStatement(self, ctx:Grammar_Project_2Parser.StatementContext):
         pass
@@ -50,6 +59,15 @@ class Grammar_Project_2Listener(ParseTreeListener):
 
     # Exit a parse tree produced by Grammar_Project_2Parser#rvalue.
     def exitRvalue(self, ctx:Grammar_Project_2Parser.RvalueContext):
+        pass
+
+
+    # Enter a parse tree produced by Grammar_Project_2Parser#rvalueCast.
+    def enterRvalueCast(self, ctx:Grammar_Project_2Parser.RvalueCastContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#rvalueCast.
+    def exitRvalueCast(self, ctx:Grammar_Project_2Parser.RvalueCastContext):
         pass
 
 
@@ -107,12 +125,39 @@ class Grammar_Project_2Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Grammar_Project_2Parser#postfixIncrement.
+    def enterPostfixIncrement(self, ctx:Grammar_Project_2Parser.PostfixIncrementContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#postfixIncrement.
+    def exitPostfixIncrement(self, ctx:Grammar_Project_2Parser.PostfixIncrementContext):
+        pass
+
+
+    # Enter a parse tree produced by Grammar_Project_2Parser#postfixDecrement.
+    def enterPostfixDecrement(self, ctx:Grammar_Project_2Parser.PostfixDecrementContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#postfixDecrement.
+    def exitPostfixDecrement(self, ctx:Grammar_Project_2Parser.PostfixDecrementContext):
+        pass
+
+
     # Enter a parse tree produced by Grammar_Project_2Parser#identifier.
     def enterIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
         pass
 
     # Exit a parse tree produced by Grammar_Project_2Parser#identifier.
     def exitIdentifier(self, ctx:Grammar_Project_2Parser.IdentifierContext):
+        pass
+
+
+    # Enter a parse tree produced by Grammar_Project_2Parser#comment.
+    def enterComment(self, ctx:Grammar_Project_2Parser.CommentContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#comment.
+    def exitComment(self, ctx:Grammar_Project_2Parser.CommentContext):
         pass
 
 

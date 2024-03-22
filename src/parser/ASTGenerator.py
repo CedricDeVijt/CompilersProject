@@ -1,9 +1,10 @@
-from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser
 from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
 
 from src.parser.AST import *
+from src.parser.SymbolTable import SymbolTableTree, Symbol
 
-def removeVariable(SymbolTable, node):
+
+def removeVariable(symbolTable, node):
     if isinstance(node, Node):
         children = [node]
         i = 0
@@ -11,7 +12,9 @@ def removeVariable(SymbolTable, node):
             for child in children[i].children:
                 children.append(child)
             if isinstance(children[i], IdentifierNode):
-                var = SymbolTable.lookup(children[i].value)
+                var = symbolTable.lookup(children[i].value)
+                if var is None:
+                    raise Exception("Variable \'" + children[i].value + "\' not declared!")
                 if isinstance(var.value, int) or isinstance(var.value, str):
                     val = str(var.value).strip('\'')
                     if val.isalnum():
@@ -33,9 +36,8 @@ def removeVariable(SymbolTable, node):
 
 class ASTGenerator(Visitor):
 
-
     def __init__(self):
-        self.scope = SymbolTable()
+        self.scope = SymbolTableTree()
 
     def visitProgram(self, ctx):
         children = []
@@ -47,11 +49,13 @@ class ASTGenerator(Visitor):
         return [node, self.scope]
 
     def visitMain(self, ctx):
+        self.scope.open_scope()
         children = []
         for line in ctx.getChildren():
             node = self.visit(line)
             if node is not None:
                 children.append(node)
+        self.scope.close_scope()
         return MainNode(ctx.start.line, ctx.start.column, children)
 
     def visitStatement(self, ctx):
@@ -67,38 +71,50 @@ class ASTGenerator(Visitor):
             else:
                 children.append(self.visit(line))
         if len(children) >= 2:
-            # Ends with type + identifier --> declaration.
-            if isinstance(children[len(children)-2], TypeNode) and isinstance(children[len(children)-1], IdentifierNode):
-                if self.scope.lookup(children[len(children)-1].value) is not None:
-                    raise Exception("Variable \'" + children[len(children)-1].value + "\' already declared!")
+            # Ends with type + identifier -> declaration.
+            if isinstance(children[len(children) - 2], TypeNode) and isinstance(children[len(children) - 1],
+                                                                                IdentifierNode):
+                identifier = children[len(children) - 1].value
+                var_type = children[len(children) - 2].value
+                const = len(children) > 2
+
+                # Check if variable already declared in current scope.
+                if self.scope.get_symbol(identifier) is not None:
+                    raise Exception("Variable \'" + identifier + "\' already declared!")
                 else:
-                    value = SymbolValue(value=0, varType=children[len(children)-2].value, const=len(children) > 2)
-                    removeVariable(SymbolTable=self.scope, node=value.value)
-                    self.scope.insert(name=children[len(children)-1].value, value=value)
-            # assignment
+                    symbol = Symbol(name=identifier, varType=var_type, const=const)
+                    self.scope.add_symbol(symbol)
+
+            # assignment or definition
             if children.__contains__("="):
-                node = children[children.index("=")+1]
+                node = children[children.index("=") + 1]
                 if isinstance(node, IntNode) or isinstance(node, FloatNode):
                     node = node.value
+                identifier = children[children.index("=") - 1].value
                 # "=" is second character -> assignment and no definition.
                 if children.index("=") == 1:
-                    if self.scope.lookup(children[children.index("=")-1].value) is None:
-                        raise Exception("Variable \'" + children[children.index("=")-1].value + "\' not declared yet!")
+                    if self.scope.lookup(identifier) is None:
+                        raise Exception("Variable \'" + identifier + "\' not declared yet!")
                     else:
                         # If variable is constant --> error. Otherwise set value.
-                        if self.scope.lookup(children[children.index("=")-1].value).const:
-                            raise Exception("Variable \'" + children[children.index("=")-1].value + "\' is constant!")
+                        if self.scope.lookup(identifier).const:
+                            raise Exception("Variable \'" + identifier + "\' is constant!")
                         else:
-                            removeVariable(SymbolTable=self.scope, node=node)
-                            self.scope.lookup(children[children.index("=")-1].value).value = node
+                            removeVariable(symbolTable=self.scope, node=node)
+                            self.scope.lookup(identifier).value = node
                 else:
                     # "=" is not second character -> definition.
-                    if self.scope.lookup(children[children.index("=")-1].value) is not None:
-                        raise Exception("Variable \'" + children[children.index("=")-1].value + "\' already declared!")
+                    if self.scope.lookup(identifier) is not None:
+                        raise Exception(
+                            "Variable \'" + identifier + "\' already declared!")
                     else:
-                        value = SymbolValue(value=node, varType=children[children.index("=")-2].value, const=len(children) > 4)
-                        removeVariable(SymbolTable=self.scope, node=value.value)
-                        self.scope.insert(name=children[children.index("=")-1].value, value=value)
+                        var_type = children[children.index("=") - 2].value
+                        const = len(children) > 4
+                        value = node
+                        removeVariable(symbolTable=self.scope, node=value)
+                        symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
+                        self.scope.add_symbol(symbol)
+
         node = StatementNode(ctx.start.line, ctx.start.column, children)
         return node
 
@@ -120,7 +136,7 @@ class ASTGenerator(Visitor):
         children = []
         for line in ctx.getChildren():
             children.append(line)
-        node = PointerNode(len(children)-1, ctx.start.line, ctx.start.column)
+        node = PointerNode(len(children) - 1, ctx.start.line, ctx.start.column)
         node.setType(self.visit(children[0]))
         return node
 
@@ -165,13 +181,16 @@ class ASTGenerator(Visitor):
                 case ">>":
                     node = SRNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "&":
-                    node = BitwiseAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseAndNode(ctx.start.line, ctx.start.column,
+                                          [self.visit(lines[0]), self.visit(lines[2])])
                 case "|":
                     node = BitwiseOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "^":
-                    node = BitwiseXorNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseXorNode(ctx.start.line, ctx.start.column,
+                                          [self.visit(lines[0]), self.visit(lines[2])])
                 case "&&":
-                    node = LogicalAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalAndNode(ctx.start.line, ctx.start.column,
+                                          [self.visit(lines[0]), self.visit(lines[2])])
                 case "||":
                     node = LogicalOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
             return node
