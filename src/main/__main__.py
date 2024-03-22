@@ -8,7 +8,7 @@ from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Pars
 from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
 from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Listener
 
-from src.parser.AST import Node
+import src.parser.AST as AST
 
 from src.parser.ASTGenerator import ASTGenerator as Generator
 
@@ -33,10 +33,59 @@ def generate_ast(path, visitor):
 
 def compile_llvm(input_file, visitor):
     ast = generate_ast(input_file, visitor)
-    # TODO: CONVERT TO LLVM
-    ast.to_dot_file('test.dot')
+    if ast is None:
+        print("Failed to generate AST.")
+        return
 
-    raise Exception("NOT IMPLEMENTED YET!")
+    # Open a file to write LLVM code
+    with open('output.ll', 'w') as llvm_file:
+        # Write LLVM header
+        llvm_file.write("; ModuleID = 'output.ll'\n")
+        llvm_file.write("source_filename = \"output.ll\"\n")
+        llvm_file.write("\n")
+
+        # Emit LLVM code for the main function
+        llvm_file.write("define i32 @main() {\n")
+        llvm_file.write("entry:\n")
+        emit_llvm_code(ast, llvm_file, {})
+        llvm_file.write("ret i32 0\n")
+        llvm_file.write("}\n")
+
+def emit_llvm_code(node, llvm_file, symbol_table):
+    if isinstance(node, AST.Node):
+        if isinstance(node, AST.ProgramNode):
+            for child in node.children:
+                emit_llvm_code(child, llvm_file, symbol_table)
+        elif isinstance(node, AST.MainNode):
+            for child in node.children:
+                emit_llvm_code(child, llvm_file, symbol_table)
+        elif isinstance(node, AST.StatementNode):
+            for child in node.children:
+                emit_llvm_code(child, llvm_file, symbol_table)
+        elif isinstance(node, AST.IdentifierNode):
+            # No action needed for identifiers in LLVM code generation
+            pass
+        elif isinstance(node, AST.TypeNode):
+            # No action needed for types in LLVM code generation
+            pass
+        elif isinstance(node, AST.IntNode) or isinstance(node, AST.FloatNode):
+            value = node.value
+            var_name = f"%{value}"
+            if var_name not in symbol_table:
+                llvm_type = "i32" if isinstance(node, AST.IntNode) else "double"
+                llvm_file.write(f"{var_name} = alloca {llvm_type}\n")
+                llvm_file.write(f"store {llvm_type} {value}, {llvm_type}* {var_name}\n")
+                symbol_table[var_name] = True  # Mark variable as allocated and stored
+        else:
+            # Handle other node types as needed
+            pass
+
+        # Recursively emit LLVM code for children nodes
+        for child in node.children:
+            emit_llvm_code(child, llvm_file, symbol_table)
+
+
+
 
 
 def compile_mips(input_file, visitor):
