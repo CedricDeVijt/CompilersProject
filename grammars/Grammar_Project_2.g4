@@ -8,7 +8,7 @@ main: 'int' 'main' LPAREN RPAREN scope;
 
 scope: LBRACE statement* RBRACE;
 
-statement: rvalue
+statement: rvalue SEMICOLON+
     | lvalue SEMICOLON+
     | lvalue '=' rvalue SEMICOLON+
     | lvalue '=' rvalueCast SEMICOLON+
@@ -98,7 +98,7 @@ LOGICAL_OR: '||';
 LOGICAL_NOT: '!';
 
 SEMICOLON: ';';
-INT: [0-9]+;
+INT: [1-9][0-9]+;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
 CHAR : '\'' [a-zA-Z0-9] '\'' ;
 
