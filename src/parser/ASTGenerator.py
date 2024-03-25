@@ -75,7 +75,6 @@ class ASTGenerator(Visitor):
     def visitStatement(self, ctx):
         children = []
         for line in ctx.getChildren():
-            child = self.visit(line)
             if line.getText() == ";":
                 pass
             elif line.getText() == "=":
@@ -158,7 +157,7 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[:-2]
         value = int(self.scope.lookup(identifier).value) + 1
         self.scope.lookup(identifier).value = value
-        return IntNode(value, ctx.start.line, ctx.start.column)
+        return IntNode(str(value), ctx.start.line, ctx.start.column)
 
     def visitPointer(self, ctx):
         children = []
