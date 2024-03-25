@@ -142,32 +142,32 @@ class Node:
                     return
             case GTNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) > (self.children[1].value))
+                self.value = int(float(self.children[0].value) > float(self.children[1].value))
                 self.children = []
                 return
             case LTNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) < (self.children[1].value))
+                self.value = int(float(self.children[0].value) < float(self.children[1].value))
                 self.children = []
             case GTEQNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) >= (self.children[1].value))
+                self.value = int(float(self.children[0].value) >= float(self.children[1].value))
                 self.children = []
                 return
             case LTEQNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) <= (self.children[1].value))
+                self.value = int(float(self.children[0].value) <= float(self.children[1].value))
                 self.children = []
                 return
             case NEQNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) != (self.children[1].value))
+                self.value = int(float(self.children[0].value) != float(self.children[1].value))
                 self.children = []
                 return
             case SLNode():
                 if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
                     self.__class__ = IntNode
-                    self.value = str(int(self.children[0].value) << int(self.children[1].value))
+                    self.value = int(self.children[0].value) << int(self.children[1].value)
                     self.children = []
                 return
             case SRNode():
@@ -178,32 +178,32 @@ class Node:
                 return
             case BitwiseAndNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) & (self.children[1].value))
+                self.value = int(int(self.children[0].value) & int(self.children[1].value))
                 self.children = []
                 return
             case BitwiseOrNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) | (self.children[1].value))
+                self.value = int(int(self.children[0].value) | int(self.children[1].value))
                 self.children = []
                 return
             case BitwiseXorNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) ^ (self.children[1].value))
+                self.value = int(int(self.children[0].value) ^ int(self.children[1].value))
                 self.children = []
                 return
             case LogicalAndNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) and (self.children[1].value))
+                self.value = int(float(self.children[0].value) and float(self.children[1].value))
                 self.children = []
                 return
             case LogicalOrNode():
                 self.__class__ = IntNode
-                self.value = str((self.children[0].value) or (self.children[1].value))
+                self.value = int(float(self.children[0].value) or float(self.children[1].value))
                 self.children = []
                 return
             case LogicalNotNode():
                 self.__class__ = IntNode
-                self.value = str(not self.children[0].value)
+                self.value = int(not float(self.children[0].value))
                 self.children = []
                 return
         return
@@ -335,6 +335,10 @@ class PointerNode(Node):
 
     def setType(self, type: TypeNode):
         self.type = type
+
+class AddrNode(Node):
+    def __init__(self, value, line: int, pos: int, children=None):
+        super().__init__(value, line, pos, children=children)
 
 
 class IntNode(Node):

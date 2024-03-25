@@ -164,7 +164,10 @@ class ASTGenerator(Visitor):
         children = []
         for line in ctx.getChildren():
             children.append(line)
-        node = self.visit(children[1])
+        identifier = self.visit(children[1])
+        if self.scope.lookup(identifier.value) is None:
+            raise Exception("Variable \'" + identifier.value + "\' not declared yet!")
+        node = AddrNode(identifier, ctx.start.line, ctx.start.column)
         return node
 
     def visitPointer(self, ctx):

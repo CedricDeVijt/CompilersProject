@@ -27,6 +27,7 @@ def generate_ast(path, visitor):
         ast.constantFold()
         ast.to_dot_file("test.dot")
     except Exception as e:
+        raise Exception(e)
         print(e)
         return None
     return ast
