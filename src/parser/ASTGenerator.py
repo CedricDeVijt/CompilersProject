@@ -1,3 +1,4 @@
+from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser
 from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
 
 from src.parser.AST import *
@@ -157,7 +158,14 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[:-2]
         value = int(self.scope.lookup(identifier).value) + 1
         self.scope.lookup(identifier).value = value
-        return IntNode(str(value), ctx.start.line, ctx.start.column)
+        return IntNode(value, ctx.start.line, ctx.start.column)
+
+    def visitAddr(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+        node = self.visit(children[1])
+        return node
 
     def visitPointer(self, ctx):
         children = []
