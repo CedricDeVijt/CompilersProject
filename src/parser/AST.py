@@ -1,3 +1,5 @@
+from graphviz import Source
+
 class SymbolValue:
     def __init__(self, value, varType, const):
         self.value = value
@@ -49,10 +51,10 @@ class Node:
         return dot_string
 
     def to_dot_file(self, filename):
-        with open(filename, "w") as file:
-            file.write("digraph AST {\n")
-            file.write(self.to_dot())
-            file.write("}\n")
+        dot_string = "digraph AST {\n" + self.to_dot() + "}\n"
+        src = Source(dot_string)
+        src.format = 'png'
+        src.render(filename, view=True)
 
 
     def constantFold(self):
