@@ -75,15 +75,17 @@ class ASTGenerator(Visitor):
     def visitStatement(self, ctx):
         children = []
         for line in ctx.getChildren():
+            child = self.visit(line)
             if line.getText() == ";":
                 pass
             elif line.getText() == "=":
                 children.append(line.getText())
-            elif isinstance(self.visit(line), list):
-                a = self.visit(line)
-                children.extend(self.visit(line))
             else:
-                children.append(self.visit(line))
+                child = self.visit(line)
+                if isinstance(child, list):
+                    children.extend(child)
+                else:
+                    children.append(child)
         if len(children) >= 2:
             # Ends with type + identifier -> declaration.
             if isinstance(children[len(children) - 2], TypeNode) and isinstance(children[len(children) - 1],
