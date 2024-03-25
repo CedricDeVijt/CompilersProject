@@ -140,6 +140,11 @@ class Node:
                     self.value = str(float(self.children[0].value) + float(self.children[1].value))
                     self.children = []
                     return
+            case EQNode():
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) == float(self.children[1].value))
+                self.children = []
+                return
             case GTNode():
                 self.__class__ = IntNode
                 self.value = int(float(self.children[0].value) > float(self.children[1].value))

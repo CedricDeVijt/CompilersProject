@@ -152,13 +152,13 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[:-2]
         value = int(self.scope.lookup(identifier).value) - 1
         self.scope.lookup(identifier).value = value
-        return IntNode(value, ctx.start.line, ctx.start.column)
+        return IntNode(str(value), ctx.start.line, ctx.start.column)
 
     def visitPostfixIncrement(self, ctx):
         identifier = ctx.getText()[:-2]
         value = int(self.scope.lookup(identifier).value) + 1
         self.scope.lookup(identifier).value = value
-        return IntNode(value, ctx.start.line, ctx.start.column)
+        return IntNode(str(value), ctx.start.line, ctx.start.column)
 
     def visitAddr(self, ctx):
         children = []
@@ -169,6 +169,7 @@ class ASTGenerator(Visitor):
             raise Exception("Variable \'" + identifier.value + "\' not declared yet!")
         node = AddrNode(identifier, ctx.start.line, ctx.start.column)
         return node
+
 
     def visitPointer(self, ctx):
         children = []
@@ -208,6 +209,8 @@ class ASTGenerator(Visitor):
                     node = GTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "<":
                     node = LTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                case "==":
+                    node = EQNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case ">=":
                     node = GTEQNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "<=":
