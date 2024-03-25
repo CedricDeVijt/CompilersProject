@@ -1,10 +1,12 @@
 from graphviz import Source
 
+
 class SymbolValue:
     def __init__(self, value, varType, const):
         self.value = value
         self.varType = varType
         self.const = const
+
 
 class SymbolTable:
     def __init__(self):
@@ -23,6 +25,7 @@ class SymbolTable:
 
     def set_parent(self, parent):
         self.parent = parent
+
 
 class Node:
     def __init__(self, value: str, line: int, pos: int, children=None):
@@ -56,7 +59,6 @@ class Node:
         src.format = 'png'
         src.render(filename, view=True)
 
-
     def constantFold(self):
         for node in self.children:
             if not isinstance(node, str) and not isinstance(node, list):
@@ -67,19 +69,23 @@ class Node:
             case FloatNode():
                 return
             case DivNode():
-                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode) and str(self.children[1].value) != "0":
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode) and str(
+                        self.children[1].value) != "0":
                     self.__class__ = IntNode
                     self.value = str(int(self.children[0].value) // int(self.children[1].value))
                     self.children = []
-                if isinstance(self.children[0], FloatNode) and isinstance(self.children[1], FloatNode) and float(self.children[1].value) != 0:
+                elif isinstance(self.children[0], FloatNode) and isinstance(self.children[1], FloatNode) and float(
+                        self.children[1].value) != 0:
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) / float(self.children[1].value))
                     self.children = []
-                if isinstance(self.children[0], FloatNode) and isinstance(self.children[1], IntNode) and int(self.children[1].value) != 0:
+                elif isinstance(self.children[0], FloatNode) and isinstance(self.children[1], IntNode) and int(
+                        self.children[1].value) != 0:
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) / float(self.children[1].value))
                     self.children = []
-                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], FloatNode) and float(self.children[1].value) != 0:
+                elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], FloatNode) and float(
+                        self.children[1].value) != 0:
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) / float(self.children[1].value))
                     self.children = []
@@ -96,17 +102,19 @@ class Node:
                     self.value = str(int(self.children[0].value) * int(self.children[1].value))
                     self.children = []
                     return
-                if isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
+                elif isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) * float(self.children[1].value))
                     self.children = []
                     return
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)) and self.children[0].value == 0:
+                elif (isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)) and \
+                        self.children[0].value == 0:
                     self.__class__ = IntNode
                     self.children = []
                     self.value = "0"
                     return
-                if (isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)) and self.children[1].value == 0:
+                elif (isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)) and \
+                        self.children[1].value == 0:
                     self.__class__ = IntNode
                     self.children = []
                     self.value = "0"
@@ -116,7 +124,7 @@ class Node:
                     self.__class__ = IntNode
                     self.value = str(int(self.children[0].value) - int(self.children[1].value))
                     self.children = []
-                if isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
+                elif isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) - float(self.children[1].value))
                     self.children = []
@@ -127,7 +135,7 @@ class Node:
                     self.value = str(int(self.children[0].value) + int(self.children[1].value))
                     self.children = []
                     return
-                if isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
+                elif isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) + float(self.children[1].value))
                     self.children = []
@@ -210,13 +218,16 @@ class MainNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("Main", line, pos, children=children)
 
+
 class StatementNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("Statement", line, pos, children=children)
 
+
 class IdentifierNode(Node):
     def __init__(self, value, line: int, pos: int, children=None):
         super().__init__(value, line, pos, children=children)
+
 
 class TypeNode(Node):
     def __init__(self, value, line: int, pos: int, children=None):
