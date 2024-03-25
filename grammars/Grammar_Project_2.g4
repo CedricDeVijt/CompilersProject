@@ -9,14 +9,13 @@ main: 'int' 'main' LPAREN RPAREN scope;
 scope: LBRACE statement* RBRACE;
 
 statement: rvalue
-    | lvalue
-    | lvalue '=' rvalue
-    | lvalue '=' rvalueCast
-    | lvalue '=' rvalue
-    | postfixIncrement
-    | postfixDecrement
-    | comment
-    | SEMICOLON;
+    | lvalue SEMICOLON+
+    | lvalue '=' rvalue SEMICOLON+
+    | lvalue '=' rvalueCast SEMICOLON+
+    | lvalue '=' rvalue SEMICOLON+
+    | postfixIncrement SEMICOLON+
+    | postfixDecrement SEMICOLON+
+    | comment;
 
 lvalue: identifier
     | type identifier
