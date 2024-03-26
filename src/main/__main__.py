@@ -40,7 +40,7 @@ def compile_llvm(input_file, visitor):
         return
 
     # Open a file to write LLVM code
-    with open('output.ll', 'w') as llvm_file:
+    with open('src/mips_target/output.ll', 'w') as llvm_file:
         # Write LLVM header
         llvm_file.write("; ModuleID = 'output.ll'\n")
         llvm_file.write("source_filename = \"output.ll\"\n")
@@ -52,6 +52,7 @@ def compile_llvm(input_file, visitor):
         emit_llvm_code(ast, llvm_file, {})
         llvm_file.write("ret i32 0\n")
         llvm_file.write("}\n")
+
 
 def emit_llvm_code(node, llvm_file, symbol_table):
     if isinstance(node, AST.Node):
@@ -85,9 +86,6 @@ def emit_llvm_code(node, llvm_file, symbol_table):
         # Recursively emit LLVM code for children nodes
         for child in node.children:
             emit_llvm_code(child, llvm_file, symbol_table)
-
-
-
 
 
 def compile_mips(input_file, visitor):
