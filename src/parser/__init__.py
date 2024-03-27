@@ -1,1 +1,1 @@
-from AST import *
+from src.parser.AST import *

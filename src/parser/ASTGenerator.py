@@ -88,8 +88,7 @@ class ASTGenerator(Visitor):
                     children.append(child)
         if len(children) >= 2:
             # Ends with type + identifier -> declaration.
-            if isinstance(children[len(children) - 2], TypeNode) and isinstance(children[len(children) - 1],
-                                                                                IdentifierNode):
+            if isinstance(children[len(children) - 2], TypeNode) and isinstance(children[len(children) - 1], IdentifierNode):
                 identifier = children[len(children) - 1].value
                 var_type = children[len(children) - 2].value
                 const = len(children) > 2
@@ -100,6 +99,8 @@ class ASTGenerator(Visitor):
                 else:
                     symbol = Symbol(name=identifier, varType=var_type, const=const)
                     self.scope.add_symbol(symbol)
+                    node = DeclarationNode(ctx.start.line, ctx.start.column, children[len(children) - 2], children[len(children) - 1])
+                    return node
 
             # assignment or definition
             if children.__contains__("="):
@@ -130,7 +131,7 @@ class ASTGenerator(Visitor):
                         value = node
                         symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
                         self.scope.add_symbol(symbol)
-                        node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children)-2], children[children.index("=") - 1], children[children.index("=") + 1])
+                        node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children)-3], children[children.index("=") - 1], children[children.index("=") + 1])
                         return node
 
         node = children[0]
