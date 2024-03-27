@@ -61,30 +61,48 @@ def generateLLVMcode(node, llvm_file, symbol_table):
             llvm_file.write("    ret i32 0\n")
             llvm_file.write("}\n")
         elif isinstance(node, AST.DefinitionNode):
-            # get varname value and type from node
+            pointer = False
+            # Get variable name, value, and type from node
             var_name = f"%{node.lvalue.value}"
             value = node.rvalue.value
             if node.type[0].value == "int":
-                type = 'i32'
+                llvm_type = 'i32'
             elif node.type[0].value == "float":
-                type = 'float'
+                llvm_type = 'float'
             elif node.type[0].value == "char":
-                type = 'i8'
+                llvm_type = 'i8'
                 value = ord(value[1])
+            else:
+                # Handle pointers
+                if isinstance(value, str):
+                    llvm_type = symbol_table[f"%{value}"]
+                else:
+                    llvm_type = symbol_table[f"%{value.value}"]
+                for i in range(int(node.type[0].value)):
+                    if i != 0:
+                        llvm_type += '*'
+                pointer = True
 
-            # write to output file
-            llvm_file.write(f"    {var_name} = alloca {type}\n")
-            llvm_file.write(f"    store {type} {value}, {type}* {var_name}\n\n")
-            symbol_table[var_name] = type
+            # Write to output file
+            if pointer:
+                llvm_file.write(f"    {var_name} = alloca {llvm_type}*\n")
+                llvm_file.write(f"    %addr_{value.value} = alloca {llvm_type}\n")
+                llvm_file.write(f"    store {llvm_type}* %{value.value}, {llvm_type}** %addr_{value.value}\n")
+                llvm_file.write(f"    %ptr_{value.value} = load {llvm_type}*, {llvm_type}** %addr_{value.value}\n")
+                llvm_file.write(f"    store {llvm_type}* %ptr_{value.value}, {llvm_type}** {var_name}\n\n")
+            else:
+                llvm_file.write(f"    {var_name} = alloca {llvm_type}\n")
+                llvm_file.write(f"    store {llvm_type} {value}, {llvm_type}* {var_name}\n\n")
+            symbol_table[var_name] = llvm_type
 
         elif isinstance(node, AST.AssignmentNode):
-            # get varname value and type from node
+            # Get variable name, value, and type from node
             var_name = f"%{node.lvalue.value}"
             value = node.rvalue.value
-            type = symbol_table[var_name]
+            llvm_type = symbol_table[var_name]
 
-            # write to output file
-            llvm_file.write(f"    store {type} {value}, {type}* {var_name}\n\n")
+            # Write to output file
+            llvm_file.write(f"    store {llvm_type} {value}, {llvm_type}* {var_name}\n\n")
 
         elif isinstance(node, AST.IdentifierNode):
             # No action needed for identifiers in LLVM code generation
@@ -92,6 +110,7 @@ def generateLLVMcode(node, llvm_file, symbol_table):
         elif isinstance(node, AST.TypeNode):
             # No action needed for types in LLVM code generation
             pass
+
 
 
 def compile_mips(input_file, visitor):
