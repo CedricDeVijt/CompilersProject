@@ -40,7 +40,7 @@ def compile_llvm(input_file, visitor):
         return
 
     # Open a file to write LLVM code
-    with open('src/mips_target/output.ll', 'w') as llvm_file:
+    with open('src/llvm_target/output.ll', 'w') as llvm_file:
         # Write LLVM header
         llvm_file.write("; ModuleID = 'output.ll'\n")
         llvm_file.write("source_filename = \"output.ll\"\n")
@@ -61,27 +61,31 @@ def generateLLVMcode(node, llvm_file, symbol_table):
                 generateLLVMcode(child, llvm_file, symbol_table)
             llvm_file.write("    ret i32 0\n")
             llvm_file.write("}\n")
-        elif isinstance(node, AST.StatementNode):
-            if len(node.children) == 4:
-                value = node.children[3].value
-                var_name = f"%{node.children[1].value}"
-                type = ""
-                if node.children[0].value == "int":
-                    type = 'i32'
-                elif node.children[0].value == "float":
-                    type = 'float'
-                elif node.children[0].value == "char":
-                    type = 'i8'
-                    value = ord(value[1])
-                llvm_file.write(f"    {var_name} = alloca {type}\n")
-                llvm_file.write(f"    store {type} {value}, {type}* {var_name}\n\n")
-                symbol_table[var_name] = type
-            else:
-                value = node.children[2].value
-                var_name = f"%{node.children[0].value}"
-                type = symbol_table[var_name]
-                var_name = f"%{node.children[0].value}"
-                llvm_file.write(f"    store {type} {value}, {type}* {var_name}\n\n")
+        elif isinstance(node, AST.DefinitionNode):
+            # get varname value and type from node
+            var_name = f"%{node.lvalue.value}"
+            value = node.rvalue.value
+            if node.type[0].value == "int":
+                type = 'i32'
+            elif node.type[0].value == "float":
+                type = 'float'
+            elif node.type[0].value == "char":
+                type = 'i8'
+                value = ord(value[1])
+
+            # write to output file
+            llvm_file.write(f"    {var_name} = alloca {type}\n")
+            llvm_file.write(f"    store {type} {value}, {type}* {var_name}\n\n")
+            symbol_table[var_name] = type
+
+        elif isinstance(node, AST.AssignmentNode):
+            # get varname value and type from node
+            var_name = f"%{node.lvalue.value}"
+            value = node.rvalue.value
+            type = symbol_table[var_name]
+
+            # write to output file
+            llvm_file.write(f"    store {type} {value}, {type}* {var_name}\n\n")
 
         elif isinstance(node, AST.IdentifierNode):
             # No action needed for identifiers in LLVM code generation
@@ -89,24 +93,6 @@ def generateLLVMcode(node, llvm_file, symbol_table):
         elif isinstance(node, AST.TypeNode):
             # No action needed for types in LLVM code generation
             pass
-        """
-        elif isinstance(node, AST.IntNode) or isinstance(node, AST.FloatNode):
-            pass
-            value = node.value
-            var_name = f"%{value}"
-            if var_name not in symbol_table:
-                llvm_type = "i32" if isinstance(node, AST.IntNode) else "double"
-                llvm_file.write(f"{var_name} = alloca {llvm_type}\n")
-                llvm_file.write(f"store {llvm_type} {value}, {llvm_type}* {var_name}\n")
-                symbol_table[var_name] = True  # Mark variable as allocated and stored
-        else:
-            # Handle other node types as needed
-            pass
-
-        # Recursively emit LLVM code for children nodes
-        for child in node.children:
-            emit_llvm_code(child, llvm_file, symbol_table)
-        """
 
 
 def compile_mips(input_file, visitor):
