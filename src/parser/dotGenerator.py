@@ -1,6 +1,6 @@
 from graphviz import Digraph
 
-from src.parser.AST import IdentifierNode, TypeNode, IntNode, FloatNode
+from src.parser.AST import IdentifierNode, TypeNode, IntNode, FloatNode, DefinitionNode
 
 
 class DotGenerator:
@@ -30,4 +30,6 @@ class DotGenerator:
                 label += f"Value: {node.value}\nType: int"
             elif isinstance(node, FloatNode):
                 label += f"Value: {node.value}\nType: float"
+            elif isinstance(node, DefinitionNode):
+                label += f"Definition: {node.value}"
             dot.node(str(id(node)), label, shape='box')
