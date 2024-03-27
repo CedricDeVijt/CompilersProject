@@ -116,8 +116,9 @@ class ASTGenerator(Visitor):
                         if self.scope.lookup(identifier).const:
                             raise Exception("Variable \'" + identifier + "\' is constant!")
                         else:
-                            removeVariable(symbolTable=self.scope, node=node)
                             self.scope.lookup(identifier).value = node
+                            node = AssignmentNode(ctx.start.line, ctx.start.column, children[0], children[2])
+                            return node
                 else:
                     # "=" is not second character -> definition.
                     if self.scope.lookup(identifier) is not None:
@@ -127,11 +128,12 @@ class ASTGenerator(Visitor):
                         var_type = children[children.index("=") - 2].value
                         const = len(children) > 4
                         value = node
-                        removeVariable(symbolTable=self.scope, node=value)
                         symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
                         self.scope.add_symbol(symbol)
+                        node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children)-2], children[children.index("=") - 1], children[children.index("=") + 1])
+                        return node
 
-        node = StatementNode(ctx.start.line, ctx.start.column, children)
+        node = children[0]
         return node
 
     def visitLvalue(self, ctx):
@@ -196,6 +198,8 @@ class ASTGenerator(Visitor):
             node = ProgramNode(0, 0)
             match str(lines[1]):
                 case "/":
+                    if int(self.visit(lines[2]).value) == 0:
+                        raise Exception("Division by zero!")
                     node = DivNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "%":
                     node = ModNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
