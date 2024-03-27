@@ -69,23 +69,19 @@ class Node:
             case FloatNode():
                 return
             case DivNode():
-                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode) and str(
-                        self.children[1].value) != "0":
+                if isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
                     self.__class__ = IntNode
                     self.value = str(int(self.children[0].value) // int(self.children[1].value))
                     self.children = []
-                elif isinstance(self.children[0], FloatNode) and isinstance(self.children[1], FloatNode) and float(
-                        self.children[1].value) != 0:
+                elif isinstance(self.children[0], FloatNode) and isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) / float(self.children[1].value))
                     self.children = []
-                elif isinstance(self.children[0], FloatNode) and isinstance(self.children[1], IntNode) and int(
-                        self.children[1].value) != 0:
+                elif isinstance(self.children[0], FloatNode) and isinstance(self.children[1], IntNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) / float(self.children[1].value))
                     self.children = []
-                elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], FloatNode) and float(
-                        self.children[1].value) != 0:
+                elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) / float(self.children[1].value))
                     self.children = []
@@ -341,9 +337,25 @@ class PointerNode(Node):
     def setType(self, type: TypeNode):
         self.type = type
 
+
 class AddrNode(Node):
     def __init__(self, value, line: int, pos: int, children=None):
         super().__init__(value, line, pos, children=children)
+
+
+class AssignmentNode(Node):
+    def __init__(self, line: int, pos: int, lvalue: IdentifierNode, rvalue: Node, children=None):
+        super().__init__("Assignment", line, pos, children=children)
+        self.lvalue = lvalue
+        self.rvalue = rvalue
+
+
+class DefinitionNode(Node):
+    def __init__(self, line: int, pos: int, type: Node, lvalue: IdentifierNode, rvalue: Node, children=None):
+        super().__init__("Definition", line, pos, children=children)
+        self.type = type
+        self.lvalue = lvalue
+        self.rvalue = rvalue
 
 
 class IntNode(Node):
