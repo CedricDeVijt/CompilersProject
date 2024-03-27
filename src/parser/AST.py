@@ -1,32 +1,5 @@
 from graphviz import Source
 
-
-class SymbolValue:
-    def __init__(self, value, varType, const):
-        self.value = value
-        self.varType = varType
-        self.const = const
-
-
-class SymbolTable:
-    def __init__(self):
-        self.table = dict()
-        self.parent = None
-
-    def insert(self, name, value):
-        self.table[name] = value
-
-    def lookup(self, name):
-        if name in self.table:
-            return self.table[name]
-        if self.parent is not None:
-            return self.parent.lookup(name)
-        return None
-
-    def set_parent(self, parent):
-        self.parent = parent
-
-
 class Node:
     def __init__(self, value: str, line: int, pos: int, children=None):
         self.value = value
