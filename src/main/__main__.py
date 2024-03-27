@@ -5,12 +5,11 @@ import antlr4
 
 from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
 from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
-from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
-from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Listener
 
 import src.parser.AST as AST
 
 from src.parser.ASTGenerator import ASTGenerator as Generator
+from src.parser.dotGenerator import DotGenerator
 
 
 def generate_ast(path, visitor):
@@ -25,7 +24,7 @@ def generate_ast(path, visitor):
         ast = visit[0]
         symbolTable = visit[1]
         ast.constantFold()
-        ast.to_dot_file("test.dot")
+        DotGenerator.generateDotImage(AST_tree=ast, output_filename="ast")
     except Exception as e:
         raise Exception(e)
         print(e)

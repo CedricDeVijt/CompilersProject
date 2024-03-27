@@ -7,31 +7,6 @@ class Node:
         self.line = line
         self.pos = pos
 
-    def to_dot(self):
-        dot_string = f'"{id(self)}" [label="{self.value}"];\n'
-        for child in self.children:
-            if isinstance(child, PointerNode):
-                type = ""
-                for line in child.type:
-                    type += line.value
-                    type += " "
-                pointer_label = f"{type}{'*' * int(child.value)}"
-                dot_string += f'"{id(self)}" -> "{id(self)}_{pointer_label}";\n'
-                dot_string += f'"{id(self)}_{pointer_label}" [label="{pointer_label}"];\n'
-            elif isinstance(child, Node):
-                dot_string += f'"{id(self)}" -> "{id(child)}";\n'
-                dot_string += child.to_dot()
-            elif isinstance(child, str):
-                dot_string += f'"{id(self)}" -> "{id(self)}_{child}";\n'
-                dot_string += f'"{id(self)}_{child}" [label="{child}"];\n'
-        return dot_string
-
-    def to_dot_file(self, filename):
-        dot_string = "digraph AST {\n" + self.to_dot() + "}\n"
-        src = Source(dot_string)
-        src.format = 'png'
-        src.render(filename, view=True)
-
     def constantFold(self):
         for node in self.children:
             if not isinstance(node, str) and not isinstance(node, list):

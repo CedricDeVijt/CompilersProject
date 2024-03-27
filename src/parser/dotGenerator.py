@@ -1,6 +1,6 @@
 from graphviz import Digraph
 
-from src.parser.AST import IdentifierNode, TypeNode, IntNode, FloatNode, DefinitionNode
+from src.parser.AST import IdentifierNode, TypeNode, IntNode, FloatNode, PointerNode, DeclarationNode, AssignmentNode, DefinitionNode
 
 
 class DotGenerator:
@@ -27,9 +27,29 @@ class DotGenerator:
             elif isinstance(node, TypeNode):
                 label += f"Type: {node.value}"
             elif isinstance(node, IntNode):
+                label = f"Literal\n"
                 label += f"Value: {node.value}\nType: int"
             elif isinstance(node, FloatNode):
+                label = f"Literal\n"
                 label += f"Value: {node.value}\nType: float"
+            elif isinstance(node, DeclarationNode):
+                for child in node.type:
+                    if isinstance(child, PointerNode):
+                        for child1 in child.type:
+                            label += f" {child1.value}"
+                        label += f"*" * int(child.value)
+                    else:
+                        label += f" {child.value}"
+                label += f" {node.lvalue.value}"
+            elif isinstance(node, AssignmentNode):
+                label += f" {node.lvalue.value} = {node.rvalue.value}"
             elif isinstance(node, DefinitionNode):
-                label += f"Definition: {node.value}"
+                for child in node.type:
+                    if isinstance(child, PointerNode):
+                        for child1 in child.type:
+                            label += f" {child1.value}"
+                        label += f"*" * int(child.value)
+                    else:
+                        label += f" {child.value}"
+                label += f" {node.lvalue.value} = {node.rvalue.value}"
             dot.node(str(id(node)), label, shape='box')

@@ -99,7 +99,7 @@ class ASTGenerator(Visitor):
                 else:
                     symbol = Symbol(name=identifier, varType=var_type, const=const)
                     self.scope.add_symbol(symbol)
-                    node = DeclarationNode(ctx.start.line, ctx.start.column, children[len(children) - 2], children[len(children) - 1])
+                    node = DeclarationNode(ctx.start.line, ctx.start.column, children[:len(children) - 1], children[len(children) - 1])
                     return node
 
             # assignment or definition
