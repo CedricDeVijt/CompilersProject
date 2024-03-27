@@ -11,7 +11,7 @@ class DotGenerator:
         """
         dot = Digraph()
         DotGenerator._generateDotImage(dot, AST_tree)
-        dot.render(output_filename, view=True)
+        dot.render(output_filename, view=True, format='png')
 
     @staticmethod
     def _generateDotImage(dot, node):
