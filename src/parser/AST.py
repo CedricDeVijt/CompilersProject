@@ -316,6 +316,12 @@ class AddrNode(Node):
         super().__init__(value, line, pos, children=children)
 
 
+class DeclarationNode(Node):
+        def __init__(self, line: int, pos: int, type: Node, lvalue: IdentifierNode, children=None):
+            super().__init__("Declaration", line, pos, children=children)
+            self.type = type
+            self.lvalue = lvalue
+
 class AssignmentNode(Node):
     def __init__(self, line: int, pos: int, lvalue: IdentifierNode, rvalue: Node, children=None):
         super().__init__("Assignment", line, pos, children=children)
