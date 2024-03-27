@@ -5,6 +5,8 @@ from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Pars
 
 from ASTGenerator import ASTGenerator
 
+from src.parser.dotGenerator import DotGenerator
+
 
 def main():
     # Read input from a file
@@ -35,7 +37,7 @@ def main():
 
     ast[0].constantFold()
 
-    ast[0].to_dot_file("output")
+    DotGenerator.generateDotImage(AST_tree=ast[0], output_filename="ast.png")
 
 
 if __name__ == '__main__':
