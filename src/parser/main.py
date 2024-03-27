@@ -37,7 +37,7 @@ def main():
 
     ast[0].constantFold()
 
-    DotGenerator.generateDotImage(AST_tree=ast[0], output_filename="ast.png")
+    DotGenerator.generateDotImage(AST_tree=ast[0], output_filename="ast")
 
 
 if __name__ == '__main__':
