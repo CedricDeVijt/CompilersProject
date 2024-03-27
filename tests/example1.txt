@@ -1,6 +1,6 @@
 int main() {
     5 > 2;
-    int a;
-    a = 5;
+    const int a;
     int b = a;
+    b = 1;
 }
