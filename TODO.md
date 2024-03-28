@@ -21,3 +21,12 @@
 - [ ] (**mandatory**) Pointer arithmetic
 - [ ] (**mandatory**) Increment/Decrement Operations
 - [ ] (**optional**) Const casting
+
+# project 3
+- [ ] (**mandatory**) Single line comments
+- [ ] (**mandatory**) Multi line comments
+- [ ] (**mandatory**) Output printf
+- [ ] (**mandatory**) Typedef support
+- [x] (**mandatory**) LLVM definitions
+- [x] (**mandatory**) LLVM pointers
+- [ ] (**mandatory**) LLVM comments
