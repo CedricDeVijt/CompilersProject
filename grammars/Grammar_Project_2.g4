@@ -47,7 +47,8 @@ rvalue: unaryExpression
     | rvalue BITWISE_XOR rvalue
     | rvalue LOGICAL_AND rvalue
     | rvalue LOGICAL_OR rvalue
-    | LPAREN rvalue RPAREN;
+    | LPAREN rvalue RPAREN
+    | implicitConversion rvalue;
 
 
 rvalueCast:  LPAREN type RPAREN rvalue;
@@ -57,6 +58,8 @@ unaryExpression: (PLUS | MINUS)? literal
                | (MINUS PLUS)+ (MINUS)? literal;
 
 literal: INT | FLOAT | CHAR;
+
+implicitConversion: '(' + type + ')';
 
 pointer: type '*'+;
 
