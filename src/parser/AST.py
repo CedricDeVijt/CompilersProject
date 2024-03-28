@@ -292,10 +292,28 @@ class AddrNode(Node):
 
 
 class DeclarationNode(Node):
-        def __init__(self, line: int, pos: int, type: Node, lvalue: IdentifierNode, children=None):
+    def __init__(self, line: int, pos: int, type: Node, lvalue: IdentifierNode, children=None):
             super().__init__("Declaration", line, pos, children=children)
             self.type = type
             self.lvalue = lvalue
+
+
+class CommentNode(Node):
+    def __init__(self, value, line: int, pos: int, children=None):
+        super().__init__(value, line, pos, children=children)
+
+
+class PostFixNode(Node):
+    def __init__(self, value: str, line: int, pos: int, op: str, children=None):
+        super().__init__(value, line, pos, children=children)
+        self.op = op
+
+
+class PreFixNode(Node):
+    def __init__(self, value: str, line: int, pos: int, op: str, children=None):
+        super().__init__(value, line, pos, children=children)
+        self.op = op
+
 
 class AssignmentNode(Node):
     def __init__(self, line: int, pos: int, lvalue: IdentifierNode, rvalue: Node, children=None):

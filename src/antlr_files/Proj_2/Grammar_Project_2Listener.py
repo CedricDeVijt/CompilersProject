@@ -125,21 +125,39 @@ class Grammar_Project_2Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by Grammar_Project_2Parser#postfixIncrement.
-    def enterPostfixIncrement(self, ctx:Grammar_Project_2Parser.PostfixIncrementContext):
+    # Enter a parse tree produced by Grammar_Project_2Parser#postFixIncrement.
+    def enterPostFixIncrement(self, ctx:Grammar_Project_2Parser.PostFixIncrementContext):
         pass
 
-    # Exit a parse tree produced by Grammar_Project_2Parser#postfixIncrement.
-    def exitPostfixIncrement(self, ctx:Grammar_Project_2Parser.PostfixIncrementContext):
+    # Exit a parse tree produced by Grammar_Project_2Parser#postFixIncrement.
+    def exitPostFixIncrement(self, ctx:Grammar_Project_2Parser.PostFixIncrementContext):
         pass
 
 
-    # Enter a parse tree produced by Grammar_Project_2Parser#postfixDecrement.
-    def enterPostfixDecrement(self, ctx:Grammar_Project_2Parser.PostfixDecrementContext):
+    # Enter a parse tree produced by Grammar_Project_2Parser#postFixDecrement.
+    def enterPostFixDecrement(self, ctx:Grammar_Project_2Parser.PostFixDecrementContext):
         pass
 
-    # Exit a parse tree produced by Grammar_Project_2Parser#postfixDecrement.
-    def exitPostfixDecrement(self, ctx:Grammar_Project_2Parser.PostfixDecrementContext):
+    # Exit a parse tree produced by Grammar_Project_2Parser#postFixDecrement.
+    def exitPostFixDecrement(self, ctx:Grammar_Project_2Parser.PostFixDecrementContext):
+        pass
+
+
+    # Enter a parse tree produced by Grammar_Project_2Parser#preFixIncrement.
+    def enterPreFixIncrement(self, ctx:Grammar_Project_2Parser.PreFixIncrementContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#preFixIncrement.
+    def exitPreFixIncrement(self, ctx:Grammar_Project_2Parser.PreFixIncrementContext):
+        pass
+
+
+    # Enter a parse tree produced by Grammar_Project_2Parser#preFixDecrement.
+    def enterPreFixDecrement(self, ctx:Grammar_Project_2Parser.PreFixDecrementContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#preFixDecrement.
+    def exitPreFixDecrement(self, ctx:Grammar_Project_2Parser.PreFixDecrementContext):
         pass
 
 

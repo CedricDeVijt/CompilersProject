@@ -151,17 +151,37 @@ class ASTGenerator(Visitor):
         node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
 
-    def visitPostfixDecrement(self, ctx):
-        identifier = ctx.getText()[:-2]
-        value = int(self.scope.lookup(identifier).value) - 1
-        self.scope.lookup(identifier).value = value
-        return IntNode(str(value), ctx.start.line, ctx.start.column)
+    def visitComment(self, ctx):
+        node = CommentNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        return node
 
-    def visitPostfixIncrement(self, ctx):
+    def visitPostFixDecrement(self, ctx):
         identifier = ctx.getText()[:-2]
-        value = int(self.scope.lookup(identifier).value) + 1
-        self.scope.lookup(identifier).value = value
-        return IntNode(str(value), ctx.start.line, ctx.start.column)
+        if isinstance(self.scope.lookup(identifier).value, Node):
+            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+        node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
+        return node
+
+    def visitPostFixIncrement(self, ctx):
+        identifier = ctx.getText()[:-2]
+        if isinstance(self.scope.lookup(identifier).value, Node):
+            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+        node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
+        return node
+
+    def visitPreFixDecrement(self, ctx:Grammar_Project_2Parser.PreFixDecrementContext):
+        identifier = ctx.getText()[2:]
+        if isinstance(self.scope.lookup(identifier).value, Node):
+            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+        node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
+        return node
+
+    def visitPreFixIncrement(self, ctx:Grammar_Project_2Parser.PreFixIncrementContext):
+        identifier = ctx.getText()[2:]
+        if isinstance(self.scope.lookup(identifier).value, Node):
+            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+        node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
+        return node
 
     def visitAddr(self, ctx):
         children = []

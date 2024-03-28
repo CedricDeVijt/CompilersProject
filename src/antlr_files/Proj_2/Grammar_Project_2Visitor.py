@@ -74,13 +74,23 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by Grammar_Project_2Parser#postfixIncrement.
-    def visitPostfixIncrement(self, ctx:Grammar_Project_2Parser.PostfixIncrementContext):
+    # Visit a parse tree produced by Grammar_Project_2Parser#postFixIncrement.
+    def visitPostFixIncrement(self, ctx:Grammar_Project_2Parser.PostFixIncrementContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by Grammar_Project_2Parser#postfixDecrement.
-    def visitPostfixDecrement(self, ctx:Grammar_Project_2Parser.PostfixDecrementContext):
+    # Visit a parse tree produced by Grammar_Project_2Parser#postFixDecrement.
+    def visitPostFixDecrement(self, ctx:Grammar_Project_2Parser.PostFixDecrementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Grammar_Project_2Parser#preFixIncrement.
+    def visitPreFixIncrement(self, ctx:Grammar_Project_2Parser.PreFixIncrementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Grammar_Project_2Parser#preFixDecrement.
+    def visitPreFixDecrement(self, ctx:Grammar_Project_2Parser.PreFixDecrementContext):
         return self.visitChildren(ctx)
 
 
