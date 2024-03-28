@@ -32,7 +32,7 @@ class DotGenerator:
                 label = f"Literal\n"
                 label += f"Value: {node.value}\nType: float"
             elif isinstance(node, AST.CommentNode):
-                label = f"Comment\n{node.value}"
+                label = f"Comment\n" + node.value.replace('\n', '\\\\n')
             elif isinstance(node, AST.PostFixNode):
                 label = f"PostFix"
                 if node.op == 'inc':
