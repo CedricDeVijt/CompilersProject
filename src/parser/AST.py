@@ -279,11 +279,15 @@ class LogicalOrNode(Node):
 
 
 class PointerNode(Node):
-    def __init__(self, value: int, line: int, pos: int, children=None):
+    def __init__(self, value: int, line: int, pos: int, type: TypeNode, children=None):
         super().__init__(str(value), line, pos, children=children)
-
-    def setType(self, type: TypeNode):
         self.type = type
+
+
+class DerefNode(Node):
+    def __init__(self, value: int, line: int, pos: int, identifier: str, children=None):
+        super().__init__(str(value), line, pos, children=children)
+        self.identifier=identifier
 
 
 class AddrNode(Node):
@@ -338,3 +342,9 @@ class IntNode(Node):
 class FloatNode(Node):
     def __init__(self, value, line: int, pos: int, children=None):
         super().__init__(value, line, pos, children=children)
+
+
+class ImplicitConversionNode(Node):
+    def __init__(self, line: int, pos: int, type: str):
+        super().__init__("ImplicitConversion", line, pos, children=None)
+        self.type = type

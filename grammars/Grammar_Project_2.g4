@@ -9,45 +9,46 @@ main: 'int' 'main' LPAREN RPAREN scope;
 scope: LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON+
-    | lvalue SEMICOLON+
-    | lvalue '=' rvalue SEMICOLON+
-    | lvalue '=' rvalueCast SEMICOLON+
-    | lvalue '=' rvalue SEMICOLON+
-    | postFixIncrement SEMICOLON+
-    | postFixDecrement SEMICOLON+
-    | preFixIncrement SEMICOLON+
-    | preFixDecrement SEMICOLON+
-    | comment;
+         | lvalue SEMICOLON+
+         | lvalue '=' rvalue SEMICOLON+
+         | lvalue '=' rvalueCast SEMICOLON+
+         | lvalue '=' rvalue SEMICOLON+
+         | postFixIncrement SEMICOLON+
+         | postFixDecrement SEMICOLON+
+         | preFixIncrement SEMICOLON+
+         | preFixDecrement SEMICOLON+
+         | comment;
 
 lvalue: identifier
-    | type identifier
-    | pointer identifier
-    | deref;
+      | type identifier
+      | pointer identifier
+      | deref;
 
 rvalue: unaryExpression
-    | identifier
-    | deref
-    | addr
-    | LOGICAL_NOT rvalue
-    | rvalue DIV rvalue
-    | rvalue MOD rvalue
-    | rvalue MULT rvalue
-    | rvalue MINUS rvalue
-    | rvalue PLUS rvalue
-    | rvalue GREATER_THAN rvalue
-    | rvalue LESS_THAN rvalue
-    | rvalue GREATER_EQUAL rvalue
-    | rvalue LESS_EQUAL rvalue
-    | rvalue EQUALS rvalue
-    | rvalue NOT_EQUAL rvalue
-    | rvalue SHIFT_LEFT rvalue
-    | rvalue SHIFT_RIGHT rvalue
-    | rvalue BITWISE_AND rvalue
-    | rvalue BITWISE_OR rvalue
-    | rvalue BITWISE_XOR rvalue
-    | rvalue LOGICAL_AND rvalue
-    | rvalue LOGICAL_OR rvalue
-    | LPAREN rvalue RPAREN;
+      | identifier
+      | deref
+      | addr
+      | LOGICAL_NOT rvalue
+      | rvalue DIV rvalue
+      | rvalue MOD rvalue
+      | rvalue MULT rvalue
+      | rvalue MINUS rvalue
+      | rvalue PLUS rvalue
+      | rvalue GREATER_THAN rvalue
+      | rvalue LESS_THAN rvalue
+      | rvalue GREATER_EQUAL rvalue
+      | rvalue LESS_EQUAL rvalue
+      | rvalue EQUALS rvalue
+      | rvalue NOT_EQUAL rvalue
+      | rvalue SHIFT_LEFT rvalue
+      | rvalue SHIFT_RIGHT rvalue
+      | rvalue BITWISE_AND rvalue
+      | rvalue BITWISE_OR rvalue
+      | rvalue BITWISE_XOR rvalue
+      | rvalue LOGICAL_AND rvalue
+      | rvalue LOGICAL_OR rvalue
+      | LPAREN rvalue RPAREN
+      | implicitConversion rvalue;
 
 
 rvalueCast:  LPAREN type RPAREN rvalue;
@@ -56,7 +57,11 @@ unaryExpression: (PLUS | MINUS)? literal
                | (PLUS MINUS)+ (PLUS)? literal
                | (MINUS PLUS)+ (MINUS)? literal;
 
-literal: INT | FLOAT | CHAR;
+literal: INT
+       | FLOAT
+       | CHAR;
+
+implicitConversion: '(' + type + ')';
 
 pointer: type '*'+;
 
@@ -113,4 +118,8 @@ IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 INCREMENT: '++';
 DECREMENT: '--';
 
-COMMENT: '//' ~[\r\n]*;
+COMMENT: LINECOMMENT
+       | BLOCKCOMMENT;
+
+BLOCKCOMMENT: '/*' .*? '*/' -> skip;
+LINECOMMENT: '//' ~[\r\n]* -> skip;

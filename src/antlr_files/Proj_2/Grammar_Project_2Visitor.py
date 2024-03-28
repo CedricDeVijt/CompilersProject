@@ -54,6 +54,11 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by Grammar_Project_2Parser#implicitConversion.
+    def visitImplicitConversion(self, ctx:Grammar_Project_2Parser.ImplicitConversionContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by Grammar_Project_2Parser#pointer.
     def visitPointer(self, ctx:Grammar_Project_2Parser.PointerContext):
         return self.visitChildren(ctx)

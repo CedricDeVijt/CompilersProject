@@ -32,7 +32,7 @@ class DotGenerator:
                 label = f"Literal\n"
                 label += f"Value: {node.value}\nType: float"
             elif isinstance(node, AST.CommentNode):
-                label = f"Comment\n{node.value}"
+                label = f"Comment\n" + node.value.replace('\n', '\\\\n')
             elif isinstance(node, AST.PostFixNode):
                 label = f"PostFix"
                 if node.op == 'inc':
@@ -55,7 +55,12 @@ class DotGenerator:
                         label += f" {child.value}"
                 label += f" {node.lvalue.value}"
             elif isinstance(node, AST.AssignmentNode):
-                label += f" {node.lvalue.value} = {node.rvalue.value}"
+                label += f" {node.lvalue.value} = "
+                if isinstance(node.rvalue, AST.DerefNode):
+                    label += f"*" * int(node.rvalue.value)
+                    label += f"{node.rvalue.identifier.value}"
+                else:
+                    label += f"{node.rvalue.value}"
             elif isinstance(node, AST.DefinitionNode):
                 for child in node.type:
                     if isinstance(child, AST.PointerNode):
@@ -64,5 +69,10 @@ class DotGenerator:
                         label += f"*" * int(child.value)
                     else:
                         label += f" {child.value}"
-                label += f" {node.lvalue.value} = {node.rvalue.value}"
+                label += f" {node.lvalue.value} = "
+                if isinstance(node.rvalue, AST.DerefNode):
+                    label += f"*" * int(node.rvalue.value)
+                    label += f"{node.rvalue.identifier.value}"
+                else:
+                    label += f"{node.rvalue.value}"
             dot.node(str(id(node)), label, shape='box')

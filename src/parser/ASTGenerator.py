@@ -117,29 +117,36 @@ class ASTGenerator(Visitor):
                         raise Exception("Variable \'" + identifier + "\' not declared yet!")
                     else:
                         lval = self.scope.lookup(identifier)
+                        lvalPointer = 0
+                        rvalPointer = 0
                         if isinstance(lval.type, PointerNode):
-                            rval = node
                             lvalPointer = int(lval.type.value)
-                            rvalPointer = 0
-                            if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
-                                if isinstance(rval, AddrNode):
-                                    if not self.scope.lookup(rval.value.value):
-                                        raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
-                                    else:
-                                        rvalType = self.scope.lookup(rval.value.value).type
-                                        if isinstance(rvalType, PointerNode):
-                                            rvalPointer = int(rvalType.value) + 1
-                                        else:
-                                            rvalPointer = 1
+                        rval = node
+                        if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
+                            if isinstance(rval, AddrNode):
+                                if not self.scope.lookup(rval.value.value):
+                                    raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
+                                rvalType = self.scope.lookup(rval.value.value).type
+                                if isinstance(rvalType, PointerNode):
+                                    rvalPointer = int(rvalType.value) + 1
                                 else:
-                                    if not self.scope.lookup(rval.value):
-                                        raise Exception("Variable \'" + rval.value + "\' not declared yet!")
-                                    else:
-                                        rvalType = self.scope.lookup(rval.value).type
-                                        if isinstance(rvalType, PointerNode):
-                                            rvalPointer = int(rvalType.value)
-                            if lvalPointer != rvalPointer:
-                                raise Exception("Pointer type mismatch!")
+                                    rvalPointer = 1
+                            else:
+                                if not self.scope.lookup(rval.value):
+                                    raise Exception("Variable \'" + rval.value + "\' not declared yet!")
+                                rvalType = self.scope.lookup(rval.value).type
+                                if isinstance(rvalType, PointerNode):
+                                    rvalPointer = int(rvalType.value)
+                        if isinstance(rval, DerefNode):
+                            if not self.scope.lookup(rval.identifier.value):
+                                raise Exception("Variable \'" + rval.identifier.value + "\' not declared yet!")
+                            rvalType = self.scope.lookup(rval.identifier.value).type
+                            if isinstance(rvalType, PointerNode):
+                                rvalPointer = int(rvalType.value) - int(rval.value)
+                            else:
+                                raise Exception("Cannot dereference non-pointer type!")
+                        if lvalPointer != rvalPointer:
+                            raise Exception("Pointer type mismatch!")
                         # If variable is constant --> error. Otherwise set value.
                         if self.scope.lookup(identifier).const:
                             raise Exception("Variable \'" + identifier + "\' is constant!")
@@ -154,9 +161,42 @@ class ASTGenerator(Visitor):
                             "Variable \'" + identifier + "\' already declared!")
                     else:
                         var_type = children[children.index("=") - 2].value
+                        if isinstance(children[children.index("=") - 2], PointerNode):
+                            var_type = children[children.index("=") - 2]
                         const = len(children) > 4
                         value = node
                         symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
+                        lval = symbol
+                        lvalPointer = 0
+                        rvalPointer = 0
+                        if isinstance(lval.type, PointerNode):
+                            lvalPointer = int(lval.type.value)
+                        rval = node
+                        if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
+                            if isinstance(rval, AddrNode):
+                                if not self.scope.lookup(rval.value.value):
+                                    raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
+                                rvalType = self.scope.lookup(rval.value.value).type
+                                if isinstance(rvalType, PointerNode):
+                                    rvalPointer = int(rvalType.value) + 1
+                                else:
+                                    rvalPointer = 1
+                            else:
+                                if not self.scope.lookup(rval.value):
+                                    raise Exception("Variable \'" + rval.value + "\' not declared yet!")
+                                rvalType = self.scope.lookup(rval.value).type
+                                if isinstance(rvalType, PointerNode):
+                                    rvalPointer = int(rvalType.value)
+                        if isinstance(rval, DerefNode):
+                            if not self.scope.lookup(rval.identifier.value):
+                                raise Exception("Variable \'" + rval.identifier.value + "\' not declared yet!")
+                            rvalType = self.scope.lookup(rval.identifier.value).type
+                            if isinstance(rvalType, PointerNode):
+                                rvalPointer = int(rvalType.value) - int(rval.value)
+                            else:
+                                raise Exception("Cannot dereference non-pointer type!")
+                        if lvalPointer != rvalPointer:
+                            raise Exception("Pointer type mismatch!")
                         self.scope.add_symbol(symbol)
                         node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children)-3], children[children.index("=") - 1], children[children.index("=") + 1])
                         return node
@@ -220,13 +260,21 @@ class ASTGenerator(Visitor):
         node = AddrNode(identifier, ctx.start.line, ctx.start.column)
         return node
 
-
     def visitPointer(self, ctx):
         children = []
         for line in ctx.getChildren():
             children.append(line)
-        node = PointerNode(len(children) - 1, ctx.start.line, ctx.start.column)
-        node.setType(self.visit(children[0]))
+        node = PointerNode(len(children) - 1, ctx.start.line, ctx.start.column, self.visit(children[0]))
+        return node
+
+    def visitDeref(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+        identifier = self.visit(children[len(children) - 1])
+        if self.scope.lookup(identifier.value) is None:
+            raise Exception("Variable \'" + identifier.value + "\' not declared yet!")
+        node = DerefNode(len(children) - 1, ctx.start.line, ctx.start.column, self.visit(children[len(children)-1]))
         return node
 
     def visitType(self, ctx):
@@ -304,4 +352,12 @@ class ASTGenerator(Visitor):
             node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
             return node
         node = FloatNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        return node
+
+    def visitImplicitConversion(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+        type = children[1].getText()
+        node = ImplicitConversionNode(ctx.start.line, ctx.start.column, type)
         return node
