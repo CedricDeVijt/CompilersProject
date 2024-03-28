@@ -279,11 +279,15 @@ class LogicalOrNode(Node):
 
 
 class PointerNode(Node):
-    def __init__(self, value: int, line: int, pos: int, children=None):
+    def __init__(self, value: int, line: int, pos: int, type: TypeNode, children=None):
         super().__init__(str(value), line, pos, children=children)
-
-    def setType(self, type: TypeNode):
         self.type = type
+
+
+class DerefNode(Node):
+    def __init__(self, value: int, line: int, pos: int, identifier: str, children=None):
+        super().__init__(str(value), line, pos, children=children)
+        self.identifier=identifier
 
 
 class AddrNode(Node):
