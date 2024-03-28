@@ -69,5 +69,10 @@ class DotGenerator:
                         label += f"*" * int(child.value)
                     else:
                         label += f" {child.value}"
-                label += f" {node.lvalue.value} = {node.rvalue.value}"
+                label += f" {node.lvalue.value} = "
+                if isinstance(node.rvalue, AST.DerefNode):
+                    label += f"*" * int(node.rvalue.value)
+                    label += f"{node.rvalue.identifier.value}"
+                else:
+                    label += f"{node.rvalue.value}"
             dot.node(str(id(node)), label, shape='box')
