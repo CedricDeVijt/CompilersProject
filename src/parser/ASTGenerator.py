@@ -88,10 +88,13 @@ class ASTGenerator(Visitor):
                     children.append(child)
         if len(children) >= 2:
             # Ends with type + identifier -> declaration.
-            if isinstance(children[len(children) - 2], TypeNode) and isinstance(children[len(children) - 1], IdentifierNode):
+            if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
                 identifier = children[len(children) - 1].value
-                var_type = children[len(children) - 2].value
+                var_type = children[len(children) - 2]
                 const = len(children) > 2
+
+                if isinstance(children[len(children) - 2], PointerNode):
+                    var_type = children[len(children) - 2]
 
                 # Check if variable already declared in current scope.
                 if self.scope.get_symbol(identifier) is not None:
@@ -113,6 +116,30 @@ class ASTGenerator(Visitor):
                     if self.scope.lookup(identifier) is None:
                         raise Exception("Variable \'" + identifier + "\' not declared yet!")
                     else:
+                        lval = self.scope.lookup(identifier)
+                        if isinstance(lval.type, PointerNode):
+                            rval = node
+                            lvalPointer = int(lval.type.value)
+                            rvalPointer = 0
+                            if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
+                                if isinstance(rval, AddrNode):
+                                    if not self.scope.lookup(rval.value.value):
+                                        raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
+                                    else:
+                                        rvalType = self.scope.lookup(rval.value.value).type
+                                        if isinstance(rvalType, PointerNode):
+                                            rvalPointer = int(rvalType.value) + 1
+                                        else:
+                                            rvalPointer = 1
+                                else:
+                                    if not self.scope.lookup(rval.value):
+                                        raise Exception("Variable \'" + rval.value + "\' not declared yet!")
+                                    else:
+                                        rvalType = self.scope.lookup(rval.value).type
+                                        if isinstance(rvalType, PointerNode):
+                                            rvalPointer = int(rvalType.value)
+                            if lvalPointer != rvalPointer:
+                                raise Exception("Pointer type mismatch!")
                         # If variable is constant --> error. Otherwise set value.
                         if self.scope.lookup(identifier).const:
                             raise Exception("Variable \'" + identifier + "\' is constant!")
