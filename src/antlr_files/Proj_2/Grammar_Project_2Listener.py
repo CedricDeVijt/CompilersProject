@@ -89,6 +89,15 @@ class Grammar_Project_2Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Grammar_Project_2Parser#implicitConversion.
+    def enterImplicitConversion(self, ctx:Grammar_Project_2Parser.ImplicitConversionContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#implicitConversion.
+    def exitImplicitConversion(self, ctx:Grammar_Project_2Parser.ImplicitConversionContext):
+        pass
+
+
     # Enter a parse tree produced by Grammar_Project_2Parser#pointer.
     def enterPointer(self, ctx:Grammar_Project_2Parser.PointerContext):
         pass
