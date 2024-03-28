@@ -1,7 +1,7 @@
 int main() {
     int a;
-    a++;
-    a--;
-    ++a;
-    --a;
+    int* b;
+    int** c;
+    b = &a;
+    int d = a;
 }
