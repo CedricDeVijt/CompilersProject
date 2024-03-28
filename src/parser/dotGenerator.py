@@ -1,6 +1,6 @@
 from graphviz import Digraph
 
-from src.parser.AST import IdentifierNode, TypeNode, IntNode, FloatNode, PointerNode, DeclarationNode, AssignmentNode, DefinitionNode
+import src.parser.AST as AST
 
 
 class DotGenerator:
@@ -22,30 +22,31 @@ class DotGenerator:
                 dot.edge(str(id(node)), str(id(child)))
         else:
             label = f"{node.value}\n"
-            if isinstance(node, IdentifierNode):
+            if isinstance(node, AST.IdentifierNode):
                 label += f"Identifier: {node.value}"
-            elif isinstance(node, TypeNode):
+            elif isinstance(node, AST.CommentNode):
+                label = f"Comment\n{node.value}"
+            elif isinstance(node, AST.TypeNode):
                 label += f"Type: {node.value}"
-            elif isinstance(node, IntNode):
-                label = f"Literal\n"
-                label += f"Value: {node.value}\nType: int"
-            elif isinstance(node, FloatNode):
+            elif isinstance(node, AST.IntNode):
+                label = f"Literal\nValue: {node.value}\nType: int"
+            elif isinstance(node, AST.FloatNode):
                 label = f"Literal\n"
                 label += f"Value: {node.value}\nType: float"
-            elif isinstance(node, DeclarationNode):
+            elif isinstance(node, AST.DeclarationNode):
                 for child in node.type:
-                    if isinstance(child, PointerNode):
+                    if isinstance(child, AST.PointerNode):
                         for child1 in child.type:
                             label += f" {child1.value}"
                         label += f"*" * int(child.value)
                     else:
                         label += f" {child.value}"
                 label += f" {node.lvalue.value}"
-            elif isinstance(node, AssignmentNode):
+            elif isinstance(node, AST.AssignmentNode):
                 label += f" {node.lvalue.value} = {node.rvalue.value}"
-            elif isinstance(node, DefinitionNode):
+            elif isinstance(node, AST.DefinitionNode):
                 for child in node.type:
-                    if isinstance(child, PointerNode):
+                    if isinstance(child, AST.PointerNode):
                         for child1 in child.type:
                             label += f" {child1.value}"
                         label += f"*" * int(child.value)

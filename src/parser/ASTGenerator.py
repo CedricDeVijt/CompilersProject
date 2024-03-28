@@ -151,6 +151,10 @@ class ASTGenerator(Visitor):
         node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
 
+    def visitComment(self, ctx):
+        node = CommentNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        return node
+
     def visitPostfixDecrement(self, ctx):
         identifier = ctx.getText()[:-2]
         value = int(self.scope.lookup(identifier).value) - 1
