@@ -157,28 +157,28 @@ class ASTGenerator(Visitor):
 
     def visitPostFixDecrement(self, ctx):
         identifier = ctx.getText()[:-2]
-        if isinstance(self.scope.lookup(identifier).value, Node):
+        if not self.scope.lookup(identifier):
             raise Exception("Variable \'" + identifier + "\' not declared yet!")
         node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
         return node
 
     def visitPostFixIncrement(self, ctx):
         identifier = ctx.getText()[:-2]
-        if isinstance(self.scope.lookup(identifier).value, Node):
+        if not self.scope.lookup(identifier):
             raise Exception("Variable \'" + identifier + "\' not declared yet!")
         node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
         return node
 
     def visitPreFixDecrement(self, ctx:Grammar_Project_2Parser.PreFixDecrementContext):
         identifier = ctx.getText()[2:]
-        if isinstance(self.scope.lookup(identifier).value, Node):
+        if not self.scope.lookup(identifier):
             raise Exception("Variable \'" + identifier + "\' not declared yet!")
         node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
         return node
 
     def visitPreFixIncrement(self, ctx:Grammar_Project_2Parser.PreFixIncrementContext):
         identifier = ctx.getText()[2:]
-        if isinstance(self.scope.lookup(identifier).value, Node):
+        if not self.scope.lookup(identifier):
             raise Exception("Variable \'" + identifier + "\' not declared yet!")
         node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
         return node
