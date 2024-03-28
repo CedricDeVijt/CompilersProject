@@ -303,6 +303,18 @@ class CommentNode(Node):
         super().__init__(value, line, pos, children=children)
 
 
+class PostFixNode(Node):
+    def __init__(self, value: str, line: int, pos: int, op: str, children=None):
+        super().__init__(value, line, pos, children=children)
+        self.op = op
+
+
+class PreFixNode(Node):
+    def __init__(self, value: str, line: int, pos: int, op: str, children=None):
+        super().__init__(value, line, pos, children=children)
+        self.op = op
+
+
 class AssignmentNode(Node):
     def __init__(self, line: int, pos: int, lvalue: IdentifierNode, rvalue: Node, children=None):
         super().__init__("Assignment", line, pos, children=children)

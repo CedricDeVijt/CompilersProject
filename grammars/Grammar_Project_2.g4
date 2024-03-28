@@ -13,8 +13,10 @@ statement: rvalue SEMICOLON+
     | lvalue '=' rvalue SEMICOLON+
     | lvalue '=' rvalueCast SEMICOLON+
     | lvalue '=' rvalue SEMICOLON+
-    | postfixIncrement SEMICOLON+
-    | postfixDecrement SEMICOLON+
+    | postFixIncrement SEMICOLON+
+    | postFixDecrement SEMICOLON+
+    | preFixIncrement SEMICOLON+
+    | preFixDecrement SEMICOLON+
     | comment;
 
 lvalue: identifier
@@ -64,9 +66,11 @@ addr: '&'+ identifier;
 
 type: 'const'* ('int' | 'float' | 'char');
 
-postfixIncrement: lvalue INCREMENT;
+postFixIncrement: lvalue INCREMENT;
+postFixDecrement: lvalue DECREMENT;
 
-postfixDecrement: lvalue DECREMENT;
+preFixIncrement: INCREMENT lvalue;
+preFixDecrement: DECREMENT lvalue;
 
 identifier: IDENTIFIER;
 comment: COMMENT;

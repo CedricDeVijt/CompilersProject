@@ -24,8 +24,6 @@ class DotGenerator:
             label = f"{node.value}\n"
             if isinstance(node, AST.IdentifierNode):
                 label += f"Identifier: {node.value}"
-            elif isinstance(node, AST.CommentNode):
-                label = f"Comment\n{node.value}"
             elif isinstance(node, AST.TypeNode):
                 label += f"Type: {node.value}"
             elif isinstance(node, AST.IntNode):
@@ -33,6 +31,20 @@ class DotGenerator:
             elif isinstance(node, AST.FloatNode):
                 label = f"Literal\n"
                 label += f"Value: {node.value}\nType: float"
+            elif isinstance(node, AST.CommentNode):
+                label = f"Comment\n{node.value}"
+            elif isinstance(node, AST.PostFixNode):
+                label = f"PostFix"
+                if node.op == 'inc':
+                    label += f"Increment\n{node.value}++"
+                else:
+                    label += f"Increment\n{node.value}--"
+            elif isinstance(node, AST.PreFixNode):
+                label = f"PreFix"
+                if node.op == 'inc':
+                    label += f"Increment\n++{node.value}"
+                else:
+                    label += f"Increment\n--{node.value}"
             elif isinstance(node, AST.DeclarationNode):
                 for child in node.type:
                     if isinstance(child, AST.PointerNode):
