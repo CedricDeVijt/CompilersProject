@@ -52,13 +52,13 @@ The project is structured as follows:
 To run the compiler, follow the steps below:
 
 - Rendering the AST:
-    `python -m src.main --input input_file.c --render_ast ast_output.dot`
+  `python -m src.main --input input_file.c --render_ast ast_output.dot`
 - Rendering the symbol table:
-    `python -m src.main --input input_file.c --render_symb symb_output.dot`
+  `python -m src.main --input input_file.c --render_symb symb_output.dot`
 - Compile to LLVM:
-    `python -m src.main --input input_file.c --target_llvm output_file.ll`
+  `python -m src.main --input input_file.c --target_llvm output_file.ll`
 - Compile to MIPS:
-    `python -m src.main --input input_file.c --target_mips output_file.mips`
+  `python -m src.main --input input_file.c --target_mips output_file.mips`
 
 ## How to Run the Tests
 
@@ -66,7 +66,8 @@ To run the tests, follow the steps below:
 
 1. Run the shell script by running `./test.sh`
 
-The shell script will run all the tests in the `tests/` directory and print the results to the console.
+The shell script will run all the tests in the `tests/` directory and print the results to the console. The tests from
+project 1 are modified to be compatible with the compiler.
 
 ## Conclusion
 
