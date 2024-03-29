@@ -234,9 +234,9 @@ def run(args):
         elif args.render_symb:
             render_symbol_table(args.input, args.render_symb)
         elif args.target_llvm:
-            compile_llvm(args.input, args.target_llvm, Generator())
+            compile_llvm(args.input, args.target_llvm)
         elif args.target_mips:
-            compile_mips(args.input, args.target_mips, Generator())
+            compile_mips(args.input, args.target_mips)
     else:
         print("No input file provided.")
 
