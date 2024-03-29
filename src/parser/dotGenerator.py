@@ -104,7 +104,7 @@ class DotGenerator:
     def generateSymbolTableDot(symbol_table_tree, output_filename, format="dot"):
         dot = Digraph()
         DotGenerator._generateSymbolTableDot(dot, symbol_table_tree.root)
-        dot.render(output_filename, view=True, format=format)
+        dot.render(output_filename, view=True, format='png')
         # remove the temporary file created by the render method
         os.remove(f"{output_filename}")
 
@@ -126,6 +126,9 @@ class DotGenerator:
         # Create a label for the symbol table node
         label = ""
         for symbol in symbol_table.symbols.values():
-            label += f"{symbol.type}, {symbol.const}, {symbol.name}\l"
+            if not symbol.const:
+                label += f"{symbol.type} {symbol.name}\n"
+            else:
+                label += f"const {symbol.type} {symbol.name}\n"
         return label
 
