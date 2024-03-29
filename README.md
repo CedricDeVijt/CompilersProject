@@ -53,6 +53,8 @@ To run the compiler, follow the steps below:
 
 - Rendering the AST:
   `python -m src.main --input input_file.c --render_ast ast_output.dot`
+- - Rendering the AST as png:
+  `python -m src.main --input input_file.c --render_ast_png ast_output.dot`
 - Rendering the symbol table:
   `python -m src.main --input input_file.c --render_symb symb_output.dot`
 - Compile to LLVM:
