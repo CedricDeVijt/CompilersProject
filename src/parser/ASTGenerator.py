@@ -339,7 +339,8 @@ class ASTGenerator(Visitor):
         if literal.startswith("\'"):
             for i in literal:
                 if i.isalnum():
-                    literal = ord(i)
+                    node = CharNode(i, ctx.start.line, ctx.start.column)
+                    return node
         if float(literal) % 1 == 0:
             node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
             return node

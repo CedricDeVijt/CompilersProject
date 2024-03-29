@@ -337,6 +337,11 @@ class DefinitionNode(Node):
         self.rvalue = rvalue
 
 
+class CharNode(Node):
+    def __init__(self, value, line: int, pos: int, children=None):
+        super().__init__(value, line, pos, children=children)
+
+
 class IntNode(Node):
     def __init__(self, value, line: int, pos: int, children=None):
         super().__init__(value, line, pos, children=children)
