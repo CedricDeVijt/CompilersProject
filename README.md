@@ -57,6 +57,8 @@ To run the compiler, follow the steps below:
   `python -m src.main --input input_file.c --render_ast_png ast_output.dot`
 - Rendering the symbol table:
   `python -m src.main --input input_file.c --render_symb symb_output.dot`
+- Rendering the symbol table as png:
+  `python -m src.main --input input_file.c --render_symb_png symb_output.dot`
 - Compile to LLVM:
   `python -m src.main --input input_file.c --target_llvm output_file.ll`
 - Compile to MIPS:
