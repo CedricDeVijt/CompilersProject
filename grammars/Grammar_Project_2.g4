@@ -18,7 +18,8 @@ statement: rvalue SEMICOLON+
          | postFixDecrement SEMICOLON+
          | preFixIncrement SEMICOLON+
          | preFixDecrement SEMICOLON+
-         | comment;
+         | comment
+         | scope;
 
 variables: lvalue '=' rvalue SEMICOLON+
          | lvalue SEMICOLON+;
