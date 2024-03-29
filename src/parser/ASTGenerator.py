@@ -78,6 +78,20 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             if line.getText() == ";":
                 pass
+            else:
+                child = self.visit(line)
+                if isinstance(child, list):
+                    children.extend(child)
+                else:
+                    children.append(child)
+        node = children[0]
+        return node
+
+    def visitVariables(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            if line.getText() == ";":
+                pass
             elif line.getText() == "=":
                 children.append(line.getText())
             else:
@@ -86,123 +100,126 @@ class ASTGenerator(Visitor):
                     children.extend(child)
                 else:
                     children.append(child)
-        if len(children) >= 2:
-            # Ends with type + identifier -> declaration.
-            if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
-                identifier = children[len(children) - 1].value
+        # Ends with type + identifier -> declaration.
+        if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
+            identifier = children[len(children) - 1].value
+            var_type = children[len(children) - 2]
+            const = len(children) > 2
+
+            if isinstance(children[len(children) - 2], PointerNode):
                 var_type = children[len(children) - 2]
-                const = len(children) > 2
 
-                if isinstance(children[len(children) - 2], PointerNode):
-                    var_type = children[len(children) - 2]
+            # Check if variable already declared in current scope.
+            if self.scope.get_symbol(identifier) is not None:
+                raise Exception("Variable \'" + identifier + "\' already declared!")
+            else:
+                symbol = Symbol(name=identifier, varType=var_type, const=const)
+                self.scope.add_symbol(symbol)
+                node = DeclarationNode(ctx.start.line, ctx.start.column, children[:len(children) - 1], children[len(children) - 1])
+                return node
 
-                # Check if variable already declared in current scope.
-                if self.scope.get_symbol(identifier) is not None:
-                    raise Exception("Variable \'" + identifier + "\' already declared!")
-                else:
-                    symbol = Symbol(name=identifier, varType=var_type, const=const)
-                    self.scope.add_symbol(symbol)
-                    node = DeclarationNode(ctx.start.line, ctx.start.column, children[:len(children) - 1], children[len(children) - 1])
-                    return node
-
-            # assignment or definition
-            if children.__contains__("="):
-                node = children[children.index("=") + 1]
-                if isinstance(node, IntNode) or isinstance(node, FloatNode):
-                    node = node.value
-                identifier = children[children.index("=") - 1].value
-                # "=" is second character -> assignment and no definition.
-                if children.index("=") == 1:
-                    if self.scope.lookup(identifier) is None:
-                        raise Exception("Variable \'" + identifier + "\' not declared yet!")
-                    else:
-                        lval = self.scope.lookup(identifier)
-                        lvalPointer = 0
-                        rvalPointer = 0
-                        if isinstance(lval.type, PointerNode):
-                            lvalPointer = int(lval.type.value)
-                        rval = node
-                        if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
-                            if isinstance(rval, AddrNode):
-                                if not self.scope.lookup(rval.value.value):
-                                    raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
-                                rvalType = self.scope.lookup(rval.value.value).type
-                                if isinstance(rvalType, PointerNode):
-                                    rvalPointer = int(rvalType.value) + 1
-                                else:
-                                    rvalPointer = 1
-                            else:
-                                if not self.scope.lookup(rval.value):
-                                    raise Exception("Variable \'" + rval.value + "\' not declared yet!")
-                                rvalType = self.scope.lookup(rval.value).type
-                                if isinstance(rvalType, PointerNode):
-                                    rvalPointer = int(rvalType.value)
-                        if isinstance(rval, DerefNode):
-                            if not self.scope.lookup(rval.identifier.value):
-                                raise Exception("Variable \'" + rval.identifier.value + "\' not declared yet!")
-                            rvalType = self.scope.lookup(rval.identifier.value).type
-                            if isinstance(rvalType, PointerNode):
-                                rvalPointer = int(rvalType.value) - int(rval.value)
-                            else:
-                                raise Exception("Cannot dereference non-pointer type!")
-                        if lvalPointer != rvalPointer:
-                            raise Exception("Pointer type mismatch!")
-                        # If variable is constant --> error. Otherwise set value.
-                        if self.scope.lookup(identifier).const:
-                            raise Exception("Variable \'" + identifier + "\' is constant!")
+        # assignment or definition
+        if children.__contains__("="):
+            node = children[children.index("=") + 1]
+            if isinstance(node, IntNode) or isinstance(node, FloatNode):
+                node = node.value
+            identifier = children[children.index("=") - 1].value
+            if isinstance(children[children.index("=") - 1], DerefNode):
+                identifier = children[children.index("=") - 1].identifier.value
+            # "=" is second character -> assignment and no definition.
+            if children.index("=") == 1:
+                if self.scope.lookup(identifier) is None:
+                    raise Exception("Variable \'" + identifier + "\' not declared yet!")
+                lval = self.scope.lookup(identifier)
+                lvalPointer = 0
+                rvalPointer = 0
+                if isinstance(lval.type, PointerNode):
+                    lvalPointer = int(lval.type.value)
+                if isinstance(children[0], DerefNode):
+                    if not self.scope.lookup(lval.name):
+                        raise Exception("Variable \'" + str(lval.name) + "\' not declared yet!")
+                    if not isinstance(self.scope.lookup(lval.name).type, PointerNode):
+                        raise Exception("Cannot dereference non-pointer type!")
+                    lvalPointer = int(self.scope.lookup(lval.name).type.value) - int(lval.type.value)
+                rval = node
+                if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
+                    if isinstance(rval, AddrNode):
+                        if not self.scope.lookup(rval.value.value):
+                            raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
+                        rvalType = self.scope.lookup(rval.value.value).type
+                        if isinstance(rvalType, PointerNode):
+                            rvalPointer = int(rvalType.value) + 1
                         else:
-                            self.scope.lookup(identifier).value = node
-                            node = AssignmentNode(ctx.start.line, ctx.start.column, children[0], children[2])
-                            return node
-                else:
-                    # "=" is not second character -> definition.
-                    if self.scope.lookup(identifier) is not None:
-                        raise Exception(
-                            "Variable \'" + identifier + "\' already declared!")
+                            rvalPointer = 1
                     else:
-                        var_type = children[children.index("=") - 2].value
-                        if isinstance(children[children.index("=") - 2], PointerNode):
-                            var_type = children[children.index("=") - 2]
-                        const = len(children) > 4
-                        value = node
-                        symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
-                        lval = symbol
-                        lvalPointer = 0
-                        rvalPointer = 0
-                        if isinstance(lval.type, PointerNode):
-                            lvalPointer = int(lval.type.value)
-                        rval = node
-                        if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
-                            if isinstance(rval, AddrNode):
-                                if not self.scope.lookup(rval.value.value):
-                                    raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
-                                rvalType = self.scope.lookup(rval.value.value).type
-                                if isinstance(rvalType, PointerNode):
-                                    rvalPointer = int(rvalType.value) + 1
-                                else:
-                                    rvalPointer = 1
-                            else:
-                                if not self.scope.lookup(rval.value):
-                                    raise Exception("Variable \'" + rval.value + "\' not declared yet!")
-                                rvalType = self.scope.lookup(rval.value).type
-                                if isinstance(rvalType, PointerNode):
-                                    rvalPointer = int(rvalType.value)
-                        if isinstance(rval, DerefNode):
-                            if not self.scope.lookup(rval.identifier.value):
-                                raise Exception("Variable \'" + rval.identifier.value + "\' not declared yet!")
-                            rvalType = self.scope.lookup(rval.identifier.value).type
+                        if not self.scope.lookup(rval.value):
+                            raise Exception("Variable \'" + rval.value + "\' not declared yet!")
+                        rvalType = self.scope.lookup(rval.value).type
+                        if isinstance(rvalType, PointerNode):
+                            rvalPointer = int(rvalType.value)
+                if isinstance(rval, DerefNode):
+                    if not self.scope.lookup(rval.identifier.value):
+                        raise Exception("Variable \'" + rval.identifier.value + "\' not declared yet!")
+                    rvalType = self.scope.lookup(rval.identifier.value).type
+                    if isinstance(rvalType, PointerNode):
+                        rvalPointer = int(rvalType.value) - int(rval.value)
+                    else:
+                        raise Exception("Cannot dereference non-pointer type!")
+                if lvalPointer != rvalPointer:
+                    raise Exception("Pointer type mismatch!")
+                # If variable is constant --> error. Otherwise set value.
+                if self.scope.lookup(identifier).const:
+                    raise Exception("Variable \'" + identifier + "\' is constant!")
+                else:
+                    self.scope.lookup(identifier).value = node
+                    node = AssignmentNode(ctx.start.line, ctx.start.column, children[0], children[2])
+                    return node
+            else:
+                # "=" is not second character -> definition.
+                if self.scope.lookup(identifier) is not None:
+                    raise Exception(
+                        "Variable \'" + identifier + "\' already declared!")
+                else:
+                    var_type = children[children.index("=") - 2].value
+                    if isinstance(children[children.index("=") - 2], PointerNode):
+                        var_type = children[children.index("=") - 2]
+                    const = len(children) > 4
+                    value = node
+                    symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
+                    lval = symbol
+                    lvalPointer = 0
+                    rvalPointer = 0
+                    if isinstance(lval.type, PointerNode):
+                        lvalPointer = int(lval.type.value)
+                    rval = node
+                    if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
+                        if isinstance(rval, AddrNode):
+                            if not self.scope.lookup(rval.value.value):
+                                raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
+                            rvalType = self.scope.lookup(rval.value.value).type
                             if isinstance(rvalType, PointerNode):
-                                rvalPointer = int(rvalType.value) - int(rval.value)
+                                rvalPointer = int(rvalType.value) + 1
                             else:
-                                raise Exception("Cannot dereference non-pointer type!")
-                        if lvalPointer != rvalPointer:
-                            raise Exception("Pointer type mismatch!")
-                        self.scope.add_symbol(symbol)
-                        node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children)-3], children[children.index("=") - 1], children[children.index("=") + 1])
-                        return node
-
-        node = children[0]
-        return node
+                                rvalPointer = 1
+                        else:
+                            if not self.scope.lookup(rval.value):
+                                raise Exception("Variable \'" + rval.value + "\' not declared yet!")
+                            rvalType = self.scope.lookup(rval.value).type
+                            if isinstance(rvalType, PointerNode):
+                                rvalPointer = int(rvalType.value)
+                    elif isinstance(rval, DerefNode):
+                        if not self.scope.lookup(rval.identifier.value):
+                            raise Exception("Variable \'" + rval.identifier.value + "\' not declared yet!")
+                        rvalType = self.scope.lookup(rval.identifier.value).type
+                        if isinstance(rvalType, PointerNode):
+                            rvalPointer = int(rvalType.value) - int(rval.value)
+                        else:
+                            raise Exception("Cannot dereference non-pointer type!")
+                    if lvalPointer != rvalPointer:
+                        raise Exception("Pointer type mismatch!")
+                    self.scope.add_symbol(symbol)
+                    node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children) - 3], children[children.index("=") - 1], children[children.index("=") + 1])
+                    return node
 
     def visitLvalue(self, ctx):
         children = []

@@ -1,7 +1,4 @@
 int main() {
-    int*** x;
-    int* y = **x;
-    /* test
-    test
-    test */
+    int* x;
+    *x = 5;
 }
