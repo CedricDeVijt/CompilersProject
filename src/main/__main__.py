@@ -1,21 +1,19 @@
 import sys
-import os
 
 import antlr4
 from antlr4.error.ErrorListener import ErrorListener
 
+import src.parser.AST as AST
 from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
 from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
-
-import src.parser.AST as AST
-
 from src.parser.ASTGenerator import ASTGenerator as Generator
 from src.parser.dotGenerator import DotGenerator
 
-class ThrowingErrorListener(ErrorListener):
 
+class ThrowingErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         raise SyntaxError(f"Syntax error at line {line}:{column}")
+
 
 def generate_ast(path, visitor):
     input_stream = antlr4.FileStream(path)
@@ -30,16 +28,14 @@ def generate_ast(path, visitor):
         ast = visit[0]
         symbolTable = visit[1]
         ast.constantFold()
-        DotGenerator.generateDotImage(AST_tree=ast, output_filename="ast")
+        return ast, symbolTable
     except Exception as e:
-        raise Exception(e)
         print(e)
-        return None
-    return ast
+        return None, None
 
 
 def compile_llvm(input_file, visitor):
-    ast = generate_ast(input_file, visitor)
+    ast, symbol_table = generate_ast(input_file, visitor)
     if ast is None:
         print("Failed to generate AST.")
         return
@@ -51,7 +47,7 @@ def compile_llvm(input_file, visitor):
         llvm_file.write("source_filename = \"output.ll\"\n")
         llvm_file.write("\n")
 
-        generateLLVMcode(ast, llvm_file, {})
+        generateLLVMcode(ast, llvm_file, symbol_table)
 
 
 def generateLLVMcode(node, llvm_file, symbol_table):
@@ -71,7 +67,7 @@ def generateLLVMcode(node, llvm_file, symbol_table):
             # Get variable name, value, and type from node
             var_name = f"%{node.lvalue.value}"
             value = node.rvalue.value
-            c_type = "" # type as in c code
+            c_type = ""  # type as in c code
             if node.type[0].value == "int":
                 var_type = 'i32'
             elif node.type[0].value == "float":
@@ -86,9 +82,9 @@ def generateLLVMcode(node, llvm_file, symbol_table):
                 else:
                     var_type = symbol_table[f"%{value.value}"]
                     c_type = var_type
-                    if(c_type == "i32"):
+                    if (c_type == "i32"):
                         c_type = "int"
-                    elif(c_type == "i8"):
+                    elif (c_type == "i8"):
                         c_type = "char"
                 for i in range(int(node.type[0].value)):
                     if i != 0:
@@ -160,38 +156,57 @@ def generateLLVMcode(node, llvm_file, symbol_table):
             pass
 
 
-
 def compile_mips(input_file, visitor):
-    ast = generate_ast(input_file, visitor)
-    # TODO: CONVERT TO MIPS
-    raise Exception("NOT IMPLEMENTED YET!")
+    # Implement MIPS compilation
+    pass
 
 
-def run(language, path):
-    visitor = Generator()
-    if os.path.isdir(path):
-        # compile all in directory
-        print('directory')
-        if language == 'LLVM':
-            print('LLVM')
-            return
-        print('MIPS')
-        return
-    print('file')
-    if language == "LLVM":
-        print('LLVM')
-        compile_llvm(path, visitor)
-        return
-    print('MIPS')
-    compile_mips(path, visitor)
+def render_ast(input_file, output_file):
+    ast, _ = generate_ast(input_file, Generator())
+    if ast is not None:
+        DotGenerator.generateDot(AST_tree=ast, output_filename=output_file)
+
+
+def render_ast_png(input_file, output_file):
+    ast, _ = generate_ast(input_file, Generator())
+    if ast is not None:
+        DotGenerator.generateDot(AST_tree=ast, output_filename=output_file, format='png')
+
+
+def render_symbol_table(input_file, output_file):
+    # Implement symbol table rendering
+    pass
+
+
+def run(args):
+    if args.input:
+        if args.render_ast:
+            render_ast(args.input, args.render_ast)
+        elif args.render_ast_png:
+            render_ast_png(args.input, args.render_ast_png)
+        elif args.render_symb:
+            render_symbol_table(args.input, args.render_symb)
+        elif args.target_llvm:
+            compile_llvm(args.input, args.target_llvm, Generator())
+        elif args.target_mips:
+            compile_mips(args.input, args.target_mips, Generator())
+    else:
+        print("No input file provided.")
 
 
 def main(argv):
-    arg_len = 2
-    if len(argv) != arg_len+1 or (argv[1] != 'LLVM' and argv[1] != 'MIPS') or not (os.path.isdir(argv[2]) or os.path.isfile(argv[2])):
-        print('Usage: test.py [\'LLVM\' | \'MIPS\'] [INPUT_FILE | INPUT_DIRECTORY]')
-        exit(1)
-    run(argv[1], argv[2])
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Your program description here")
+    parser.add_argument("--input", help="Input C file")
+    parser.add_argument("--render_ast", help="Render AST to DOT file")
+    parser.add_argument("--render_ast_png", help="Render AST to DOT png file")
+    parser.add_argument("--render_symb", help="Render symbol table to DOT file")
+    parser.add_argument("--target_llvm", help="Compile to LLVM output file")
+    parser.add_argument("--target_mips", help="Compile to MIPS output file")
+    args = parser.parse_args(argv[1:])
+
+    run(args)
 
 
 if __name__ == '__main__':

@@ -1,17 +1,28 @@
 from graphviz import Digraph
 
 import src.parser.AST as AST
+import os
 
 
 class DotGenerator:
     @staticmethod
-    def generateDotImage(AST_tree, output_filename):
+    def generateDot(AST_tree, output_filename, format="dot"):
         """
         Generate a dot image from the AST and save it to a file.
         """
         dot = Digraph()
         DotGenerator._generateDotImage(dot, AST_tree)
-        dot.render(output_filename, view=True, format='png')
+
+        # remove ".dot" from the output filename if it is present
+        if output_filename.endswith(".dot") or output_filename.endswith(".png"):
+            output_filename = output_filename[:-4]
+
+        dot.render(output_filename, view=True, format=format)
+
+        # remove the temporary file created by the render method
+
+        os.remove(f"{output_filename}")
+
 
     @staticmethod
     def _generateDotImage(dot, node):
