@@ -23,13 +23,13 @@ process_file() {
     $MAIN_SCRIPT --input "$input_file" --render_ast "$ast_output"
 
     # Rendering the symbol table
-     $MAIN_SCRIPT --input "$input_file" --render_symb "$symb_output"
+    $MAIN_SCRIPT --input "$input_file" --render_symb "$symb_output"
 
     # Compile to LLVM
-     $MAIN_SCRIPT --input "$input_file" --target_llvm "$llvm_output"
+    $MAIN_SCRIPT --input "$input_file" --target_llvm "$llvm_output"
 
     # Compile to MIPS
-     $MAIN_SCRIPT --input "$input_file" --target_mips "$mips_output"
+    $MAIN_SCRIPT --input "$input_file" --target_mips "$mips_output"
 }
 
 # Recursive function to process files in a directory
