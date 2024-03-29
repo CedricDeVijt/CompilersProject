@@ -23,7 +23,7 @@
 - [x] (**mandatory**) Explicit conversions
 - [x] (**mandatory**) Pointer arithmetic
 - [x] (**mandatory**) Increment/Decrement Operations
-- [ ] (**optional**) Const casting
+- [x] (**optional**) Const casting
 
 - [ ] (**mandatory**) Implicit conversions of a richer to a poorer type should cause a compiler warning indicating
   possible loss of information.
