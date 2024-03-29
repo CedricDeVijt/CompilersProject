@@ -347,7 +347,8 @@ class FloatNode(Node):
         super().__init__(value, line, pos, children=children)
 
 
-class ImplicitConversionNode(Node):
+class ExplicitConversionNode(Node):
     def __init__(self, line: int, pos: int, type: str):
-        super().__init__("ImplicitConversion", line, pos, children=None)
+        super().__init__("ExplicitConversion", line, pos, children=None)
         self.type = type
+

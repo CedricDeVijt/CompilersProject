@@ -345,10 +345,10 @@ class ASTGenerator(Visitor):
         node = FloatNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
 
-    def visitImplicitConversion(self, ctx):
+    def visitExplicitConversion(self, ctx):
         children = []
         for line in ctx.getChildren():
             children.append(line)
         type = children[1].getText()
-        node = ImplicitConversionNode(ctx.start.line, ctx.start.column, type)
+        node = ExplicitConversionNode(ctx.start.line, ctx.start.column, type)
         return node
