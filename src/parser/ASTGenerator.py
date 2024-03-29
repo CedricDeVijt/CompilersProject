@@ -289,7 +289,7 @@ class ASTGenerator(Visitor):
             node = ProgramNode(0, 0)
             match str(lines[1]):
                 case "/":
-                    if int(self.visit(lines[2]).value) == 0:
+                    if not isinstance(self.visit(lines[2]).value, str) and int(self.visit(lines[2]).value) == 0:
                         raise Exception("Division by zero!")
                     node = DivNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "%":
@@ -317,16 +317,13 @@ class ASTGenerator(Visitor):
                 case ">>":
                     node = SRNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "&":
-                    node = BitwiseAndNode(ctx.start.line, ctx.start.column,
-                                          [self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "|":
                     node = BitwiseOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "^":
-                    node = BitwiseXorNode(ctx.start.line, ctx.start.column,
-                                          [self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseXorNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "&&":
-                    node = LogicalAndNode(ctx.start.line, ctx.start.column,
-                                          [self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "||":
                     node = LogicalOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
             return node
