@@ -3,12 +3,11 @@ import sys
 import antlr4
 from antlr4.error.ErrorListener import ErrorListener
 
-import src.parser.AST as AST
 from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
 from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
+from src.llvm_target.toLLVM import generateLLVMcode
 from src.parser.ASTGenerator import ASTGenerator as Generator
 from src.parser.dotGenerator import DotGenerator
-from src.llvm_target.toLLVM import generateLLVMcode
 
 
 class ThrowingErrorListener(ErrorListener):
@@ -39,7 +38,6 @@ def generate_ast(path, visitor):
     for error in errors:
         err_str += f"Error at {error}\n"
     raise Exception(err_str)
-
 
 
 def compile_llvm(input_file, visitor, output_file):
