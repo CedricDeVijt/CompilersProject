@@ -23,16 +23,17 @@ def generate_ast(path, visitor):
     parser = Parser(stream)
     parser.addErrorListener(ThrowingErrorListener())  # Add the custom listener
     tree = parser.program()
-
-    try:
-        visit = visitor.visit(tree)
-        ast = visit[0]
-        symbolTable = visit[1]
+    genAST = visitor.visit(tree)
+    ast = genAST.node
+    symbolTable = genAST.scope
+    errors = genAST.errors
+    if len(errors) == 0:
         ast.constantFold()
         return ast, symbolTable
-    except Exception as e:
-        print(e)
-        return None, None
+    err_str = ''
+    for error in errors:
+        err_str += f"Error: {error}\n"
+    raise Exception(err_str)
 
 
 
