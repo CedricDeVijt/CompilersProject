@@ -47,14 +47,20 @@ The project is structured as follows:
 - `TODO.md` contains the requirements for the project
 - `COMPILER.md` contains information on how to run the compiler
 
+## ANTLR Grammar
+
+The ANTLR grammar can be found in the `src/grammar` directory. The grammar is defined in the `Grammar.g4` file. The
+grammar defines the syntax of the `C` language and is used by the ANTLR parser to generate the AST.
+
 ## How to Run the Compiler
 
 To run the compiler, follow the steps below:
 
 - Rendering the AST:
   `python -m src.main --input input_file.c --render_ast ast_output.dot`
-- - Rendering the AST as png:
-  `python -m src.main --input input_file.c --render_ast_png ast_output.dot`
+-
+    - Rendering the AST as png:
+      `python -m src.main --input input_file.c --render_ast_png ast_output.dot`
 - Rendering the symbol table:
   `python -m src.main --input input_file.c --render_symb symb_output.dot`
 - Rendering the symbol table as png:
