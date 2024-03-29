@@ -130,8 +130,22 @@ def generateLLVMcode(node, llvm_file, symbol_table):
                 llvm_file.write(f"    {var_name}_dec = sub {var_type} {var_name}_val, 1\n")
                 llvm_file.write(f"    store {var_type} {var_name}_dec, {var_type}* {var_name}\n\n")
         elif isinstance(node, AST.CommentNode):
-            comment = node.value[3:]
-            llvm_file.write(f"    ; {comment}\n")
+            # Multiline comments
+            if node.value[1] == '*':
+                comments = []
+                comment = node.value[3:-6]
+                c = ""
+                for i in comment:
+                    if i == '\n':
+                        llvm_file.write(f"    ; {c}\n")
+                        c = ""
+                    elif i != ' ':
+                        c += i
+                llvm_file.write("\n")
+            # Single line comments
+            else:
+                comment = node.value[3:]
+                llvm_file.write(f"    ; {comment}\n")
         elif isinstance(node, AST.IdentifierNode):
             # No action needed for identifiers in LLVM code generation
             pass
