@@ -10,6 +10,7 @@ class ASTGenerator(Visitor):
     def __init__(self):
         self.scope = SymbolTableTree()
         self.errors = []
+        self.warnings = []
         self.node = None
 
     def visitProgram(self, ctx):
@@ -89,7 +90,7 @@ class ASTGenerator(Visitor):
 
             # Check if variable already declared in current scope.
             if self.scope.get_symbol(identifier) is not None:
-                self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
                 return None
             else:
                 symbol = Symbol(name=identifier, varType=var_type, const=const)
@@ -108,10 +109,10 @@ class ASTGenerator(Visitor):
             # "=" is second character -> assignment and no definition.
             if children.index("=") == 1:
                 if self.scope.lookup(identifier) is None:
-                    self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
                     return None
                 if self.scope.lookup(identifier).const and isinstance(children[0], DerefNode):
-                    self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Pointer \'" + identifier + "\' is constant!")
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer \'" + identifier + "\' is constant!")
                     return None
                 lval = self.scope.lookup(identifier)
                 lvalPointer = 0
@@ -120,17 +121,17 @@ class ASTGenerator(Visitor):
                     lvalPointer = int(lval.type.value)
                 if isinstance(children[0], DerefNode):
                     if not self.scope.lookup(lval.name):
-                        self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + str(lval.name) + "\' not declared yet!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + str(lval.name) + "\' not declared yet!")
                         return None
                     if not isinstance(self.scope.lookup(lval.name).type, PointerNode):
-                        self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
                         return None
                     lvalPointer = int(self.scope.lookup(lval.name).type.value) - int(lval.type.value)
                 rval = node
                 if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
                     if isinstance(rval, AddrNode):
                         if not self.scope.lookup(rval.value.value):
-                            self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value.value + "\' not declared yet!")
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value.value + "\' not declared yet!")
                             return None
                         rvalType = self.scope.lookup(rval.value.value).type
                         if isinstance(rvalType, PointerNode):
@@ -139,27 +140,27 @@ class ASTGenerator(Visitor):
                             rvalPointer = 1
                     else:
                         if not self.scope.lookup(rval.value):
-                            self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
                             return None
                         rvalType = self.scope.lookup(rval.value).type
                         if isinstance(rvalType, PointerNode):
                             rvalPointer = int(rvalType.value)
                 if isinstance(rval, DerefNode):
                     if not self.scope.lookup(rval.identifier.value):
-                        self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
                         return None
                     rvalType = self.scope.lookup(rval.identifier.value).type
                     if isinstance(rvalType, PointerNode):
                         rvalPointer = int(rvalType.value) - int(rval.value)
                     else:
-                        self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
                         return None
                 if lvalPointer != rvalPointer:
-                    self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
                     return None
                 # If variable is constant --> error. Otherwise set value.
                 if self.scope.lookup(identifier).const and not isinstance(self.scope.lookup(identifier).type, PointerNode):
-                    self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' is constant!")
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' is constant!")
                     return None
                 else:
                     self.scope.lookup(identifier).value = node
@@ -168,7 +169,7 @@ class ASTGenerator(Visitor):
             else:
                 # "=" is not second character -> definition.
                 if self.scope.get_symbol(identifier) is not None:
-                    self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
                     return None
                 else:
                     var_type = children[children.index("=") - 2].value
@@ -187,7 +188,7 @@ class ASTGenerator(Visitor):
                     if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
                         if isinstance(rval, AddrNode):
                             if not self.scope.get_symbol(rval.value.value):
-                                self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value.value + "\' not declared yet!")
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value.value + "\' not declared yet!")
                                 return None
                             rvalType = self.scope.get_symbol(rval.value.value).type
                             if isinstance(rvalType, PointerNode):
@@ -196,23 +197,23 @@ class ASTGenerator(Visitor):
                                 rvalPointer = 1
                         else:
                             if not self.scope.get_symbol(rval.value):
-                                self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
                                 return None
                             rvalType = self.scope.get_symbol(rval.value).type
                             if isinstance(rvalType, PointerNode):
                                 rvalPointer = int(rvalType.value)
                     elif isinstance(rval, DerefNode):
                         if not self.scope.get_symbol(rval.identifier.value):
-                            self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
                             return None
                         rvalType = self.scope.get_symbol(rval.identifier.value).type
                         if isinstance(rvalType, PointerNode):
                             rvalPointer = int(rvalType.value) - int(rval.value)
                         else:
-                            self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
                             return None
                     if lvalPointer != rvalPointer:
-                        self.errors.append(f"Line: {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
                         return None
                     self.scope.add_symbol(symbol)
                     node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children) - 3], children[children.index("=") - 1], children[children.index("=") + 1])
