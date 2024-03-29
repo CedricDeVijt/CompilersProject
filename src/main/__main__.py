@@ -15,8 +15,10 @@ from src.parser.dotGenerator import DotGenerator
 def generate_ast(path, visitor):
     input_stream = antlr4.FileStream(path)
     lexer = Lexer(input_stream)
+    lexer.addErrorListener(antlr4.error.ErrorListener.ConsoleErrorListener())
     stream = antlr4.CommonTokenStream(lexer)
     parser = Parser(stream)
+    parser.addErrorListener(antlr4.error.ErrorListener.ConsoleErrorListener())
     tree = parser.program()
 
     try:

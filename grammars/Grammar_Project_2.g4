@@ -1,7 +1,7 @@
 grammar Grammar_Project_2;
 
 // parser rules
-program: comment* main+ comment*;
+program: (comment | variables)* main (comment | variables)*;
 
 programLine: programLine programLine
            | comment
@@ -111,7 +111,7 @@ LOGICAL_OR: '||';
 LOGICAL_NOT: '!';
 
 SEMICOLON: ';';
-INT: [1-9][0-9]*;
+INT:  '0' | [1-9][0-9]*;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
 CHAR : '\'' [a-zA-Z0-9] '\'' ;
 

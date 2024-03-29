@@ -5,36 +5,6 @@ from src.parser.AST import *
 from src.parser.SymbolTable import SymbolTableTree, Symbol
 
 
-def removeVariable(symbolTable, node):
-    if isinstance(node, Node):
-        children = [node]
-        i = 0
-        while i < len(children):
-            for child in children[i].children:
-                children.append(child)
-            if isinstance(children[i], IdentifierNode):
-                var = symbolTable.lookup(children[i].value)
-                if var is None:
-                    raise Exception("Variable \'" + children[i].value + "\' not declared!")
-                if isinstance(var.value, int) or isinstance(var.value, str):
-                    val = str(var.value).strip('\'')
-                    if val.isalnum():
-                        children[i].__class__ = IntNode
-                        children[i].value = var.value
-                        children[i].children = []
-                    else:
-                        children[i].__class__ = FloatNode
-                        children[i].value = var.value
-                        children[i].children = []
-                else:
-                    children[i].__class__ = type(var.value)
-                    children[i].children = var.value.children
-                    children[i].value = var.value
-            i += 1
-        a = 5
-        pass
-
-
 class ASTGenerator(Visitor):
 
     def __init__(self):
@@ -45,9 +15,13 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             node = self.visit(line)
             if node is not None:
-                children.append(node)
+                if isinstance(node, list):
+                    children.extend(node)
+                else:
+                    children.append(node)
         node = ProgramNode(ctx.start.line, ctx.start.column, children)
         return [node, self.scope]
+
 
     def visitMain(self, ctx):
         children = []
@@ -176,7 +150,7 @@ class ASTGenerator(Visitor):
                     return node
             else:
                 # "=" is not second character -> definition.
-                if self.scope.lookup(identifier) is not None:
+                if self.scope.get_symbol(identifier) is not None:
                     raise Exception(
                         "Variable \'" + identifier + "\' already declared!")
                 else:
@@ -194,23 +168,23 @@ class ASTGenerator(Visitor):
                     rval = node
                     if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
                         if isinstance(rval, AddrNode):
-                            if not self.scope.lookup(rval.value.value):
+                            if not self.scope.get_symbol(rval.value.value):
                                 raise Exception("Variable \'" + rval.value.value + "\' not declared yet!")
-                            rvalType = self.scope.lookup(rval.value.value).type
+                            rvalType = self.scope.get_symbol(rval.value.value).type
                             if isinstance(rvalType, PointerNode):
                                 rvalPointer = int(rvalType.value) + 1
                             else:
                                 rvalPointer = 1
                         else:
-                            if not self.scope.lookup(rval.value):
+                            if not self.scope.get_symbol(rval.value):
                                 raise Exception("Variable \'" + rval.value + "\' not declared yet!")
-                            rvalType = self.scope.lookup(rval.value).type
+                            rvalType = self.scope.get_symbol(rval.value).type
                             if isinstance(rvalType, PointerNode):
                                 rvalPointer = int(rvalType.value)
                     elif isinstance(rval, DerefNode):
-                        if not self.scope.lookup(rval.identifier.value):
+                        if not self.scope.get_symbol(rval.identifier.value):
                             raise Exception("Variable \'" + rval.identifier.value + "\' not declared yet!")
-                        rvalType = self.scope.lookup(rval.identifier.value).type
+                        rvalType = self.scope.get_symbol(rval.identifier.value).type
                         if isinstance(rvalType, PointerNode):
                             rvalPointer = int(rvalType.value) - int(rval.value)
                         else:
