@@ -14,38 +14,37 @@ def generateLLVMcode(node, llvm_file, symbol_table):
             llvm_file.write("    ret i32 0\n")
             llvm_file.write("}\n")
         elif isinstance(node, AST.DefinitionNode):
-            if node.rvalue.value.isalpha():
-                operation(node, llvm_file, symbol_table)
+            pointer = False
+            # Get variable name, value, and type from node
+            var_name = f"%{node.lvalue.value}"
+            value = node.rvalue.value
+            c_type = ""  # type as in c code
+            if node.type[0].value == "int":
+                var_type = 'i32'
+            elif node.type[0].value == "float":
+                var_type = 'float'
+            elif node.type[0].value == "char":
+                var_type = 'i8'
+                value = ord(value[1])
             else:
-                pointer = False
-                # Get variable name, value, and type from node
-                var_name = f"%{node.lvalue.value}"
-                value = node.rvalue.value
-                c_type = "" # type as in c code
-                if node.type[0].value == "int":
-                    var_type = 'i32'
-                elif node.type[0].value == "float":
-                    var_type = 'float'
-                elif node.type[0].value == "char":
-                    var_type = 'i8'
-                    value = ord(value[1])
+                # Handle pointers
+                if isinstance(value, str):
+                    var_type = symbol_table[f"%{value}"]
                 else:
-                    # Handle pointers
-                    if isinstance(value, str):
-                        var_type = symbol_table[f"%{value}"]
-                    else:
-                        var_type = symbol_table[f"%{value.value}"]
-                        c_type = var_type
-                        if c_type == "i32":
-                            c_type = "int"
-                        elif c_type == "i8":
-                            c_type = "char"
-                    for i in range(int(node.type[0].value)):
-                        if i != 0:
-                            var_type += '*'
-                            c_type += '*'
-                    pointer = True
-
+                    var_type = symbol_table[f"%{value.value}"]
+                    c_type = var_type
+                    if c_type == "i32":
+                        c_type = "int"
+                    elif c_type == "i8":
+                        c_type = "char"
+                for i in range(int(node.type[0].value)):
+                    if i != 0:
+                        var_type += '*'
+                        c_type += '*'
+                pointer = True
+            if pointer == False and node.rvalue.value.isalpha():
+                operation(node, llvm_file)
+            else:
                 # Write to output file
                 if pointer:
                     llvm_file.write(f"    {var_name} = alloca {var_type}*")
@@ -110,7 +109,7 @@ def generateLLVMcode(node, llvm_file, symbol_table):
             pass
 
 
-def operation(node, llvm_file, symbol_table):
+def operation(node, llvm_file):
     # load variables for operation
     op = node.rvalue.value
     var_name = node.lvalue.value
@@ -150,3 +149,6 @@ def operation(node, llvm_file, symbol_table):
         y = f"%{y}_val"
     llvm_file.write(f"    %{opText} = {opText} {var_type} {x}, {y}\n")
     llvm_file.write(f"    store {var_type} %{opText}, {var_type}* %{var_name}\n\n")
+
+# target_llvm
+# render_ast_png
