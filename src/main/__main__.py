@@ -1,6 +1,7 @@
 import sys
 
 import antlr4
+from antlr4.error.ErrorListener import ErrorListener
 
 import src.parser.AST as AST
 from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
