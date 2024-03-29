@@ -126,9 +126,15 @@ class DotGenerator:
         # Create a label for the symbol table node
         label = ""
         for symbol in symbol_table.symbols.values():
-            if not symbol.const:
-                label += f"{symbol.type} {symbol.name}\n"
+            if symbol.const:
+                label += "const "
+
+            if isinstance(symbol.type, AST.PointerNode):
+                varType = symbol.type.type[-1].value
+                pointerCount = int(symbol.type.value)
+                label += f"{varType}{'*' * pointerCount} {symbol.name}\n"
             else:
-                label += f"const {symbol.type} {symbol.name}\n"
+                label += f"{symbol.type} {symbol.name}\n"
+
         return label
 
