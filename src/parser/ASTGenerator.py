@@ -82,6 +82,7 @@ class ASTGenerator(Visitor):
 
             if isinstance(children[len(children) - 2], PointerNode):
                 var_type = children[len(children) - 2]
+                const = len(children[0].type) > 1
 
             # Check if variable already declared in current scope.
             if self.scope.get_symbol(identifier) is not None:
@@ -104,6 +105,8 @@ class ASTGenerator(Visitor):
             if children.index("=") == 1:
                 if self.scope.lookup(identifier) is None:
                     raise Exception("Variable \'" + identifier + "\' not declared yet!")
+                if self.scope.lookup(identifier).const and isinstance(children[0], DerefNode):
+                    raise Exception("Pointer \'" + identifier + "\' is constant!")
                 lval = self.scope.lookup(identifier)
                 lvalPointer = 0
                 rvalPointer = 0
@@ -142,7 +145,7 @@ class ASTGenerator(Visitor):
                 if lvalPointer != rvalPointer:
                     raise Exception("Pointer type mismatch!")
                 # If variable is constant --> error. Otherwise set value.
-                if self.scope.lookup(identifier).const:
+                if self.scope.lookup(identifier).const and not isinstance(self.scope.lookup(identifier).type, PointerNode):
                     raise Exception("Variable \'" + identifier + "\' is constant!")
                 else:
                     self.scope.lookup(identifier).value = node
@@ -155,10 +158,11 @@ class ASTGenerator(Visitor):
                         "Variable \'" + identifier + "\' already declared!")
                 else:
                     var_type = children[children.index("=") - 2].value
-                    if isinstance(children[children.index("=") - 2], PointerNode):
-                        var_type = children[children.index("=") - 2]
                     const = len(children) > 4
                     value = node
+                    if isinstance(children[children.index("=") - 2], PointerNode):
+                        var_type = children[children.index("=") - 2]
+                        const = len(var_type.type) > 1
                     symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
                     lval = symbol
                     lvalPointer = 0

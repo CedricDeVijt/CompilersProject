@@ -1,7 +1,7 @@
 int a = 5+5;
 
 int main() {
-    int x = 5+5;
-    5+5;
+    float a = (int)5.5;
+    int* p = &a;
+    *p = a;
 }
-0a;
