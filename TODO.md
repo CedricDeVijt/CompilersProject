@@ -12,14 +12,14 @@
 
 # project 2
 
-- [x] (**mandatory**) Add an int main() { ... }function
+- [x] (**mandatory**) Add an int main() { ... } function
 - [x] (**mandatory**) Extra reserved keywords need to be supported: const, char, int, and float.
 - [x] (**mandatory**) Literals are now no longer limited to integers: literals of any type (integer, floating point,
   character) can now be part of expressions
 - [x] (**mandatory**) Variables
 - [x] (**mandatory**) Pointers
 - [x] (**mandatory**) Constants
-- [ ] (**mandatory**) Implicit conversions
+- [ ] (**mandatory**) Implicit conversions warnings
 - [x] (**mandatory**) Explicit conversions
 - [x] (**mandatory**) Pointer arithmetic
 - [x] (**mandatory**) Increment/Decrement Operations
