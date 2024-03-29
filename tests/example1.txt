@@ -1,9 +1,6 @@
 int a = 5+5;
 
 int main() {
-    char a = '9';
-    int b = 5+a;
-    float c = b+a;
-    b = c;
-    a = b;
+    int a = 5;
+    int b = 6;
 }

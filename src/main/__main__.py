@@ -36,7 +36,7 @@ def generate_ast(path, visitor):
 
 
 
-def compile_llvm(input_file, visitor):
+def compile_llvm(input_file, visitor, output_file):
     ast, symbol_table = generate_ast(input_file, visitor)
     if ast is None:
         print("Failed to generate AST.")
@@ -45,14 +45,14 @@ def compile_llvm(input_file, visitor):
     # Open a file to write LLVM code
     with open('src/llvm_target/output.ll', 'w') as llvm_file:
         # Write LLVM header
-        llvm_file.write("; ModuleID = 'output.ll'\n")
-        llvm_file.write("source_filename = \"output.ll\"\n")
+        llvm_file.write(f"; ModuleID = '{output_file}'\n")
+        llvm_file.write(f"source_filename = \"{output_file}\"\n")
         llvm_file.write("\n")
 
         generateLLVMcode(ast, llvm_file, symbol_table)
 
 
-def compile_mips(input_file, visitor):
+def compile_mips(input_file, visitor, output_file):
     # Implement MIPS compilation
     pass
 
@@ -83,9 +83,9 @@ def run(args):
         elif args.render_symb:
             render_symbol_table(args.input, args.render_symb)
         elif args.target_llvm:
-            compile_llvm(args.input, args.target_llvm)
+            compile_llvm(args.input, Generator(), args.target_llvm)
         elif args.target_mips:
-            compile_mips(args.input, args.target_mips)
+            compile_mips(args.input, Generator(), args.target_mips)
     else:
         print("No input file provided.")
 
