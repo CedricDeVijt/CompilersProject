@@ -65,9 +65,6 @@ rvalue: unaryExpression
       | LPAREN rvalue RPAREN
       | explicitConversion rvalue;
 
-
-rvalueCast:  LPAREN type RPAREN rvalue;
-
 unaryExpression: (PLUS | MINUS)? literal
                | (PLUS MINUS)+ (PLUS)? literal
                | (MINUS PLUS)+ (MINUS)? literal;
