@@ -81,7 +81,7 @@ class ASTGenerator(Visitor):
         # Ends with type + identifier -> declaration.
         if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
             identifier = children[len(children) - 1].value
-            var_type = children[len(children) - 2]
+            var_type = children[len(children) - 2].value
             const = len(children) > 2
 
             if isinstance(children[len(children) - 2], PointerNode):
