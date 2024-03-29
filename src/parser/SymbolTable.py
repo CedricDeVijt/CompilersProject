@@ -1,10 +1,9 @@
 class Symbol:
-    def __init__(self, name, varType, const, value=0, returnType=None):
+    def __init__(self, name, varType, const, returnType=None):
         self.name = name
         self.const = const
         self.type = varType
         self.returnType = returnType
-        self.value = value
 
 
 class SymbolTable:

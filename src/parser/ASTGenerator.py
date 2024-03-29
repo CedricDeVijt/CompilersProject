@@ -178,7 +178,7 @@ class ASTGenerator(Visitor):
                     if isinstance(children[children.index("=") - 2], PointerNode):
                         var_type = children[children.index("=") - 2]
                         const = len(var_type.type) > 1
-                    symbol = Symbol(name=identifier, varType=var_type, const=const, value=value)
+                    symbol = Symbol(name=identifier, varType=var_type, const=const)
                     lval = symbol
                     lvalPointer = 0
                     rvalPointer = 0
