@@ -2,6 +2,7 @@ import sys
 import os
 
 import antlr4
+from antlr4.error.ErrorListener import ErrorListener
 
 from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
 from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
@@ -11,14 +12,17 @@ import src.parser.AST as AST
 from src.parser.ASTGenerator import ASTGenerator as Generator
 from src.parser.dotGenerator import DotGenerator
 
+class ThrowingErrorListener(ErrorListener):
+
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        raise SyntaxError(f"Syntax error at line {line}:{column}")
 
 def generate_ast(path, visitor):
     input_stream = antlr4.FileStream(path)
     lexer = Lexer(input_stream)
-    lexer.addErrorListener(antlr4.error.ErrorListener.ConsoleErrorListener())
     stream = antlr4.CommonTokenStream(lexer)
     parser = Parser(stream)
-    parser.addErrorListener(antlr4.error.ErrorListener.ConsoleErrorListener())
+    parser.addErrorListener(ThrowingErrorListener())  # Add the custom listener
     tree = parser.program()
 
     try:

@@ -1,7 +1,7 @@
 grammar Grammar_Project_2;
 
 // parser rules
-program: (comment | variables)* main (comment | variables)*;
+program: (comment | variables)* main (comment | variables)* EOF;
 
 programLine: programLine programLine
            | comment
