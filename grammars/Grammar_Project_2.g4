@@ -1,7 +1,7 @@
 grammar Grammar_Project_2;
 
 // parser rules
-program: (comment | variables)* main (comment | variables)*;
+program: (comment | variables)* main (comment | variables)* EOF;
 
 programLine: programLine programLine
            | comment
@@ -52,7 +52,7 @@ rvalue: unaryExpression
       | rvalue LOGICAL_AND rvalue
       | rvalue LOGICAL_OR rvalue
       | LPAREN rvalue RPAREN
-      | implicitConversion rvalue;
+      | explicitConversion rvalue;
 
 
 rvalueCast:  LPAREN type RPAREN rvalue;
@@ -65,7 +65,7 @@ literal: INT
        | FLOAT
        | CHAR;
 
-implicitConversion: '(' + type + ')';
+explicitConversion: '(' + type + ')';
 
 pointer: type '*'+;
 
