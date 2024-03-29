@@ -1,6 +1,10 @@
 int a = 5+5;
 
 int main() {
-    int a = 5;
-    int b = 6;
+    'a';
+    char a = 'b';
+    int b = a+5;
+    float c = b+a;
+    b = c;
+    a = b;
 }

@@ -73,7 +73,8 @@ class ASTGenerator(Visitor):
                 if isinstance(child, list):
                     children.extend(child)
                 else:
-                    children.append(child)
+                    if child:
+                        children.append(child)
         # Ends with type + identifier -> declaration.
         if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
             identifier = children[len(children) - 1].value
@@ -206,7 +207,8 @@ class ASTGenerator(Visitor):
             if isinstance(child, list):
                 children.extend(child)
             else:
-                children.append(child)
+                if child:
+                    children.append(child)
         return children
 
     def visitIdentifier(self, ctx):

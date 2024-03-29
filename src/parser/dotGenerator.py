@@ -37,6 +37,8 @@ class DotGenerator:
                 label += f"Identifier: {node.value}"
             elif isinstance(node, AST.TypeNode):
                 label += f"Type: {node.value}"
+            elif isinstance(node, AST.CharNode):
+                label = f"Literal\nValue: \'{node.value}\'\nType: char"
             elif isinstance(node, AST.IntNode):
                 label = f"Literal\nValue: {node.value}\nType: int"
             elif isinstance(node, AST.FloatNode):
@@ -76,6 +78,8 @@ class DotGenerator:
                 if isinstance(node.rvalue, AST.DerefNode):
                     label += f"*" * int(node.rvalue.value)
                     label += f"{node.rvalue.identifier.value}"
+                elif isinstance(node.rvalue, AST.CharNode):
+                    label += f"\'{node.rvalue.value}\'"
                 else:
                     label += f"{node.rvalue.value}"
             elif isinstance(node, AST.DefinitionNode):
@@ -90,6 +94,8 @@ class DotGenerator:
                 if isinstance(node.rvalue, AST.DerefNode):
                     label += f"*" * int(node.rvalue.value)
                     label += f"{node.rvalue.identifier.value}"
+                elif isinstance(node.rvalue, AST.CharNode):
+                    label += f"\'{node.rvalue.value}\'"
                 else:
                     label += f"{node.rvalue.value}"
             dot.node(str(id(node)), label, shape='box')
