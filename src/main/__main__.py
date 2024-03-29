@@ -76,7 +76,13 @@ def render_ast_png(input_file, output_file):
 def render_symbol_table(input_file, output_file):
     _, symbol_table = generate_ast(input_file, Generator())
     if symbol_table is not None:
-        DotGenerator.generateSymbolTableDot(symbol_table, output_file)
+        DotGenerator.generateSymbolTableDot(symbol_table, output_file, format='dot')
+
+
+def render_symbol_table_png(input_file, output_file):
+    _, symbol_table = generate_ast(input_file, Generator())
+    if symbol_table is not None:
+        DotGenerator.generateSymbolTableDot(symbol_table, output_file, format='png')
 
 
 def run(args):
@@ -87,6 +93,8 @@ def run(args):
             render_ast_png(args.input, args.render_ast_png)
         elif args.render_symb:
             render_symbol_table(args.input, args.render_symb)
+        elif args.render_symb_png:
+            render_symbol_table_png(args.input, args.render_symb_png)
         elif args.target_llvm:
             compile_llvm(args.input, Generator(), args.target_llvm)
         elif args.target_mips:
@@ -103,6 +111,7 @@ def main(argv):
     parser.add_argument("--render_ast", help="Render AST to DOT file")
     parser.add_argument("--render_ast_png", help="Render AST to DOT png file")
     parser.add_argument("--render_symb", help="Render symbol table to DOT file")
+    parser.add_argument("--render_symb_png", help="Render symbol table to DOT file")
     parser.add_argument("--target_llvm", help="Compile to LLVM output file")
     parser.add_argument("--target_mips", help="Compile to MIPS output file")
     args = parser.parse_args(argv[1:])

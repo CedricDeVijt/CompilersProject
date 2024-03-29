@@ -104,7 +104,11 @@ class DotGenerator:
     def generateSymbolTableDot(symbol_table_tree, output_filename, format="dot"):
         dot = Digraph()
         DotGenerator._generateSymbolTableDot(dot, symbol_table_tree.root)
-        dot.render(output_filename, view=True, format='png')
+        # remove extension from the output filename if it is present
+        if output_filename.endswith(".dot") or output_filename.endswith(".png"):
+            output_filename = output_filename[:-4]
+
+        dot.render(output_filename, view=True, format=format)
         # remove the temporary file created by the render method
         os.remove(f"{output_filename}")
 
