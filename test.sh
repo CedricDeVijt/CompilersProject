@@ -2,10 +2,14 @@
 
 # Define the paths for rendering AST and symbol table, and compiling to LLVM and MIPS
 MAIN_SCRIPT="python -m src.main"
-INPUT_DIR="tests"
 OUTPUT_DIR="output"
 
-# Function to perform all steps for each input file
+# Create and activate Python 3 virtual environment
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install -r requirements.txt
+
+# Function to process each input file
 process_file() {
     input_file="$1"
     filename=$(basename -- "$input_file")
@@ -19,21 +23,29 @@ process_file() {
     $MAIN_SCRIPT --input "$input_file" --render_ast "$ast_output"
 
     # Rendering the symbol table
-    $MAIN_SCRIPT --input "$input_file" --render_symb "$symb_output"
+     $MAIN_SCRIPT --input "$input_file" --render_symb "$symb_output"
 
     # Compile to LLVM
-    $MAIN_SCRIPT --input "$input_file" --target_llvm "$llvm_output"
+     $MAIN_SCRIPT --input "$input_file" --target_llvm "$llvm_output"
 
     # Compile to MIPS
-    $MAIN_SCRIPT --input "$input_file" --target_mips "$mips_output"
+     $MAIN_SCRIPT --input "$input_file" --target_mips "$mips_output"
 }
 
-# Loop through all test files and process each one
-for input_file in $INPUT_DIR/*; do
-    if [ -f "$input_file" ]; then
-        echo "Processing $input_file"
-        process_file "$input_file"
-        echo "Finished processing $input_file"
-        echo
-    fi
-done
+# Recursive function to process files in a directory
+process_directory() {
+    local dir="$1"
+    for file in "$dir"/*; do
+        if [ -f "$file" ]; then
+            echo "Processing $file"
+            process_file "$file"
+            echo "Finished processing $file"
+            echo
+        elif [ -d "$file" ]; then
+            process_directory "$file"
+        fi
+    done
+}
+
+# Start processing from the tests directory
+process_directory "tests"
