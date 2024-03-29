@@ -3,21 +3,25 @@ grammar Grammar_Project_2;
 // parser rules
 program: comment* main+ comment*;
 
+programLine: programLine programLine
+           | comment
+           | main
+           | variables;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
 scope: LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON+
-         | lvalue SEMICOLON+
-         | lvalue '=' rvalue SEMICOLON+
-         | lvalue '=' rvalueCast SEMICOLON+
-         | lvalue '=' rvalue SEMICOLON+
+         | variables
          | postFixIncrement SEMICOLON+
          | postFixDecrement SEMICOLON+
          | preFixIncrement SEMICOLON+
          | preFixDecrement SEMICOLON+
          | comment;
+
+variables: lvalue '=' rvalue SEMICOLON+
+         | lvalue SEMICOLON+;
 
 lvalue: identifier
       | type identifier

@@ -14,6 +14,11 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by Grammar_Project_2Parser#programLine.
+    def visitProgramLine(self, ctx:Grammar_Project_2Parser.ProgramLineContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by Grammar_Project_2Parser#main.
     def visitMain(self, ctx:Grammar_Project_2Parser.MainContext):
         return self.visitChildren(ctx)
@@ -26,6 +31,11 @@ class Grammar_Project_2Visitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by Grammar_Project_2Parser#statement.
     def visitStatement(self, ctx:Grammar_Project_2Parser.StatementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Grammar_Project_2Parser#variables.
+    def visitVariables(self, ctx:Grammar_Project_2Parser.VariablesContext):
         return self.visitChildren(ctx)
 
 

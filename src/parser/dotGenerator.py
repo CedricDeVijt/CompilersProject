@@ -55,7 +55,13 @@ class DotGenerator:
                         label += f" {child.value}"
                 label += f" {node.lvalue.value}"
             elif isinstance(node, AST.AssignmentNode):
-                label += f" {node.lvalue.value} = "
+                label = f"Assignment\n"
+                if isinstance(node.lvalue, AST.DerefNode):
+                    label += f"*" * int(node.lvalue.value)
+                    label += f"{node.lvalue.identifier.value}"
+                    label += " = "
+                else:
+                    label += f"{node.lvalue.value} = "
                 if isinstance(node.rvalue, AST.DerefNode):
                     label += f"*" * int(node.rvalue.value)
                     label += f"{node.rvalue.identifier.value}"

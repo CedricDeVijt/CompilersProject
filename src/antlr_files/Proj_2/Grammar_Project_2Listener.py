@@ -17,6 +17,15 @@ class Grammar_Project_2Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Grammar_Project_2Parser#programLine.
+    def enterProgramLine(self, ctx:Grammar_Project_2Parser.ProgramLineContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#programLine.
+    def exitProgramLine(self, ctx:Grammar_Project_2Parser.ProgramLineContext):
+        pass
+
+
     # Enter a parse tree produced by Grammar_Project_2Parser#main.
     def enterMain(self, ctx:Grammar_Project_2Parser.MainContext):
         pass
@@ -41,6 +50,15 @@ class Grammar_Project_2Listener(ParseTreeListener):
 
     # Exit a parse tree produced by Grammar_Project_2Parser#statement.
     def exitStatement(self, ctx:Grammar_Project_2Parser.StatementContext):
+        pass
+
+
+    # Enter a parse tree produced by Grammar_Project_2Parser#variables.
+    def enterVariables(self, ctx:Grammar_Project_2Parser.VariablesContext):
+        pass
+
+    # Exit a parse tree produced by Grammar_Project_2Parser#variables.
+    def exitVariables(self, ctx:Grammar_Project_2Parser.VariablesContext):
         pass
 
 
