@@ -360,7 +360,7 @@ class ASTGenerator(Visitor):
         if literal.startswith("\'"):
             for i in literal:
                 if i.isalnum():
-                    node = CharNode(i, ctx.start.line, ctx.start.column)
+                    node = CharNode(ord(i), ctx.start.line, ctx.start.column)
                     return node
         if float(literal) % 1 == 0:
             node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
