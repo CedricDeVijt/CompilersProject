@@ -166,7 +166,7 @@ class Grammar_Project_2Parser ( Parser ):
     RULE_rvalueCast = 8
     RULE_unaryExpression = 9
     RULE_literal = 10
-    RULE_implicitConversion = 11
+    RULE_explicitConversion = 11
     RULE_pointer = 12
     RULE_deref = 13
     RULE_addr = 14
@@ -180,7 +180,7 @@ class Grammar_Project_2Parser ( Parser ):
 
     ruleNames =  [ "program", "programLine", "main", "scope", "statement", 
                    "variables", "lvalue", "rvalue", "rvalueCast", "unaryExpression", 
-                   "literal", "implicitConversion", "pointer", "deref", 
+                   "literal", "explicitConversion", "pointer", "deref", 
                    "addr", "type", "postFixIncrement", "postFixDecrement", 
                    "preFixIncrement", "preFixDecrement", "identifier", "comment" ]
 
@@ -996,8 +996,8 @@ class Grammar_Project_2Parser ( Parser ):
         def RPAREN(self):
             return self.getToken(Grammar_Project_2Parser.RPAREN, 0)
 
-        def implicitConversion(self):
-            return self.getTypedRuleContext(Grammar_Project_2Parser.ImplicitConversionContext,0)
+        def explicitConversion(self):
+            return self.getTypedRuleContext(Grammar_Project_2Parser.ExplicitConversionContext,0)
 
 
         def DIV(self):
@@ -1123,7 +1123,7 @@ class Grammar_Project_2Parser ( Parser ):
 
             elif la_ == 7:
                 self.state = 160
-                self.implicitConversion()
+                self.explicitConversion()
                 self.state = 161
                 self.rvalue(1)
                 pass
@@ -1653,7 +1653,7 @@ class Grammar_Project_2Parser ( Parser ):
         return localctx
 
 
-    class ImplicitConversionContext(ParserRuleContext):
+    class ExplicitConversionContext(ParserRuleContext):
         __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -1677,29 +1677,29 @@ class Grammar_Project_2Parser ( Parser ):
 
 
         def getRuleIndex(self):
-            return Grammar_Project_2Parser.RULE_implicitConversion
+            return Grammar_Project_2Parser.RULE_explicitConversion
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterImplicitConversion" ):
-                listener.enterImplicitConversion(self)
+            if hasattr( listener, "enterExplicitConversion" ):
+                listener.enterExplicitConversion(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitImplicitConversion" ):
-                listener.exitImplicitConversion(self)
+            if hasattr( listener, "exitExplicitConversion" ):
+                listener.exitExplicitConversion(self)
 
         def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitImplicitConversion" ):
-                return visitor.visitImplicitConversion(self)
+            if hasattr( visitor, "visitExplicitConversion" ):
+                return visitor.visitExplicitConversion(self)
             else:
                 return visitor.visitChildren(self)
 
 
 
 
-    def implicitConversion(self):
+    def explicitConversion(self):
 
-        localctx = Grammar_Project_2Parser.ImplicitConversionContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 22, self.RULE_implicitConversion)
+        localctx = Grammar_Project_2Parser.ExplicitConversionContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 22, self.RULE_explicitConversion)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
