@@ -124,9 +124,8 @@ class DotGenerator:
     @staticmethod
     def _generateSymbolTableLabel(symbol_table):
         # Create a label for the symbol table node
-        label = "{"
+        label = ""
         for symbol in symbol_table.symbols.values():
             label += f"{symbol.type}, {symbol.const}, {symbol.name}\l"
-        label += "}"
         return label
 
