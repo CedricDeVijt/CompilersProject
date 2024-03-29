@@ -52,6 +52,9 @@ class SymbolTableTree:
         symbol = node.table.get_symbol(name)
         return symbol
 
+    def get_all_symbols(self):
+        return self.current_node.table.symbols
+
     def lookup(self, name):
         node = self.current_node
         while node:
