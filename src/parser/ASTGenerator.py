@@ -61,8 +61,11 @@ class ASTGenerator(Visitor):
                     children.extend(child)
                 else:
                     children.append(child)
-        node = children[0]
-        return node
+        if len(children) == 0:
+            return None
+        else:
+            node = children[0]
+            return node
 
     def visitVariables(self, ctx):
         children = []
