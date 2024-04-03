@@ -15,9 +15,11 @@ statement: rvalue SEMICOLON+
          | preFixDecrement SEMICOLON+
          | comment
          | printfStatement
-         | scope;
+         | scope
+         |typedef;
 
-printfStatement: 'printf' '(' formatSpecifier ',' ('var' | literal) ')' SEMICOLON;
+
+printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')' SEMICOLON;
 
 formatSpecifier: '"%s"'
                | '"%d"'
@@ -76,13 +78,15 @@ deref: '*'+ identifier;
 
 addr: '&'+ identifier;
 
-type: 'const'* ('int' | 'float' | 'char');
+
 
 postFixIncrement: lvalue INCREMENT;
 postFixDecrement: lvalue DECREMENT;
 
 preFixIncrement: INCREMENT lvalue;
 preFixDecrement: DECREMENT lvalue;
+
+typedef: 'typedef' type IDENTIFIER SEMICOLON;
 
 identifier: IDENTIFIER;
 comment: COMMENT;
@@ -124,6 +128,8 @@ IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 
 INCREMENT: '++';
 DECREMENT: '--';
+
+type: 'const'* ('int' | 'float' | 'char');
 
 COMMENT: LINECOMMENT
        | BLOCKCOMMENT;
