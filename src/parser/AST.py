@@ -11,7 +11,7 @@ class Node:
         for node in self.children:
             if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
                 node.rvalue.constantFold()
-            elif not isinstance(node, str) or not isinstance(node, list):
+            elif not isinstance(node, str) and not isinstance(node, list):
                 node.constantFold()
         match self:
             case IntNode():
@@ -356,3 +356,12 @@ class ExplicitConversionNode(Node):
         super().__init__("ExplicitConversion", line, pos, children=None)
         self.type = type
 
+
+class PrintfNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("Printf", line, pos, children=children)
+
+
+class FormatSpecifierNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("FormatSpecifier", line, pos, children=children)
