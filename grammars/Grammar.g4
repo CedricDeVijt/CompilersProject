@@ -88,6 +88,8 @@ preFixDecrement: DECREMENT lvalue;
 
 typedef: 'typedef' type IDENTIFIER SEMICOLON;
 
+type: 'const'* ('int' | 'float' | 'char');
+
 identifier: IDENTIFIER;
 comment: COMMENT;
 
@@ -128,8 +130,6 @@ IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 
 INCREMENT: '++';
 DECREMENT: '--';
-
-type: 'const'* ('int' | 'float' | 'char');
 
 COMMENT: LINECOMMENT
        | BLOCKCOMMENT;
