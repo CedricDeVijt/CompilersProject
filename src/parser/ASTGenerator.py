@@ -12,6 +12,7 @@ class ASTGenerator(Visitor):
         self.errors = []
         self.warnings = []
         self.node = None
+        self.types = ['int', 'float', 'char']
 
     def get_highest_type(self, rval):
         if isinstance(rval, DerefNode):
@@ -129,6 +130,16 @@ class ASTGenerator(Visitor):
         if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
             identifier = children[len(children) - 1].value
             var_type = children[len(children) - 2].value
+
+            # Check if type is declared.
+            if var_type not in self.types:
+                if self.scope.lookup(var_type) is None:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Type \'" + var_type + "\' not declared yet!")
+                    return None
+                elif not self.scope.lookup(var_type).typeDef:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + var_type + "\' not declared as type!")
+                    return None
+
             const = len(children) > 2
 
             if isinstance(children[len(children) - 2], PointerNode):
@@ -136,8 +147,12 @@ class ASTGenerator(Visitor):
                 const = len(children[0].type) > 1
 
             # Check if variable already declared in current scope.
+
             if self.scope.get_symbol(identifier) is not None:
-                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+                if self.scope.get_symbol(identifier).typeDef:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + identifier + "\' is declared as type!")
+                else:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
                 return None
             else:
                 symbol = Symbol(name=identifier, varType=var_type, const=const)
@@ -456,6 +471,11 @@ class ASTGenerator(Visitor):
 
         name = children[2].getText()
         type = children[1].getText()
+
+        if self.scope.get_symbol(name) is not None:
+            if not self.scope.get_symbol(name).typeDef:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + name + "\' is declared a variable!")
+                return None
 
         self.scope.add_symbol(Symbol(name=name, varType=type, typeDef=True, const=False))
         return TypedefNode(ctx.start.line, ctx.start.column, children[1].getText(), children[2].getText())

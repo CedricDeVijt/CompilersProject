@@ -1,5 +1,5 @@
 class Symbol:
-    def __init__(self, name, varType, const, typeDef=None, returnType=None):
+    def __init__(self, name, varType, const, typeDef=False, returnType=None):
         self.name = name
         self.const = const
         self.type = varType
