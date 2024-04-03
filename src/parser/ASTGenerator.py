@@ -13,6 +13,51 @@ class ASTGenerator(Visitor):
         self.warnings = []
         self.node = None
 
+    def get_highest_type(self, rval):
+        if isinstance(rval, DerefNode):
+            identifier = rval.identifier.value
+            if self.scope.lookup(identifier):
+                if isinstance(self.scope.lookup(identifier).type, str):
+                    return self.scope.lookup(identifier).type
+                return self.scope.lookup(identifier).type.type[0].value
+        if isinstance(rval, IdentifierNode):
+            identifier = rval.value
+            if self.scope.lookup(identifier):
+                if isinstance(self.scope.lookup(identifier).type, str):
+                    return self.scope.lookup(identifier).type
+                return self.scope.lookup(identifier).type.type[0].value
+        if isinstance(rval, IntNode):
+            return 'int'
+        elif isinstance(rval, FloatNode):
+            return 'float'
+        elif isinstance(rval, CharNode):
+            return 'char'
+        elif isinstance(rval, Node):
+            if isinstance(rval, AddrNode):
+                identifier = rval.value.value
+                if self.scope.lookup(identifier):
+                    if isinstance(self.scope.lookup(identifier).type, str):
+                        return self.scope.lookup(identifier).type
+                    return self.scope.lookup(identifier).type.type[0].value
+            type1 = self.get_highest_type(rval.children[0])
+            type2 = self.get_highest_type(rval.children[len(rval.children) - 1])
+            if type1 == 'float' or type2 == 'float':
+                return float
+            elif type1 == 'int' or type2 == 'int':
+                return 'int'
+            return 'char'
+
+    def implicit_type_conversion(self, lvalType, rval):
+        if isinstance(lvalType, PointerNode):
+            lvalType = lvalType.type[0].value
+        rvalType = self.get_highest_type(rval)
+        if lvalType == 'int' and rvalType == 'float':
+            self.warnings.append(f"line {rval.line}:{rval.pos} Implicit type conversion from float to int!")
+        elif lvalType == 'char' and rvalType == 'float':
+            self.warnings.append(f"line {rval.line}:{rval.pos} Implicit type conversion from float to char!")
+        elif lvalType == 'char' and rvalType == 'int':
+            self.warnings.append(f"line {rval.line}:{rval.pos} Implicit type conversion from int to char!")
+
     def visitProgram(self, ctx):
         children = []
         for line in ctx.getChildren():
@@ -118,6 +163,9 @@ class ASTGenerator(Visitor):
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer \'" + identifier + "\' is constant!")
                     return None
                 lval = self.scope.lookup(identifier)
+                rval = children[2]
+                # Give warnings for implicit conversions.
+                self.implicit_type_conversion(lval.type, rval)
                 lvalPointer = 0
                 rvalPointer = 0
                 if isinstance(lval.type, PointerNode):
@@ -183,6 +231,9 @@ class ASTGenerator(Visitor):
                         const = len(var_type.type) > 1
                     symbol = Symbol(name=identifier, varType=var_type, const=const)
                     lval = symbol
+                    rval = children[len(children) - 1]
+                    # Give warnings for implicit conversions.
+                    self.implicit_type_conversion(var_type, rval)
                     lvalPointer = 0
                     rvalPointer = 0
                     if isinstance(lval.type, PointerNode):
