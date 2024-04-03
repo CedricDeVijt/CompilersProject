@@ -1,4 +1,3 @@
-from src.antlr_files.GrammarParser import GrammarParser as Parser
 from src.antlr_files.GrammarVisitor import GrammarVisitor as Visitor
 
 from src.parser.AST import *
