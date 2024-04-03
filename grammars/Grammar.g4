@@ -88,7 +88,7 @@ preFixDecrement: DECREMENT lvalue;
 
 typedef: 'typedef' type IDENTIFIER SEMICOLON;
 
-type: 'const'* ('int' | 'float' | 'char');
+type: 'const'* ('int' | 'float' | 'char' | IDENTIFIER);
 
 identifier: IDENTIFIER;
 comment: COMMENT;

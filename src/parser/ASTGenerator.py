@@ -1,3 +1,4 @@
+from src.antlr_files.GrammarParser import GrammarParser
 from src.antlr_files.GrammarVisitor import GrammarVisitor as Visitor
 
 from src.parser.AST import *
@@ -446,3 +447,10 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             children.append(line)
         return FormatSpecifierNode(ctx.start.line, ctx.start.column, children[0].getText())
+
+
+    def visitTypedef(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+        return TypedefNode(ctx.start.line, ctx.start.column, children[0].getText(), children[1].getText())

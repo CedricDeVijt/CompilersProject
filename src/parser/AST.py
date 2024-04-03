@@ -365,3 +365,10 @@ class PrintfNode(Node):
 class FormatSpecifierNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("FormatSpecifier", line, pos, children=children)
+
+
+class TypedefNode(Node):
+    def __init__(self, line: int, pos: int, type: Node, identifier: IdentifierNode, children=None):
+        super().__init__("Typedef", line, pos, children=children)
+        self.type = type
+        self.identifier = identifier
