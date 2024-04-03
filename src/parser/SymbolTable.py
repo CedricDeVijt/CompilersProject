@@ -1,8 +1,9 @@
 class Symbol:
-    def __init__(self, name, varType, const, returnType=None):
+    def __init__(self, name, varType, const, typeDef=None, returnType=None):
         self.name = name
         self.const = const
         self.type = varType
+        self.typeDef = typeDef
         self.returnType = returnType
 
 
