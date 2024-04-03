@@ -358,8 +358,10 @@ class ExplicitConversionNode(Node):
 
 
 class PrintfNode(Node):
-    def __init__(self, line: int, pos: int, children=None):
+    def __init__(self, line: int, pos: int, specifier, node, children=None):
         super().__init__("Printf", line, pos, children=children)
+        self.specifier = specifier
+        self.node = node
 
 
 class FormatSpecifierNode(Node):

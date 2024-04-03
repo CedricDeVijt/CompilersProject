@@ -454,7 +454,7 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        return PrintfNode(ctx.start.line, ctx.start.column, children)
+        return PrintfNode(ctx.start.line, ctx.start.column, children[0].children, children[1])
 
 
     def visitFormatSpecifier(self, ctx):
