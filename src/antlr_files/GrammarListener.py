@@ -143,15 +143,6 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by GrammarParser#type.
-    def enterType(self, ctx:GrammarParser.TypeContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#type.
-    def exitType(self, ctx:GrammarParser.TypeContext):
-        pass
-
-
     # Enter a parse tree produced by GrammarParser#postFixIncrement.
     def enterPostFixIncrement(self, ctx:GrammarParser.PostFixIncrementContext):
         pass
@@ -185,6 +176,24 @@ class GrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by GrammarParser#preFixDecrement.
     def exitPreFixDecrement(self, ctx:GrammarParser.PreFixDecrementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#typedef.
+    def enterTypedef(self, ctx:GrammarParser.TypedefContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#typedef.
+    def exitTypedef(self, ctx:GrammarParser.TypedefContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#type.
+    def enterType(self, ctx:GrammarParser.TypeContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#type.
+    def exitType(self, ctx:GrammarParser.TypeContext):
         pass
 
 

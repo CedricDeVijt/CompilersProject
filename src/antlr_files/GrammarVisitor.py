@@ -84,11 +84,6 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by GrammarParser#type.
-    def visitType(self, ctx:GrammarParser.TypeContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by GrammarParser#postFixIncrement.
     def visitPostFixIncrement(self, ctx:GrammarParser.PostFixIncrementContext):
         return self.visitChildren(ctx)
@@ -106,6 +101,16 @@ class GrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by GrammarParser#preFixDecrement.
     def visitPreFixDecrement(self, ctx:GrammarParser.PreFixDecrementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#typedef.
+    def visitTypedef(self, ctx:GrammarParser.TypedefContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#type.
+    def visitType(self, ctx:GrammarParser.TypeContext):
         return self.visitChildren(ctx)
 
 
