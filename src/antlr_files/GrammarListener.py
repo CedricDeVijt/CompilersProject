@@ -17,15 +17,6 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by GrammarParser#programLine.
-    def enterProgramLine(self, ctx:GrammarParser.ProgramLineContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#programLine.
-    def exitProgramLine(self, ctx:GrammarParser.ProgramLineContext):
-        pass
-
-
     # Enter a parse tree produced by GrammarParser#main.
     def enterMain(self, ctx:GrammarParser.MainContext):
         pass

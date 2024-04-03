@@ -3,11 +3,6 @@ grammar Grammar;
 // parser rules
 program: (comment | variables)* main (comment | variables)* EOF;
 
-programLine: programLine programLine
-           | comment
-           | main
-           | variables;
-
 main: 'int' 'main' LPAREN RPAREN scope;
 
 scope: LBRACE statement* RBRACE;

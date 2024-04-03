@@ -69,7 +69,6 @@ class ASTGenerator(Visitor):
         self.node = ProgramNode(ctx.start.line, ctx.start.column, children)
         return self
 
-
     def visitMain(self, ctx):
         children = []
         for line in ctx.getChildren():
