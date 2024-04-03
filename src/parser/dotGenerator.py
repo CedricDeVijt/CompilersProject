@@ -126,6 +126,9 @@ class DotGenerator:
         # Create a label for the symbol table node
         label = ""
         for symbol in symbol_table.symbols.values():
+            if symbol.typeDef:
+                label += f"typedef "
+
             if symbol.const:
                 label += "const "
 

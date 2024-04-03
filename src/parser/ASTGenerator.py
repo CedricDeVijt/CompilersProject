@@ -453,4 +453,9 @@ class ASTGenerator(Visitor):
         children = []
         for line in ctx.getChildren():
             children.append(line)
-        return TypedefNode(ctx.start.line, ctx.start.column, children[0].getText(), children[1].getText())
+
+        name = children[2].getText()
+        type = children[1].getText()
+
+        self.scope.add_symbol(Symbol(name=name, varType=type, typeDef=True, const=False))
+        return TypedefNode(ctx.start.line, ctx.start.column, children[1].getText(), children[2].getText())
