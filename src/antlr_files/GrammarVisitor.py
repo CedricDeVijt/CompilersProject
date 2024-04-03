@@ -14,11 +14,6 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by GrammarParser#programLine.
-    def visitProgramLine(self, ctx:GrammarParser.ProgramLineContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by GrammarParser#main.
     def visitMain(self, ctx:GrammarParser.MainContext):
         return self.visitChildren(ctx)
