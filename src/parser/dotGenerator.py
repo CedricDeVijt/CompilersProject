@@ -26,6 +26,8 @@ class DotGenerator:
 
     @staticmethod
     def _generateASTDot(dot, node):
+        if isinstance(node, str):
+            return
         if node.children:
             dot.node(str(id(node)), node.value)
             for child in node.children:
@@ -44,6 +46,9 @@ class DotGenerator:
             elif isinstance(node, AST.FloatNode):
                 label = f"Literal\n"
                 label += f"Value: {node.value}\nType: float"
+            elif isinstance(node, AST.PrintfNode):
+                label = f"Printf({node.specifier}, {node.node.value})"
+                pass
             elif isinstance(node, AST.CommentNode):
                 label = f"Comment\n" + node.value.replace('\n', '\\\\n')
             elif isinstance(node, AST.PostFixNode):
@@ -52,6 +57,8 @@ class DotGenerator:
                     label += f"Increment\n{node.value}++"
                 else:
                     label += f"Increment\n{node.value}--"
+            elif isinstance(node, AST.TypedefNode):
+                label = f"{node.value} {node.type} {node.identifier}"
             elif isinstance(node, AST.PreFixNode):
                 label = f"PreFix"
                 if node.op == 'inc':
@@ -126,6 +133,9 @@ class DotGenerator:
         # Create a label for the symbol table node
         label = ""
         for symbol in symbol_table.symbols.values():
+            if symbol.typeDef:
+                label += f"typedef "
+
             if symbol.const:
                 label += "const "
 

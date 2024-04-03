@@ -1,4 +1,7 @@
 int main() {
-    float y = 10;
-    int a = 5;
+    char a = 'a';
+    int b = a;
+    float c = b;
+    int d = c;
+    char e = d;
 }

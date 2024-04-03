@@ -7,6 +7,9 @@ from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer
 from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
 from src.llvm_target.toLLVM import generateLLVMcodePython
 from src.llvm_target.toLLVM import generateLLVMcodeLite
+from src.antlr_files.GrammarLexer import GrammarLexer as Lexer
+from src.antlr_files.GrammarParser import GrammarParser as Parser
+from src.llvm_target.toLLVM import generateLLVMcode
 from src.parser.ASTGenerator import ASTGenerator as Generator
 from src.parser.dotGenerator import DotGenerator
 

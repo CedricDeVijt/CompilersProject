@@ -1,12 +1,7 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | variables)* main (comment | variables)* EOF;
-
-programLine: programLine programLine
-           | comment
-           | main
-           | variables;
+program: (comment | variables | typedef)* main (comment | variables | typedef)* EOF;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
@@ -20,9 +15,11 @@ statement: rvalue SEMICOLON+
          | preFixDecrement SEMICOLON+
          | comment
          | printfStatement
-         | scope;
+         | scope
+         |typedef;
 
-printfStatement: 'printf' '(' formatSpecifier ',' ('var' | literal) ')' SEMICOLON;
+
+printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')' SEMICOLON;
 
 formatSpecifier: '"%s"'
                | '"%d"'
@@ -81,13 +78,17 @@ deref: '*'+ identifier;
 
 addr: '&'+ identifier;
 
-type: 'const'* ('int' | 'float' | 'char');
+
 
 postFixIncrement: lvalue INCREMENT;
 postFixDecrement: lvalue DECREMENT;
 
 preFixIncrement: INCREMENT lvalue;
 preFixDecrement: DECREMENT lvalue;
+
+typedef: 'typedef' type IDENTIFIER SEMICOLON;
+
+type: 'const'* ('int' | 'float' | 'char' | IDENTIFIER);
 
 identifier: IDENTIFIER;
 comment: COMMENT;
