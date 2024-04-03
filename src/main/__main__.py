@@ -5,7 +5,8 @@ from antlr4.error.ErrorListener import ErrorListener
 
 from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
 from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
-from src.llvm_target.toLLVM import generateLLVMcode
+from src.llvm_target.toLLVM import generateLLVMcodePython
+from src.llvm_target.toLLVM import generateLLVMcodeLite
 from src.parser.ASTGenerator import ASTGenerator as Generator
 from src.parser.dotGenerator import DotGenerator
 
@@ -53,7 +54,7 @@ def compile_llvm(input_file, visitor, output_file):
         llvm_file.write(f"source_filename = \"{output_file}\"\n")
         llvm_file.write("\n")
 
-        generateLLVMcode(ast, llvm_file, {})
+        generateLLVMcodeLite(ast, llvm_file, {})
 
 
 def compile_mips(input_file, visitor, output_file):

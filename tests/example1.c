@@ -1,3 +1,4 @@
 int main() {
-    char a = 'a'>>1;
+    float y = 10;
+    int a = 5;
 }
