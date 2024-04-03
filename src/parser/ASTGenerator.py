@@ -427,3 +427,22 @@ class ASTGenerator(Visitor):
         type = children[1].getText()
         node = ExplicitConversionNode(ctx.start.line, ctx.start.column, type)
         return node
+
+
+    def visitPrintfStatement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            child = self.visit(line)
+            if isinstance(child, list):
+                children.extend(child)
+            else:
+                if child:
+                    children.append(child)
+        return PrintfNode(ctx.start.line, ctx.start.column, children)
+
+
+    def visitFormatSpecifier(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+        return FormatSpecifierNode(ctx.start.line, ctx.start.column, children[0].getText())
