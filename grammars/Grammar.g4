@@ -1,7 +1,7 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | variables)* main (comment | variables)* EOF;
+program: (comment | variables | typedef)* main (comment | variables | typedef)* EOF;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
