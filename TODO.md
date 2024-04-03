@@ -19,21 +19,18 @@
 - [x] (**mandatory**) Variables
 - [x] (**mandatory**) Pointers
 - [x] (**mandatory**) Constants
-- [ ] (**mandatory**) Implicit conversions warnings
+- [x] (**mandatory**) Implicit conversions warnings
 - [x] (**mandatory**) Explicit conversions
 - [x] (**mandatory**) Pointer arithmetic
 - [x] (**mandatory**) Increment/Decrement Operations
 - [x] (**optional**) Const casting
-
-- [ ] (**mandatory**) Implicit conversions of a richer to a poorer type should cause a compiler warning indicating
-  possible loss of information.
 
 # project 3
 
 - [x] (**mandatory**) Single line comments
 - [x] (**mandatory**) Multi line comments
 - [ ] (**mandatory**) Output printf
-- [ ] (**mandatory**) Typedef support
+- [x] (**mandatory**) Typedef support
 - [x] (**mandatory**) LLVM definitions
 - [x] (**mandatory**) LLVM pointers
 - [x] (**mandatory**) LLVM comments
