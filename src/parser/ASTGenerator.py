@@ -1,5 +1,5 @@
-from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser
-from src.antlr_files.Proj_2.Grammar_Project_2Visitor import Grammar_Project_2Visitor as Visitor
+from src.antlr_files.GrammarParser import GrammarParser as Parser
+from src.antlr_files.GrammarVisitor import GrammarVisitor as Visitor
 
 from src.parser.AST import *
 from src.parser.SymbolTable import SymbolTableTree, Symbol
@@ -255,14 +255,14 @@ class ASTGenerator(Visitor):
         node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
         return node
 
-    def visitPreFixDecrement(self, ctx:Grammar_Project_2Parser.PreFixDecrementContext):
+    def visitPreFixDecrement(self, ctx):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
             raise Exception("Variable \'" + identifier + "\' not declared yet!")
         node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
         return node
 
-    def visitPreFixIncrement(self, ctx:Grammar_Project_2Parser.PreFixIncrementContext):
+    def visitPreFixIncrement(self, ctx):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
             raise Exception("Variable \'" + identifier + "\' not declared yet!")

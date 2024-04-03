@@ -3,8 +3,8 @@ import sys
 import antlr4
 from antlr4.error.ErrorListener import ErrorListener
 
-from src.antlr_files.Proj_2.Grammar_Project_2Lexer import Grammar_Project_2Lexer as Lexer
-from src.antlr_files.Proj_2.Grammar_Project_2Parser import Grammar_Project_2Parser as Parser
+from src.antlr_files.GrammarLexer import GrammarLexer as Lexer
+from src.antlr_files.GrammarParser import GrammarParser as Parser
 from src.llvm_target.toLLVM import generateLLVMcode
 from src.parser.ASTGenerator import ASTGenerator as Generator
 from src.parser.dotGenerator import DotGenerator
