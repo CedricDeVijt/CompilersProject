@@ -44,6 +44,105 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#conditional.
+    def enterConditional(self, ctx:GrammarParser.ConditionalContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#conditional.
+    def exitConditional(self, ctx:GrammarParser.ConditionalContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#ifStatement.
+    def enterIfStatement(self, ctx:GrammarParser.IfStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#ifStatement.
+    def exitIfStatement(self, ctx:GrammarParser.IfStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#elseIfStatement.
+    def enterElseIfStatement(self, ctx:GrammarParser.ElseIfStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#elseIfStatement.
+    def exitElseIfStatement(self, ctx:GrammarParser.ElseIfStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#elseStatement.
+    def enterElseStatement(self, ctx:GrammarParser.ElseStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#elseStatement.
+    def exitElseStatement(self, ctx:GrammarParser.ElseStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#whileLoop.
+    def enterWhileLoop(self, ctx:GrammarParser.WhileLoopContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#whileLoop.
+    def exitWhileLoop(self, ctx:GrammarParser.WhileLoopContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#forLoop.
+    def enterForLoop(self, ctx:GrammarParser.ForLoopContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#forLoop.
+    def exitForLoop(self, ctx:GrammarParser.ForLoopContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#forInit.
+    def enterForInit(self, ctx:GrammarParser.ForInitContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#forInit.
+    def exitForInit(self, ctx:GrammarParser.ForInitContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#forCondition.
+    def enterForCondition(self, ctx:GrammarParser.ForConditionContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#forCondition.
+    def exitForCondition(self, ctx:GrammarParser.ForConditionContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#forUpdate.
+    def enterForUpdate(self, ctx:GrammarParser.ForUpdateContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#forUpdate.
+    def exitForUpdate(self, ctx:GrammarParser.ForUpdateContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#break.
+    def enterBreak(self, ctx:GrammarParser.BreakContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#break.
+    def exitBreak(self, ctx:GrammarParser.BreakContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#continue.
+    def enterContinue(self, ctx:GrammarParser.ContinueContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#continue.
+    def exitContinue(self, ctx:GrammarParser.ContinueContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#printfStatement.
     def enterPrintfStatement(self, ctx:GrammarParser.PrintfStatementContext):
         pass
@@ -62,12 +161,12 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by GrammarParser#variables.
-    def enterVariables(self, ctx:GrammarParser.VariablesContext):
+    # Enter a parse tree produced by GrammarParser#variable.
+    def enterVariable(self, ctx:GrammarParser.VariableContext):
         pass
 
-    # Exit a parse tree produced by GrammarParser#variables.
-    def exitVariables(self, ctx:GrammarParser.VariablesContext):
+    # Exit a parse tree produced by GrammarParser#variable.
+    def exitVariable(self, ctx:GrammarParser.VariableContext):
         pass
 
 
