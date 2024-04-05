@@ -8,6 +8,8 @@ class Node:
         self.pos = pos
 
     def constantFold(self):
+        if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode):
+            self.condition.constantFold()
         for node in self.children:
             if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
                 node.rvalue.constantFold()
