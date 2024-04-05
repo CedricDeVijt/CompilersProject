@@ -406,3 +406,20 @@ class TypedefNode(Node):
         super().__init__("Typedef", line, pos, children=children)
         self.type = type
         self.identifier = identifier
+
+
+class IfStatementNode(Node):
+    def __init__(self, line: int, pos: int, condition: Node, children=None):
+        super().__init__("IfStatement", line, pos, children=children)
+        self.condition = condition
+
+
+class ElseIfStatementNode(Node):
+    def __init__(self, line: int, pos: int, condition: Node, children=None):
+        super().__init__("ElseIfStatement", line, pos, children=children)
+        self.condition = condition
+
+
+class ElseStatementNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("ElseStatement", line, pos, children=children)

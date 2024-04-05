@@ -30,6 +30,12 @@ class DotGenerator:
             return
         if node.children:
             dot.node(str(id(node)), str(node.value))
+            if isinstance(node, AST.IfStatementNode):
+                dot.node(str(id(node)), f"if ({str(node.condition.value)})")
+            if isinstance(node, AST.ElseIfStatementNode):
+                dot.node(str(id(node)), f"else if ({str(node.condition.value)})")
+            if isinstance(node, AST.ElseStatementNode):
+                dot.node(str(id(node)), f"else")
             for child in node.children:
                 DotGenerator._generateASTDot(dot, child)
                 dot.edge(str(id(node)), str(id(child)))
@@ -48,7 +54,6 @@ class DotGenerator:
                 label += f"Value: {str(node.value)}\nType: float"
             elif isinstance(node, AST.PrintfNode):
                 label = f"Printf({node.specifier}, {str(node.node.value)})"
-                pass
             elif isinstance(node, AST.CommentNode):
                 label = f"Comment\n" + str(node.value).replace('\n', '\\\\n')
             elif isinstance(node, AST.PostFixNode):

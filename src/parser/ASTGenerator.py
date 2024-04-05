@@ -142,10 +142,9 @@ class ASTGenerator(Visitor):
         if len(children) == 0:
             return None
         else:
-            node = children[0]
-            return node
+            return children
 
-    def visitVariables(self, ctx):
+    def visitVariable(self, ctx):
         children = []
         for line in ctx.getChildren():
             if line.getText() == ";":
@@ -324,6 +323,53 @@ class ASTGenerator(Visitor):
 
     def visitIdentifier(self, ctx):
         node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        return node
+
+    def visitConditional(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            child = self.visit(line)
+            if isinstance(child, list):
+                children.extend(child)
+            else:
+                if child:
+                    children.append(child)
+        return children
+
+    def visitIfStatement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            child = self.visit(line)
+            if isinstance(child, list):
+                children.extend(child)
+            else:
+                if child:
+                    children.append(child)
+        node = IfStatementNode(ctx.start.line, ctx.start.column, children[0], children[1:])
+        return node
+
+    def visitElseIfStatement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            child = self.visit(line)
+            if isinstance(child, list):
+                children.extend(child)
+            else:
+                if child:
+                    children.append(child)
+        node = ElseIfStatementNode(ctx.start.line, ctx.start.column, children[0], children[1:])
+        return node
+
+    def visitElseStatement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            child = self.visit(line)
+            if isinstance(child, list):
+                children.extend(child)
+            else:
+                if child:
+                    children.append(child)
+        node = ElseStatementNode(ctx.start.line, ctx.start.column, children)
         return node
 
     def visitComment(self, ctx):
