@@ -153,6 +153,7 @@ def operation(node, llvm_file):
 
 
 done = True
+definitions = {}
 
 
 def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code using LLVM lite
@@ -185,18 +186,25 @@ def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code
 
 
 def generateLLVMfunction(node, builder):
+    global definitions
     if isinstance(node, AST.DefinitionNode):
         constant = None
         var = None
+        pointer = False
         if node.type[0].value == "int":
             constant = ir.Constant(ir.IntType(32), node.rvalue.value)
             var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
+            definitions[node.lvalue.value] = var
         elif node.type[0].value == "float":
             constant = ir.Constant(ir.FloatType(), float(node.rvalue.value))
             var = builder.alloca(ir.FloatType(), name=node.lvalue.value)
         elif node.type[0].value == "char":
             constant = ir.Constant(ir.IntType(8), node.rvalue.value)
             var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
+        elif node.type[0].value == "1":
+            constant = builder.bitcast(builder.alloca(ir.IntType(32), name=node.lvalue.value), ir.IntType(32).as_pointer())
+            var = builder.alloca(ir.IntType(32).as_pointer(), name=node.lvalue.value)
+            pointer = True
         builder.store(constant, var)
 
 # target_llvm
