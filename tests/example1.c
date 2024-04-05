@@ -1,7 +1,25 @@
-int main() {
-    char a = 'a';
-    int b = a;
-    float c = b;
-    int d = c;
-    char e = d;
+// hello
+/* hello */
+/* hello
+   hello
+ */
+int main () {
+    // hello
+/* hello */
+/* hello
+   hello
+ */
+
+ {
+ // hello
+/* hello */
+/* hello
+   hello
+ */
+ }
 }
+// hello
+/* hello */
+/* hello
+   hello
+ */
