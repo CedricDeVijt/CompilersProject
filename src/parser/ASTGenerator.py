@@ -420,7 +420,17 @@ class ASTGenerator(Visitor):
             if str(lines[0]) == "!":
                 node = LogicalNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
                 return node
+            if str(lines[0] == "~"):
+                node = BitwiseNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
+                return node
         node = self.visitChildren(ctx)
+        if len(lines) == 1:
+            negatives = 0
+            for child in lines[0].children:
+                if child.getText() == "-":
+                    negatives += 1
+            if negatives % 2:
+                node.value = - int(node.value)
         return node
 
     def visitLiteral(self, ctx):

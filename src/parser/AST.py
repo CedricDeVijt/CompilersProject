@@ -157,6 +157,9 @@ class Node:
                 self.value = int(not float(self.children[0].value))
                 self.children = []
                 return
+            case BitwiseNotNode():
+                self.__class__ = IntNode
+                self.value = int(~int(self.children[0].value))
         return
 
 
@@ -188,6 +191,11 @@ class TypeNode(Node):
 class LogicalNotNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("LogicalNot", line, pos, children=children)
+
+
+class BitwiseNotNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("BitwiseNot", line, pos, children=children)
 
 
 class DivNode(Node):
