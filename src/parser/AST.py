@@ -173,7 +173,7 @@ class Node:
                     self.children = []
                     return
             case LogicalNotNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
+                if isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode):
                     self.__class__ = IntNode
                     self.value = int(not float(self.children[0].value))
                     self.children = []
