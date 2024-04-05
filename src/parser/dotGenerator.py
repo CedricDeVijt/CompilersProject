@@ -29,42 +29,42 @@ class DotGenerator:
         if isinstance(node, str):
             return
         if node.children:
-            dot.node(str(id(node)), node.value)
+            dot.node(str(id(node)), str(node.value))
             for child in node.children:
                 DotGenerator._generateASTDot(dot, child)
                 dot.edge(str(id(node)), str(id(child)))
         else:
-            label = f"{node.value}\n"
+            label = f"{str(node.value)}\n"
             if isinstance(node, AST.IdentifierNode):
-                label += f"Identifier: {node.value}"
+                label += f"Identifier: {str(node.value)}"
             elif isinstance(node, AST.TypeNode):
-                label += f"Type: {node.value}"
+                label += f"Type: {str(node.value)}"
             elif isinstance(node, AST.CharNode):
-                label = f"Literal\nValue: \'{chr(node.value)}\'\nType: char"
+                label = f"Literal\nValue: \'{chr(str(node.value))}\'\nType: char"
             elif isinstance(node, AST.IntNode):
-                label = f"Literal\nValue: {node.value}\nType: int"
+                label = f"Literal\nValue: {str(node.value)}\nType: int"
             elif isinstance(node, AST.FloatNode):
                 label = f"Literal\n"
-                label += f"Value: {node.value}\nType: float"
+                label += f"Value: {str(node.value)}\nType: float"
             elif isinstance(node, AST.PrintfNode):
-                label = f"Printf({node.specifier}, {node.node.value})"
+                label = f"Printf({node.specifier}, {node.str(node.value)})"
                 pass
             elif isinstance(node, AST.CommentNode):
-                label = f"Comment\n" + node.value.replace('\n', '\\\\n')
+                label = f"Comment\n" + str(node.value).replace('\n', '\\\\n')
             elif isinstance(node, AST.PostFixNode):
                 label = f"PostFix"
                 if node.op == 'inc':
-                    label += f"Increment\n{node.value}++"
+                    label += f"Increment\n{str(node.value)}++"
                 else:
-                    label += f"Increment\n{node.value}--"
+                    label += f"Increment\n{str(node.value)}--"
             elif isinstance(node, AST.TypedefNode):
-                label = f"{node.value} {node.type} {node.identifier}"
+                label = f"{str(node.value)} {node.type} {node.identifier}"
             elif isinstance(node, AST.PreFixNode):
                 label = f"PreFix"
                 if node.op == 'inc':
-                    label += f"Increment\n++{node.value}"
+                    label += f"Increment\n++{str(node.value)}"
                 else:
-                    label += f"Increment\n--{node.value}"
+                    label += f"Increment\n--{str(node.value)}"
             elif isinstance(node, AST.DeclarationNode):
                 for child in node.type:
                     if isinstance(child, AST.PointerNode):
