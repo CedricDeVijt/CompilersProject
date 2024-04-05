@@ -437,7 +437,7 @@ class ASTGenerator(Visitor):
             if str(lines[0]) == "!":
                 node = LogicalNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
                 return node
-            if str(lines[0] == "~"):
+            if str(lines[0]) == "~":
                 node = BitwiseNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
                 return node
         node = self.visitChildren(ctx)
