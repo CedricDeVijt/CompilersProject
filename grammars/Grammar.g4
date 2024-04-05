@@ -1,25 +1,46 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | variables | typedef)* main (comment | variables | typedef)* EOF;
+program: (comment | variable | typedef)* main (comment | variable | typedef)* EOF;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
 scope: LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON+
-         | variables
+         | variable SEMICOLON+
          | postFixIncrement SEMICOLON+
          | postFixDecrement SEMICOLON+
          | preFixIncrement SEMICOLON+
          | preFixDecrement SEMICOLON+
          | comment
-         | printfStatement
+         | printfStatement SEMICOLON+
          | scope
+         | conditional
+         | whileLoop
+         | forLoop
+         | break SEMICOLON+
+         | continue SEMICOLON+
          |typedef;
 
+conditional: ifStatement elseIfStatement* elseStatement?;
+ifStatement: 'if' LPAREN rvalue RPAREN scope;
+elseIfStatement: 'else' 'if' LPAREN rvalue RPAREN scope;
+elseStatement: 'else' scope;
 
-printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')' SEMICOLON;
+whileLoop: 'while' LPAREN rvalue RPAREN scope;
+
+forLoop: 'for' LPAREN forInit? SEMICOLON forCondition? SEMICOLON forUpdate? RPAREN scope;
+forInit: variable | rvalue; // TODO check if this is correct
+forCondition: rvalue;
+forUpdate: postFixIncrement | postFixDecrement | preFixIncrement | preFixDecrement | variable;
+
+break: 'break';
+
+continue: 'continue';
+
+
+printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')';
 
 formatSpecifier: '"%s"'
                | '"%d"'
@@ -28,8 +49,8 @@ formatSpecifier: '"%s"'
                | '"%c"';
 
 
-variables: lvalue '=' rvalue SEMICOLON+
-         | lvalue SEMICOLON+;
+variable: lvalue '=' rvalue
+         | lvalue;
 
 lvalue: identifier
       | type identifier
