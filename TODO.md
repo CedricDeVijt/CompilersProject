@@ -29,7 +29,7 @@
 
 - [x] (**mandatory**) Single line comments
 - [x] (**mandatory**) Multi line comments
-- [ ] (**mandatory**) Output printf
+- [x] (**mandatory**) Output printf
 - [x] (**mandatory**) Typedef support
 - [x] (**mandatory**) LLVM definitions
 - [x] (**mandatory**) LLVM pointers
