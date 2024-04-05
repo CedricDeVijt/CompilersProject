@@ -21,7 +21,7 @@ class ASTGenerator(Visitor):
             if self.scope.lookup(identifier):
                 if isinstance(self.scope.lookup(identifier).type, PointerNode):
                     if int(self.scope.lookup(identifier).type.value) - 1 != 0:
-                        size.append(int(self.scope.lookup(identifier).type.value) - 1)
+                        size.append(int(self.scope.lookup(identifier).type.value) - int(node.value))
         elif isinstance(node, IdentifierNode):
             identifier = node.value
             if self.scope.lookup(identifier):
