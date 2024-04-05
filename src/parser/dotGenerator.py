@@ -47,7 +47,7 @@ class DotGenerator:
                 label = f"Literal\n"
                 label += f"Value: {str(node.value)}\nType: float"
             elif isinstance(node, AST.PrintfNode):
-                label = f"Printf({node.specifier}, {node.str(node.value)})"
+                label = f"Printf({node.specifier}, {str(node.value)})"
                 pass
             elif isinstance(node, AST.CommentNode):
                 label = f"Comment\n" + str(node.value).replace('\n', '\\\\n')
