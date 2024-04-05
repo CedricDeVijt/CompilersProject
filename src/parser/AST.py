@@ -382,9 +382,10 @@ class FloatNode(Node):
 
 
 class ExplicitConversionNode(Node):
-    def __init__(self, line: int, pos: int, type: str):
-        super().__init__("ExplicitConversion", line, pos, children=None)
+    def __init__(self, line: int, pos: int, type: str, rval, children=None):
+        super().__init__("ExplicitConversion", line, pos, children=children)
         self.type = type
+        self.rval = rval
 
 
 class PrintfNode(Node):

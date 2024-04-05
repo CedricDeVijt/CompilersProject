@@ -61,7 +61,7 @@ rvalue: unaryExpression
       | rvalue LOGICAL_AND rvalue
       | rvalue LOGICAL_OR rvalue
       | LPAREN rvalue RPAREN
-      | explicitConversion rvalue;
+      | explicitConversion;
 
 unaryExpression: (PLUS | MINUS)? literal
                | (PLUS MINUS)+ (PLUS)? literal
@@ -71,7 +71,7 @@ literal: INT
        | FLOAT
        | CHAR;
 
-explicitConversion: '(' + type + ')';
+explicitConversion: '(' + type + ')' rvalue;
 
 pointer: type '*'+;
 

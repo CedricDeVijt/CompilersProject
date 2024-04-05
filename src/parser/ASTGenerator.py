@@ -31,7 +31,9 @@ class ASTGenerator(Visitor):
             identifier = node.value.value
             if self.scope.lookup(identifier):
                 if isinstance(self.scope.lookup(identifier).type, PointerNode):
-                    size.append(int(self.scope.lookup(identifier).type.value))
+                    size.append(int(self.scope.lookup(identifier).type.value) + 1)
+                else:
+                    size.append(1)
         elif isinstance(node, CharNode) or isinstance(node, IntNode) or isinstance(node, FloatNode) or isinstance(node, str):
             return []
         elif isinstance(node, EQNode) or isinstance(node, NEQNode) or isinstance(node, LTEQNode) or isinstance(node, GTEQNode):
@@ -69,6 +71,8 @@ class ASTGenerator(Visitor):
                     if isinstance(self.scope.lookup(identifier).type, str):
                         return self.scope.lookup(identifier).type
                     return self.scope.lookup(identifier).type.type[0].value
+            if isinstance(rval, ExplicitConversionNode):
+                return type
             type1 = self.get_highest_type(rval.children[0])
             type2 = self.get_highest_type(rval.children[len(rval.children) - 1])
             if type1 == 'float' or type2 == 'float':
@@ -301,6 +305,9 @@ class ASTGenerator(Visitor):
                         if int(rval_ptr[0]) != int(lval_ptr):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
                             return None
+                    if lval_ptr != 0 and rval_ptr == []:
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
+                        return None
                     node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children) - 3], children[children.index("=") - 1], children[children.index("=") + 1])
                     return node
 
@@ -326,28 +333,32 @@ class ASTGenerator(Visitor):
     def visitPostFixDecrement(self, ctx):
         identifier = ctx.getText()[:-2]
         if not self.scope.lookup(identifier):
-            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+            return None
         node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
         return node
 
     def visitPostFixIncrement(self, ctx):
         identifier = ctx.getText()[:-2]
         if not self.scope.lookup(identifier):
-            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+            return None
         node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
         return node
 
     def visitPreFixDecrement(self, ctx):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
-            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+            return None
         node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
         return node
 
     def visitPreFixIncrement(self, ctx):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
-            raise Exception("Variable \'" + identifier + "\' not declared yet!")
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+            return None
         node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
         return node
 
@@ -468,9 +479,8 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             children.append(line)
         type = children[1].getText()
-        node = ExplicitConversionNode(ctx.start.line, ctx.start.column, type)
+        node = ExplicitConversionNode(ctx.start.line, ctx.start.column, type, self.visit(children[len(children) - 1]))
         return node
-
 
     def visitPrintfStatement(self, ctx):
         children = []
