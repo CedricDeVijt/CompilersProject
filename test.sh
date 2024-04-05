@@ -33,19 +33,28 @@ process_file() {
 #    $MAIN_SCRIPT --input "$input_file" --target_mips "$mips_output"
 }
 
-# Recursive function to process files in a directory
+# Recursive function to process files in a directory or a single file
 process_directory() {
-    local dir="$1"
-    for file in "$dir"/*; do
-        if [ -f "$file" ]; then
-            echo "Processing $file"
-            process_file "$file"
-            echo "Finished processing $file"
+    local path="$1"
+    if [ -d "$path" ]; then
+        for file in "$path"/*; do
+            if [ -f "$file" ]; then
+                echo "Processing $file"
+                process_file "$file"
+                echo "Finished processing $file"
+                echo
+            elif [ -d "$file" ]; then
+                process_directory "$file"
+            fi
+        done
+    elif [ -f "$path" ]; then
+        if [[ "$path" == *.c ]]; then
+            echo "Processing $path"
+            process_file "$path"
+            echo "Finished processing $path"
             echo
-        elif [ -d "$file" ]; then
-            process_directory "$file"
         fi
-    done
+    fi
 }
 
 
