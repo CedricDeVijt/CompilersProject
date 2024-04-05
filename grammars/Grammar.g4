@@ -41,6 +41,7 @@ rvalue: unaryExpression
       | deref
       | addr
       | LOGICAL_NOT rvalue
+      | BITWISE_NOT rvalue
       | rvalue DIV rvalue
       | rvalue MOD rvalue
       | rvalue MULT rvalue
@@ -115,6 +116,7 @@ SHIFT_RIGHT: '>>';
 BITWISE_AND: '&';
 BITWISE_OR: '|';
 BITWISE_XOR: '^';
+BITWISE_NOT: '~';
 LOGICAL_AND: '&&';
 LOGICAL_OR: '||';
 LOGICAL_NOT: '!';

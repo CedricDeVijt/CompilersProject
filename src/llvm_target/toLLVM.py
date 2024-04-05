@@ -1,16 +1,17 @@
 import src.parser.AST as AST
+from llvmlite import ir
 
 
-def generateLLVMcode(node, llvm_file, symbol_table):
+def generateLLVMcodePython(node, llvm_file, symbol_table):  # generate LLVM code using python
     if isinstance(node, AST.Node):
         if isinstance(node, AST.ProgramNode):
             for child in node.children:
-                generateLLVMcode(child, llvm_file, symbol_table)
+                generateLLVMcodePython(child, llvm_file, symbol_table)
         elif isinstance(node, AST.MainNode):
             llvm_file.write("define i32 @main() {\n")
             llvm_file.write("entry:\n")
             for child in node.children:
-                generateLLVMcode(child, llvm_file, symbol_table)
+                generateLLVMcodePython(child, llvm_file, symbol_table)
             llvm_file.write("    ret i32 0\n")
             llvm_file.write("}\n")
         elif isinstance(node, AST.DefinitionNode):
@@ -149,6 +150,54 @@ def operation(node, llvm_file):
         y = f"%{y}_val"
     llvm_file.write(f"    %{opText} = {opText} {var_type} {x}, {y}\n")
     llvm_file.write(f"    store {var_type} %{opText}, {var_type}* %{var_name}\n\n")
+
+
+done = True
+
+
+def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code using LLVM lite
+    # Create module
+    module = ir.Module()
+    # Set the module ID
+    module.module_id = ""
+    # Set the target triple
+    module.triple = "x86_64-pc-linux-gnu"
+    # Set the target data layout
+    module.data_layout = ""
+
+    builder = None
+    global done
+    if isinstance(node, AST.Node):
+        if isinstance(node, AST.ProgramNode):
+            for child in node.children:
+                generateLLVMcodeLite(child, llvm_file, symbol_table)
+        elif isinstance(node, AST.MainNode):
+            function = ir.Function(module, ir.FunctionType(ir.IntType(32), []), name="main")
+            block = function.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
+            for child in node.children:
+                generateLLVMfunction(child, builder)
+            builder.ret(ir.Constant(ir.IntType(32), 0))
+
+    if done:
+        llvm_file.write(str(module))
+        done = False
+
+
+def generateLLVMfunction(node, builder):
+    if isinstance(node, AST.DefinitionNode):
+        constant = None
+        var = None
+        if node.type[0].value == "int":
+            constant = ir.Constant(ir.IntType(32), node.rvalue.value)
+            var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
+        elif node.type[0].value == "float":
+            constant = ir.Constant(ir.FloatType(), float(node.rvalue.value))
+            var = builder.alloca(ir.FloatType(), name=node.lvalue.value)
+        elif node.type[0].value == "char":
+            constant = ir.Constant(ir.IntType(8), node.rvalue.value)
+            var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
+        builder.store(constant, var)
 
 # target_llvm
 # render_ast_png
