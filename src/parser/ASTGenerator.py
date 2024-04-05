@@ -34,7 +34,7 @@ class ASTGenerator(Visitor):
                     size.append(int(self.scope.lookup(identifier).type.value) + 1)
                 else:
                     size.append(1)
-        elif isinstance(node, CharNode) or isinstance(node, IntNode) or isinstance(node, FloatNode) or isinstance(node, str):
+        elif isinstance(node, CharNode) or isinstance(node, IntNode) or isinstance(node, FloatNode) or isinstance(node, str) or isinstance(node, int):
             return []
         elif isinstance(node, EQNode) or isinstance(node, NEQNode) or isinstance(node, LTEQNode) or isinstance(node, GTEQNode):
             return []
