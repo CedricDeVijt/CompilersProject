@@ -179,7 +179,7 @@ def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code
             for child in node.children:
                 generateLLVMfunction(child, builder)
             builder.ret(ir.Constant(ir.IntType(32), 0))
-        #elif isinstance(node, AST.CommentNode):
+        # elif isinstance(node, AST.CommentNode):   add comment outside of function if possible
         #    module.add_comment("Allocate memory for variable a")
 
     if done:
@@ -189,11 +189,11 @@ def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code
 
 def generateLLVMfunction(node, builder):
     global definitions
+    global defi
 
     if isinstance(node, AST.DefinitionNode):
         constant = None
         var = None
-        pointer = False
 
         # add original c code as comment
         originalExpression = f"{node.type[0].value} {node.lvalue.value} = {node.rvalue.value}"
@@ -208,17 +208,23 @@ def generateLLVMfunction(node, builder):
             builder.comment(originalExpression)
             constant = ir.Constant(ir.FloatType(), float(node.rvalue.value))
             var = builder.alloca(ir.FloatType(), name=node.lvalue.value)
+            definitions[node.lvalue.value] = var
         elif node.type[0].value == "char":
             originalExpression = f"{node.type[0].value} {node.lvalue.value} = {chr(node.rvalue.value)}"
             builder.comment(originalExpression)
             constant = ir.Constant(ir.IntType(8), node.rvalue.value)
             var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
-        elif node.type[0].value == "1":
-            originalExpression = f"int* {node.lvalue.value} = &{node.rvalue.value}"
+            definitions[node.lvalue.value] = var
+        elif node.type[0].value.isnumeric():
+            # pointers
+            stars = ""
+            for i in range(int(node.type[0].value)):
+                stars += "*"
+            originalExpression = f"{node.type[0].type[0].value}{stars} {node.lvalue.value} = &{node.rvalue.value.value}"
             builder.comment(originalExpression)
-            constant = builder.bitcast(builder.alloca(ir.IntType(32), name=node.lvalue.value), ir.IntType(32).as_pointer())
-            var = builder.alloca(ir.IntType(32).as_pointer(), name=node.lvalue.value)
-            pointer = True
+            constant = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)))
+            var = builder.alloca(getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)), name=node.lvalue.value)
+            definitions[node.lvalue.value] = var
         builder.store(constant, var)
 
     elif isinstance(node, AST.CommentNode):
@@ -244,6 +250,20 @@ def generateLLVMfunction(node, builder):
             builder.comment(comment)
 
 
+
+def getIRtype(Ctype):
+    if Ctype == "int":
+        return ir.IntType(32)
+    elif Ctype == "float":
+        return ir.FloatType()
+    elif Ctype == "char":
+        return ir.IntType(8)
+
+def getIRpointerType(type, iterations):
+    if iterations > 0:
+        return ir.PointerType(getIRpointerType(type, iterations-1))
+    else:
+        return type
 
 # --target_llvm
 # --render_ast_png
