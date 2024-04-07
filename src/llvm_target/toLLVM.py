@@ -154,6 +154,7 @@ def operation(node, llvm_file):
 
 done = True
 definitions = {}
+types = {}
 
 
 def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code using LLVM lite
@@ -189,13 +190,14 @@ def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code
 
 def generateLLVMfunction(node, builder):
     global definitions
+    global types
 
     if isinstance(node, AST.DefinitionNode):
         constant = None
         var = None
 
         # add original c code as comment
-        originalExpression = f"{node.type[0].value} {node.lvalue.value} = {node.rvalue.value}"
+        originalExpression = f"{node.type[0].value} {node.lvalue.value} = {node.rvalue.value};"
 
         # generate code
         if node.type[0].value == "int":
@@ -209,7 +211,7 @@ def generateLLVMfunction(node, builder):
             var = builder.alloca(ir.FloatType(), name=node.lvalue.value)
             definitions[node.lvalue.value] = var
         elif node.type[0].value == "char":
-            originalExpression = f"{node.type[0].value} {node.lvalue.value} = {chr(node.rvalue.value)}"
+            originalExpression = f"{node.type[0].value} {node.lvalue.value} = {chr(node.rvalue.value)};"
             builder.comment(originalExpression)
             constant = ir.Constant(ir.IntType(8), node.rvalue.value)
             var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
@@ -219,30 +221,37 @@ def generateLLVMfunction(node, builder):
             stars = ""
             for i in range(int(node.type[0].value)):
                 stars += "*"
-            originalExpression = f"{node.type[0].type[0].value}{stars} {node.lvalue.value} = &{node.rvalue.value.value}"
+            originalExpression = f"{node.type[0].type[0].value}{stars} {node.lvalue.value} = &{node.rvalue.value.value};"
             builder.comment(originalExpression)
             constant = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)))
             var = builder.alloca(getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)), name=node.lvalue.value)
             definitions[node.lvalue.value] = var
+        types[node.lvalue.value] = node.type[0].value
         builder.store(constant, var)
+
+    elif isinstance(node, AST.AssignmentNode):
+        originalExpression = f"{node.lvalue.value} = {node.rvalue.value};"
+        builder.comment(originalExpression)
+        builder.store(ir.Constant(getIRtype(types[node.lvalue.value]), node.rvalue.value), definitions[node.lvalue.value])
 
     elif isinstance(node, AST.PostFixNode):
         if node.op == "inc":
-            originalExpression = f"{node.value}++"
+            originalExpression = f"{node.value}++;"
             builder.comment(originalExpression)
             contant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         else:
-            originalExpression = f"{node.value}--"
+            originalExpression = f"{node.value}--;"
             builder.comment(originalExpression)
             contant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         builder.store(contant, definitions[node.value])
+
     elif isinstance(node, AST.PreFixNode):
         if node.op == "inc":
-            originalExpression = f"++{node.value}"
+            originalExpression = f"++{node.value};"
             builder.comment(originalExpression)
             contant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         else:
-            originalExpression = f"--{node.value}"
+            originalExpression = f"--{node.value};"
             builder.comment(originalExpression)
             contant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         builder.store(contant, definitions[node.value])
