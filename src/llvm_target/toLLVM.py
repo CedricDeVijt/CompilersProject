@@ -189,7 +189,6 @@ def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code
 
 def generateLLVMfunction(node, builder):
     global definitions
-    global defi
 
     if isinstance(node, AST.DefinitionNode):
         constant = None
@@ -226,6 +225,27 @@ def generateLLVMfunction(node, builder):
             var = builder.alloca(getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)), name=node.lvalue.value)
             definitions[node.lvalue.value] = var
         builder.store(constant, var)
+
+    elif isinstance(node, AST.PostFixNode):
+        if node.op == "inc":
+            originalExpression = f"{node.value}++"
+            builder.comment(originalExpression)
+            contant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+        else:
+            originalExpression = f"{node.value}--"
+            builder.comment(originalExpression)
+            contant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+        builder.store(contant, definitions[node.value])
+    elif isinstance(node, AST.PreFixNode):
+        if node.op == "inc":
+            originalExpression = f"++{node.value}"
+            builder.comment(originalExpression)
+            contant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+        else:
+            originalExpression = f"--{node.value}"
+            builder.comment(originalExpression)
+            contant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+        builder.store(contant, definitions[node.value])
 
     elif isinstance(node, AST.CommentNode):
         # multi line comments
