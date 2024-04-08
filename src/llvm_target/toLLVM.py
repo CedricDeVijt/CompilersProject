@@ -44,7 +44,7 @@ def generateLLVMcodePython(node, llvm_file, symbol_table):  # generate LLVM code
                         c_type += '*'
                 pointer = True
             if pointer == False and node.rvalue.value.isalpha():
-                operation(node, llvm_file)
+                opeRation(node, llvm_file)
             else:
                 # Write to output file
                 if pointer:
@@ -110,7 +110,7 @@ def generateLLVMcodePython(node, llvm_file, symbol_table):  # generate LLVM code
             pass
 
 
-def operation(node, llvm_file):
+def opeRation(node, llvm_file):
     # load variables for operation
     op = node.rvalue.value
     var_name = node.lvalue.value
@@ -155,6 +155,7 @@ def operation(node, llvm_file):
 done = True
 definitions = {}
 types = {}
+ops = ["Plus", "Minus", "Mul", "Div", "Mod"]
 
 
 def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code using LLVM lite
@@ -191,43 +192,47 @@ def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code
 def generateLLVMfunction(node, builder):
     global definitions
     global types
+    global ops
 
     if isinstance(node, AST.DefinitionNode):
         constant = None
         var = None
+        # check if definition is on an operation
+        if node.rvalue.value in ops and len(node.rvalue.children) != 0:
+            operation(node, builder)
+        else:
+            # add original c code as comment
+            originalExpression = f"{node.type[0].value} {node.lvalue.value} = {node.rvalue.value};"
 
-        # add original c code as comment
-        originalExpression = f"{node.type[0].value} {node.lvalue.value} = {node.rvalue.value};"
-
-        # generate code
-        if node.type[0].value == "int":
-            builder.comment(originalExpression)
-            constant = ir.Constant(ir.IntType(32), node.rvalue.value)
-            var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
-            definitions[node.lvalue.value] = var
-        elif node.type[0].value == "float":
-            builder.comment(originalExpression)
-            constant = ir.Constant(ir.FloatType(), float(node.rvalue.value))
-            var = builder.alloca(ir.FloatType(), name=node.lvalue.value)
-            definitions[node.lvalue.value] = var
-        elif node.type[0].value == "char":
-            originalExpression = f"{node.type[0].value} {node.lvalue.value} = {chr(node.rvalue.value)};"
-            builder.comment(originalExpression)
-            constant = ir.Constant(ir.IntType(8), node.rvalue.value)
-            var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
-            definitions[node.lvalue.value] = var
-        elif node.type[0].value.isnumeric():
-            # pointers
-            stars = ""
-            for i in range(int(node.type[0].value)):
-                stars += "*"
-            originalExpression = f"{node.type[0].type[0].value}{stars} {node.lvalue.value} = &{node.rvalue.value.value};"
-            builder.comment(originalExpression)
-            constant = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)))
-            var = builder.alloca(getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)), name=node.lvalue.value)
-            definitions[node.lvalue.value] = var
-        types[node.lvalue.value] = node.type[0].value
-        builder.store(constant, var)
+            # generate code
+            if node.type[0].value == "int":
+                builder.comment(originalExpression)
+                constant = ir.Constant(ir.IntType(32), node.rvalue.value)
+                var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
+                definitions[node.lvalue.value] = var
+            elif node.type[0].value == "float":
+                builder.comment(originalExpression)
+                constant = ir.Constant(ir.FloatType(), float(node.rvalue.value))
+                var = builder.alloca(ir.FloatType(), name=node.lvalue.value)
+                definitions[node.lvalue.value] = var
+            elif node.type[0].value == "char":
+                originalExpression = f"{node.type[0].value} {node.lvalue.value} = {chr(node.rvalue.value)};"
+                builder.comment(originalExpression)
+                constant = ir.Constant(ir.IntType(8), node.rvalue.value)
+                var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
+                definitions[node.lvalue.value] = var
+            elif node.type[0].value.isnumeric():
+                # pointers
+                stars = ""
+                for i in range(int(node.type[0].value)):
+                    stars += "*"
+                originalExpression = f"{node.type[0].type[0].value}{stars} {node.lvalue.value} = &{node.rvalue.value.value};"
+                builder.comment(originalExpression)
+                constant = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)))
+                var = builder.alloca(getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)), name=node.lvalue.value)
+                definitions[node.lvalue.value] = var
+            types[node.lvalue.value] = node.type[0].value
+            builder.store(constant, var)
 
     elif isinstance(node, AST.AssignmentNode):
         originalExpression = f"{node.lvalue.value} = {node.rvalue.value};"
@@ -238,23 +243,23 @@ def generateLLVMfunction(node, builder):
         if node.op == "inc":
             originalExpression = f"{node.value}++;"
             builder.comment(originalExpression)
-            contant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+            constant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         else:
             originalExpression = f"{node.value}--;"
             builder.comment(originalExpression)
-            contant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
-        builder.store(contant, definitions[node.value])
+            constant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+        builder.store(constant, definitions[node.value])
 
     elif isinstance(node, AST.PreFixNode):
         if node.op == "inc":
             originalExpression = f"++{node.value};"
             builder.comment(originalExpression)
-            contant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+            constant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         else:
             originalExpression = f"--{node.value};"
             builder.comment(originalExpression)
-            contant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
-        builder.store(contant, definitions[node.value])
+            constant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
+        builder.store(constant, definitions[node.value])
 
     elif isinstance(node, AST.CommentNode):
         # multi line comments
@@ -278,6 +283,61 @@ def generateLLVMfunction(node, builder):
             comment = node.value[2:]
             builder.comment(comment)
 
+
+
+def operation(node, builder):
+    vars = {}
+    cString = ""
+    global definitions
+    var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
+    definitions[node.lvalue.value] = var
+    operationRecursive(node.rvalue, builder, vars, cString)
+    return False
+
+
+def operationRecursive(node, builder, vars, cString): # if node.rvalue.children[0].value.isalpha():
+    if len(node.children) != 0:
+        if len(node.children[0]) != 0:
+            operationRecursive(node.children[0], builder, vars, cString)
+        else:
+            print(node.children[0].value)
+        if len(node.children) != 0:
+            operationRecursive(node.children[1], builder, vars, cString)
+        else:
+            print(node.children[1].value)
+
+    else:
+        print(node.value)
+    """
+    if isinstance(node.rvalue, AST.PlusNode):
+        ...
+    elif isinstance(node.rvalue, AST.MinusNode):
+        ...
+    elif isinstance(node.rvalue, AST.MultNode):
+        ...
+    elif isinstance(node.rvalue, AST.DivNode):
+        ...
+    elif isinstance(node.rvalue, AST.ModNode):
+        ...
+    elif isinstance(node.rvalue, AST.BitwiseAndNode):
+        ...
+    elif isinstance(node.rvalue, AST.BitwiseOrNode):
+        ...
+    elif isinstance(node.rvalue, AST.BitwiseNotNode):
+        ...
+    elif isinstance(node.rvalue, AST.BitwiseXorNode):
+        ...
+    elif isinstance(node.rvalue, AST.LogicalAndNode):
+        ...
+    elif isinstance(node.rvalue, AST.LogicalOrNode):
+        ...
+    elif isinstance(node.rvalue, AST.LogicalNotNode):
+        ...
+    elif isinstance(node.rvalue, AST.SLNode):
+        ...
+    elif isinstance(node.rvalue, AST.SRNode):
+        ...
+    """
 
 
 def getIRtype(Ctype):
