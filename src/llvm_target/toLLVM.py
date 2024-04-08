@@ -297,17 +297,17 @@ def operation(node, builder):
 
 def operationRecursive(node, builder, vars, cString): # if node.rvalue.children[0].value.isalpha():
     if len(node.children) != 0:
-        if len(node.children[0]) != 0:
+        if len(node.children[0].children) != 0:
             operationRecursive(node.children[0], builder, vars, cString)
         else:
             print(node.children[0].value)
-        if len(node.children) != 0:
+        if len(node.children[1].children) != 0:
             operationRecursive(node.children[1], builder, vars, cString)
         else:
             print(node.children[1].value)
 
     else:
-        print(node.value)
+        ...
     """
     if isinstance(node.rvalue, AST.PlusNode):
         ...
