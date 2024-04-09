@@ -8,8 +8,15 @@ class Node:
         self.pos = pos
 
     def constantFold(self, errors=None, warnings=None):
-        if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode):
+        if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode) or isinstance(self, WhileLoopNode):
             self.condition.constantFold()
+        if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode) or isinstance(self, ElseStatementNode) or isinstance(self, WhileLoopNode):
+            for node in self.body:
+                if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
+                    node.rvalue.constantFold(errors, warnings)
+                elif not isinstance(node, str) and not isinstance(node, list):
+                    if node is not None:
+                        node.constantFold(errors, warnings)
         for node in self.children:
             if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
                 node.rvalue.constantFold(errors, warnings)
@@ -481,17 +488,27 @@ class TypedefNode(Node):
 
 
 class IfStatementNode(Node):
-    def __init__(self, line: int, pos: int, condition: Node, children=None):
+    def __init__(self, line: int, pos: int, condition: Node, body: Node, children=None):
         super().__init__("IfStatement", line, pos, children=children)
         self.condition = condition
+        self.body = body
 
 
 class ElseIfStatementNode(Node):
-    def __init__(self, line: int, pos: int, condition: Node, children=None):
+    def __init__(self, line: int, pos: int, condition: Node, body: Node, children=None):
         super().__init__("ElseIfStatement", line, pos, children=children)
         self.condition = condition
+        self.body = body
 
 
 class ElseStatementNode(Node):
-    def __init__(self, line: int, pos: int, children=None):
+    def __init__(self, line: int, pos: int, body: Node, children=None):
         super().__init__("ElseStatement", line, pos, children=children)
+        self.body = body
+
+
+class WhileLoopNode(Node):
+    def __init__(self, line: int, pos: int, condition: Node, body: Node, children=None):
+        super().__init__("While", line, pos, children=children)
+        self.condition = condition
+        self.body = body

@@ -138,6 +138,12 @@ class ASTGenerator(Visitor):
                 if isinstance(child, list):
                     children.extend(child)
                 else:
+                    if isinstance(child, IdentifierNode):
+                        if self.scope.lookup(child.value) is None:
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child.value + "\' not declared yet!")
+                        else:
+                            if self.scope.lookup(child.value).typeDef:
+                                self.warnings.append("line {ctx.start.line}:{ctx.start.column} \'" + child.value + "\' useless type name in empty declaration!")
                     children.append(child)
         if len(children) == 0:
             return None
@@ -162,6 +168,9 @@ class ASTGenerator(Visitor):
         if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
             identifier = children[len(children) - 1].value
             var_type = children[len(children) - 2].value
+
+            if isinstance(children[len(children) - 2], PointerNode):
+                var_type = children[len(children) - 2].type[len(children[len(children) - 2].type) - 1].value
 
             # Check if type is declared.
             if var_type not in self.types:
@@ -254,6 +263,9 @@ class ASTGenerator(Visitor):
                 # "=" is not second character -> definition.
                 identifier = children[children.index('=') - 1].value
                 var_type = children[children.index('=') - 2].value
+
+                if isinstance(children[children.index('=') - 2], PointerNode):
+                    var_type = children[children.index('=') - 2].type[len(children[children.index('=') - 2].type) - 1].value
 
                 # Check if type is declared.
                 if var_type not in self.types:
@@ -518,7 +530,7 @@ class ASTGenerator(Visitor):
                 node = LogicalNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
             elif str(lines[0]) == "~":
                 node = BitwiseNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
-            if isinstance(node.children[1], IdentifierNode):
+            if isinstance(node.children[0], IdentifierNode):
                 identifier = lines[1].getText()
                 if self.scope.lookup(identifier) is None:
                     self.errors.append(
@@ -578,13 +590,11 @@ class ASTGenerator(Visitor):
             return ProgramNode(0, 0)
         return node
 
-
     def visitFormatSpecifier(self, ctx):
         children = []
         for line in ctx.getChildren():
             children.append(line)
         return FormatSpecifierNode(ctx.start.line, ctx.start.column, children[0].getText())
-
 
     def visitTypedef(self, ctx):
         children = []
@@ -601,3 +611,15 @@ class ASTGenerator(Visitor):
 
         self.scope.add_symbol(Symbol(name=name, varType=type, typeDef=True, const=False))
         return TypedefNode(ctx.start.line, ctx.start.column, children[1].getText(), children[2].getText())
+
+    def visitWhileLoop(self, ctx):
+        children = []
+        for child in ctx.getChildren():
+            child = self.visit(child)
+            if child is not None:
+                if isinstance(child, list):
+                    children.extend(child)
+                else:
+                    children.append(child)
+        node = WhileLoopNode(ctx.start.line, ctx.start.column, children[0], children[1:])
+        return node
