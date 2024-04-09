@@ -52,13 +52,13 @@ class ASTGenerator(Visitor):
                 if isinstance(self.scope.lookup(identifier).type, str):
                     return self.scope.lookup(identifier).type
                 return self.scope.lookup(identifier).type.type[0].value
-        if isinstance(rval, IdentifierNode):
+        elif isinstance(rval, IdentifierNode):
             identifier = rval.value
             if self.scope.lookup(identifier):
                 if isinstance(self.scope.lookup(identifier).type, str):
                     return self.scope.lookup(identifier).type
                 return self.scope.lookup(identifier).type.type[0].value
-        if isinstance(rval, IntNode):
+        elif isinstance(rval, IntNode):
             return 'int'
         elif isinstance(rval, FloatNode):
             return 'float'
@@ -195,8 +195,6 @@ class ASTGenerator(Visitor):
         # assignment or definition
         if children.__contains__("="):
             node = children[children.index("=") + 1]
-            if isinstance(node, IntNode) or isinstance(node, FloatNode):
-                node = node.value
             identifier = children[children.index("=") - 1].value
             if isinstance(children[children.index("=") - 1], DerefNode):
                 identifier = children[children.index("=") - 1].identifier.value
@@ -514,10 +512,10 @@ class ASTGenerator(Visitor):
                 if i.isalnum():
                     node = CharNode(ord(i), ctx.start.line, ctx.start.column)
                     return node
-        if float(literal) % 1 == 0:
+        elif '.' in literal:
+            node = FloatNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        elif literal.isdigit():
             node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
-            return node
-        node = FloatNode(ctx.getText(), ctx.start.line, ctx.start.column)
         return node
 
     def visitExplicitConversion(self, ctx):

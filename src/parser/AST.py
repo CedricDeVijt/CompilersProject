@@ -7,68 +7,91 @@ class Node:
         self.line = line
         self.pos = pos
 
-    def constantFold(self):
+    def constantFold(self, errors=None, warnings=None):
         if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode):
             self.condition.constantFold()
         for node in self.children:
             if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
-                node.rvalue.constantFold()
+                node.rvalue.constantFold(errors, warnings)
             elif not isinstance(node, str) and not isinstance(node, list):
-                node.constantFold()
+                if node is not None:
+                    node.constantFold(errors, warnings)
         match self:
+            case CharNode():
+                return
             case IntNode():
                 return
             case FloatNode():
                 return
             case DivNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
+                    return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                if float(self.children[1].value) == 0:
+                    if errors is not None:
+                        errors.append(f"line {self.line}:{self.pos} Division by zero!")
+                    return
+                if isinstance(self.children[0], CharNode) and isinstance(self.children[1], CharNode):
+                    self.__class__ = CharNode
                     self.value = str(int(self.children[0].value) // int(self.children[1].value))
                     self.children = []
-                elif isinstance(self.children[0], FloatNode) and isinstance(self.children[1], FloatNode):
+                elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) / int(self.children[1].value))
+                    self.children = []
+                elif isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) / float(self.children[1].value))
                     self.children = []
-                elif isinstance(self.children[0], FloatNode) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = FloatNode
-                    self.value = str(float(self.children[0].value) / float(self.children[1].value))
+                else:
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) / int(self.children[1].value))
                     self.children = []
-                elif (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and isinstance(self.children[1], FloatNode):
-                    self.__class__ = FloatNode
-                    self.value = str(float(self.children[0].value) / float(self.children[1].value))
-                    self.children = []
-                return
             case ModNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
+                if isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
+                    if errors is not None:
+                        errors.append(f"line {self.line}:{self.pos} Modulus of float!")
+                    return
+                elif (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
+                    if int(self.children[1].value) == 0:
+                        if errors is not None:
+                            errors.append(f"line {self.line}:{self.pos} Division by zero!")
+                        return
                     self.__class__ = IntNode
                     self.value = str(int(self.children[0].value) % int(self.children[1].value))
                     self.children = []
-                return
             case MultNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
+                    return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                if isinstance(self.children[0], CharNode) and isinstance(self.children[1], CharNode):
+                    self.__class__ = CharNode
+                    self.value = str(int(self.children[0].value) * int(self.children[1].value))
+                    self.children = []
+                elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
                     self.__class__ = IntNode
                     self.value = str(int(self.children[0].value) * int(self.children[1].value))
                     self.children = []
-                    return
                 elif isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) * float(self.children[1].value))
                     self.children = []
-                    return
-                elif ((isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) or isinstance(self.children[0], FloatNode)) and \
-                        self.children[0].value == 0:
+                else:
                     self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) * int(self.children[1].value))
                     self.children = []
-                    self.value = "0"
-                    return
-                elif ((isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)) or isinstance(self.children[1], FloatNode)) and \
-                        self.children[1].value == 0:
-                    self.__class__ = IntNode
-                    self.children = []
-                    self.value = "0"
-                return
             case MinusNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
+                    return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                if isinstance(self.children[0], CharNode) and isinstance(self.children[1], CharNode):
+                    self.__class__ = CharNode
+                    self.value = str(int(self.children[0].value) - int(self.children[1].value))
+                    self.children = []
+                elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
                     self.__class__ = IntNode
                     self.value = str(int(self.children[0].value) - int(self.children[1].value))
                     self.children = []
@@ -76,116 +99,163 @@ class Node:
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) - float(self.children[1].value))
                     self.children = []
-                return
+                else:
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) - int(self.children[1].value))
+                    self.children = []
             case PlusNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
+                    return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                if isinstance(self.children[0], CharNode) and isinstance(self.children[1], CharNode):
+                    self.__class__ = CharNode
+                    self.value = str(int(self.children[0].value) + int(self.children[1].value))
+                    self.children = []
+                elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
                     self.__class__ = IntNode
                     self.value = str(int(self.children[0].value) + int(self.children[1].value))
                     self.children = []
-                    return
                 elif isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
                     self.value = str(float(self.children[0].value) + float(self.children[1].value))
                     self.children = []
-                    return
+                else:
+                    self.__class__ = IntNode
+                    self.value = str(int(self.children[0].value) + int(self.children[1].value))
+                    self.children = []
             case EQNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) == float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) == float(self.children[1].value))
+                self.children = []
             case GTNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) > float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) > float(self.children[1].value))
+                self.children = []
             case LTNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) < float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) < float(self.children[1].value))
+                self.children = []
             case GTEQNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) >= float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) >= float(self.children[1].value))
+                self.children = []
             case LTEQNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) <= float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) <= float(self.children[1].value))
+                self.children = []
             case NEQNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) != float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) != float(self.children[1].value))
+                self.children = []
             case SLNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    # Undefined behaviour.
-                    if int(self.children[1].value) < 0:
-                        self.value = None
-                    else:
-                        self.value = int(self.children[0].value) << int(self.children[1].value)
-                    self.children = []
-                return
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
+                    return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                if isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
+                    if errors is not None:
+                        errors.append()
+                    return
+                self.__class__ = IntNode
+                # Undefined behaviour
+                if int(self.children[1].value) < 0:
+                    self.value = None
+                else:
+                    self.value = int(self.children[0].value) << int(self.children[1].value)
+                self.children = []
             case SRNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    # Undefined behaviour.
-                    if int(self.children[1].value) < 0:
-                        self.value = None
-                    else:
-                        self.value = str(int(self.children[0].value) >> int(self.children[1].value))
-                    self.children = []
-                return
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
+                    return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                if isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
+                    if errors is not None:
+                        errors.append()
+                    return
+                self.__class__ = IntNode
+                # Undefined behaviour
+                if int(self.children[1].value) < 0:
+                    self.value = None
+                else:
+                    self.value = int(self.children[0].value) >> int(self.children[1].value)
+                self.children = []
             case BitwiseAndNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(int(self.children[0].value) & int(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(int(self.children[0].value) & int(self.children[1].value))
+                self.children = []
             case BitwiseOrNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(int(self.children[0].value) | int(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(int(self.children[0].value) | int(self.children[1].value))
+                self.children = []
             case BitwiseXorNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(int(self.children[0].value) ^ int(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(int(self.children[0].value) ^ int(self.children[1].value))
+                self.children = []
             case LogicalAndNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) and float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) and float(self.children[1].value))
+                self.children = []
             case LogicalOrNode():
-                if (isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode)) and (isinstance(self.children[1], IntNode) or isinstance(self.children[1], CharNode)):
-                    self.__class__ = IntNode
-                    self.value = int(float(self.children[0].value) or float(self.children[1].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(float(self.children[0].value) or float(self.children[1].value))
+                self.children = []
             case LogicalNotNode():
-                if isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode):
-                    self.__class__ = IntNode
-                    self.value = int(not float(self.children[0].value))
-                    self.children = []
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
+                self.__class__ = IntNode
+                self.value = int(not float(self.children[0].value))
+                self.children = []
             case BitwiseNotNode():
-                if isinstance(self.children[0], IntNode) or isinstance(self.children[0], CharNode):
-                    self.__class__ = IntNode
-                    self.value = int(~int(self.children[0].value))
-                    self.children = []
-        return
+                if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
+                    return
+                self.__class__ = IntNode
+                self.value = int(~int(self.children[0].value))
+                self.children = []
 
 
 class ProgramNode(Node):
