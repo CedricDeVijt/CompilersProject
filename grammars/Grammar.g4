@@ -1,7 +1,7 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | variable | typedef)* main (comment | variable | typedef)* EOF;
+program: (comment | (variable SEMICOLON+) | (typedef SEMICOLON+))* main (comment | variable | typedef)* EOF;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
@@ -21,7 +21,7 @@ statement: rvalue SEMICOLON+
          | forLoop
          | break SEMICOLON+
          | continue SEMICOLON+
-         |typedef;
+         | typedef SEMICOLON+;
 
 conditional: ifStatement elseIfStatement* elseStatement?;
 ifStatement: 'if' LPAREN rvalue RPAREN scope;
@@ -108,7 +108,7 @@ postFixDecrement: lvalue DECREMENT;
 preFixIncrement: INCREMENT lvalue;
 preFixDecrement: DECREMENT lvalue;
 
-typedef: 'typedef' type IDENTIFIER SEMICOLON;
+typedef: 'typedef' type IDENTIFIER;
 
 type: 'const'* ('int' | 'float' | 'char' | IDENTIFIER);
 

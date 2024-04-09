@@ -1,3 +1,7 @@
+typedef int a;
+
 int main() {
-    int c = 5 % 1;
+    a b = 1;
+    a a = b;
+    printf("%d", a);
 }
