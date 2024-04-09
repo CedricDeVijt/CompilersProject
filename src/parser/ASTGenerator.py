@@ -679,3 +679,11 @@ class ASTGenerator(Visitor):
         if len(children) < 3:
             children.append(None)
         return children
+
+    def visitJumpStatement(self, ctx):
+        name = ctx.getText()
+        match name:
+            case 'break':
+                return BreakNode(ctx.start.line, ctx.start.column)
+            case 'continue':
+                return ContinueNode(ctx.start.line, ctx.start.column)

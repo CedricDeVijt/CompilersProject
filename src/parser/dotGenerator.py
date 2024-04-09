@@ -99,6 +99,10 @@ def expandExpression(node):
         return f"{node.value}"
     if len(node.children) == 0:
         match node:
+            case AST.BreakNode():
+                return "break"
+            case AST.ContinueNode():
+                return "continue"
             case AST.CommentNode():
                 return f"{node.value}"
             case AST.CharNode():

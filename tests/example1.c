@@ -5,6 +5,7 @@ int main() {
     for(int i=0; i<50; i++) {
         a = a+1;
         int b;
+        break;
     }
     a = !a;
     a = a+a/a+a;

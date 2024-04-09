@@ -512,3 +512,13 @@ class WhileLoopNode(Node):
         super().__init__("While", line, pos, children=children)
         self.condition = condition
         self.body = body
+
+
+class BreakNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("Break", line, pos, children=children)
+
+
+class ContinueNode(Node):
+    def __init__(self, line: int, pos: int, children=None):
+        super().__init__("Continue", line, pos, children=children)

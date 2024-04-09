@@ -15,8 +15,7 @@ statement: rvalue SEMICOLON+
          | conditional
          | whileLoop
          | forLoop
-         | break SEMICOLON+
-         | continue SEMICOLON+;
+         | jumpStatement SEMICOLON+;
 
 conditional: ifStatement elseIfStatement* elseStatement?;
 ifStatement: 'if' LPAREN rvalue RPAREN scope;
@@ -28,11 +27,6 @@ whileLoop: 'while' LPAREN rvalue RPAREN scope;
 forLoop: 'for' LPAREN forCondition RPAREN scope;
 forInit: variable | rvalue;
 forCondition: variable? SEMICOLON (rvalue conditionalExpression?)? SEMICOLON rvalue?;
-
-break: 'break';
-
-continue: 'continue';
-
 
 printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')';
 
@@ -74,7 +68,8 @@ rvalue: unaryExpression
       | postFixDecrement
       | preFixIncrement
       | preFixDecrement
-      | rvalue conditionalExpression;
+      | rvalue conditionalExpression
+      | jumpStatement;
 
 conditionalExpression: GREATER_THAN rvalue
                      | LESS_THAN rvalue
@@ -84,6 +79,9 @@ conditionalExpression: GREATER_THAN rvalue
                      | NOT_EQUAL rvalue
                      | LOGICAL_AND rvalue
                      | LOGICAL_OR rvalue;
+
+jumpStatement: 'break'
+             | 'continue';
 
 unaryExpression: (PLUS | MINUS)? literal
                | (PLUS MINUS)+ (PLUS)? literal

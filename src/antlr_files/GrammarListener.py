@@ -116,24 +116,6 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by GrammarParser#break.
-    def enterBreak(self, ctx:GrammarParser.BreakContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#break.
-    def exitBreak(self, ctx:GrammarParser.BreakContext):
-        pass
-
-
-    # Enter a parse tree produced by GrammarParser#continue.
-    def enterContinue(self, ctx:GrammarParser.ContinueContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#continue.
-    def exitContinue(self, ctx:GrammarParser.ContinueContext):
-        pass
-
-
     # Enter a parse tree produced by GrammarParser#printfStatement.
     def enterPrintfStatement(self, ctx:GrammarParser.PrintfStatementContext):
         pass
@@ -185,6 +167,15 @@ class GrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by GrammarParser#conditionalExpression.
     def exitConditionalExpression(self, ctx:GrammarParser.ConditionalExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#jumpStatement.
+    def enterJumpStatement(self, ctx:GrammarParser.JumpStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#jumpStatement.
+    def exitJumpStatement(self, ctx:GrammarParser.JumpStatementContext):
         pass
 
 
