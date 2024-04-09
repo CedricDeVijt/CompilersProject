@@ -163,7 +163,10 @@ class ASTGenerator(Visitor):
                     children.extend(child)
                 else:
                     if child:
+                        if isinstance(child, TypedefNode):
+                            return child
                         children.append(child)
+
         # Ends with type + identifier -> declaration.
         if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
             identifier = children[len(children) - 1].value
@@ -464,10 +467,10 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             lines.append(line)
         if len(lines) == 3:
+            node = ProgramNode(0, 0)
             if str(lines[0]) == "(" and ")" == str(lines[2]):
                 node = self.visit(lines[1])
                 return node
-            node = ProgramNode(0, 0)
             match str(lines[1]):
                 case "/":
                     if not isinstance(self.visit(lines[2]).value, str) and int(self.visit(lines[2]).value) == 0:
@@ -481,18 +484,6 @@ class ASTGenerator(Visitor):
                     node = MinusNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "+":
                     node = PlusNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
-                case ">":
-                    node = GTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
-                case "<":
-                    node = LTNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
-                case "==":
-                    node = EQNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
-                case ">=":
-                    node = GTEQNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
-                case "<=":
-                    node = LTEQNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
-                case "!=":
-                    node = NEQNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case "<<":
                     node = SLNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
                 case ">>":
@@ -530,6 +521,10 @@ class ASTGenerator(Visitor):
                 node = LogicalNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
             elif str(lines[0]) == "~":
                 node = BitwiseNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
+            else:
+                node = self.visit(lines[1])
+                node.children[0] = self.visit(lines[0])
+                return node
             if isinstance(node.children[0], IdentifierNode):
                 identifier = lines[1].getText()
                 if self.scope.lookup(identifier) is None:
@@ -549,6 +544,26 @@ class ASTGenerator(Visitor):
                     negatives += 1
             if negatives % 2:
                 node.value = - int(node.value)
+        return node
+
+    def visitConditionalExpression(self, ctx):
+        children = []
+        node = ProgramNode
+        for line in ctx.getChildren():
+            children.append(line)
+        match children[0].getText():
+            case ">":
+                node = GTNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+            case "<":
+                node = LTNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+            case "==":
+                node = EQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+            case ">=":
+                node = GTEQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+            case "<=":
+                node = LTEQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+            case "!=":
+                node = NEQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
         return node
 
     def visitLiteral(self, ctx):
@@ -623,3 +638,44 @@ class ASTGenerator(Visitor):
                     children.append(child)
         node = WhileLoopNode(ctx.start.line, ctx.start.column, children[0], children[1:])
         return node
+
+    def visitForLoop(self, ctx):
+        self.scope.open_scope()
+        children = []
+        for child in ctx.getChildren():
+            child = self.visit(child)
+            if child is not None:
+                if isinstance(child, list):
+                    children.extend(child)
+                else:
+                    children.append(child)
+        body = children[3:]
+        if children[2] is not None:
+            body.append(children[2])
+        condition = IntNode('1', ctx.start.line, ctx.start.column)
+        if children[1] is not None:
+            condition = children[1]
+
+        node = WhileLoopNode(ctx.start.line, ctx.start.column, condition=condition, body=body)
+        self.scope.close_scope()
+        return node if children[0] is None else [children[0], node]
+
+    def visitForCondition(self, ctx):
+        children = []
+        i = 0
+        for child in ctx.getChildren():
+            text = child.getText()
+            child = self.visit(child)
+            if child is None:
+                if text == ';':
+                    if i == len(children):
+                        children.append(None)
+                    i += 1
+                    continue
+            if isinstance(child, list):
+                children.extend(child)
+            else:
+                children.append(child)
+        if len(children) < 3:
+            children.append(None)
+        return children

@@ -488,27 +488,27 @@ class TypedefNode(Node):
 
 
 class IfStatementNode(Node):
-    def __init__(self, line: int, pos: int, condition: Node, body: Node, children=None):
+    def __init__(self, line: int, pos: int, condition: Node, body: list, children=None):
         super().__init__("IfStatement", line, pos, children=children)
         self.condition = condition
         self.body = body
 
 
 class ElseIfStatementNode(Node):
-    def __init__(self, line: int, pos: int, condition: Node, body: Node, children=None):
+    def __init__(self, line: int, pos: int, condition: Node, body: list, children=None):
         super().__init__("ElseIfStatement", line, pos, children=children)
         self.condition = condition
         self.body = body
 
 
 class ElseStatementNode(Node):
-    def __init__(self, line: int, pos: int, body: Node, children=None):
+    def __init__(self, line: int, pos: int, body: list, children=None):
         super().__init__("ElseStatement", line, pos, children=children)
         self.body = body
 
 
 class WhileLoopNode(Node):
-    def __init__(self, line: int, pos: int, condition: Node, body: Node, children=None):
+    def __init__(self, line: int, pos: int, condition: Node, body: list, children=None):
         super().__init__("While", line, pos, children=children)
         self.condition = condition
         self.body = body

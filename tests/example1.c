@@ -2,6 +2,10 @@ typedef float testType;
 
 int main() {
     int a = 5;
+    for(int i=0; i<50; i++) {
+        a = a+1;
+        int b;
+    }
     a = !a;
     a = a+a/a+a;
     float b = (int) 5.0;
