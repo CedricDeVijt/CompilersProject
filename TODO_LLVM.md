@@ -1,54 +1,54 @@
 # project 1
 
-- [x] (mandatory) Binary operations +, -, *, and /.
-- [x] (mandatory) Binary operations >, <, and ==.
-- [x] (mandatory) Unary operators + and -.
-- [x] (mandatory) Parenthesis to overwrite the order of operations.
-- [x] (mandatory) Logical operators &&, ||, and !.
-- [x] (mandatory) Comparison operators >=, <=, and !=.
-- [x] (mandatory) Binary operator %.
-- [x] (mandatory) Shift operators <<, >>.
-- [x] (mandatory) Bitwise operators &, |, ~, and ^.
+- [] (mandatory) Binary operations +, -, *, and /.
+- [] (mandatory) Binary operations >, <, and ==.
+- [] (mandatory) Unary operators + and -.
+- [] (mandatory) Parenthesis to overwrite the order of operations.
+- [] (mandatory) Logical operators &&, ||, and !.
+- [] (mandatory) Comparison operators >=, <=, and !=.
+- [] (mandatory) Binary operator %.
+- [] (mandatory) Shift operators <<, >>.
+- [] (mandatory) Bitwise operators &, |, ~, and ^.
 
 # project 2
 
-- [x] (**mandatory**) Add an int main() { ... } function
-- [x] (**mandatory**) Extra reserved keywords need to be supported: const, char, int, and float.
-- [x] (**mandatory**) Literals are now no longer limited to integers: literals of any type (integer, floating point,
+- [] (**mandatory**) Add an int main() { ... } function
+- [] (**mandatory**) Extra reserved keywords need to be supported: const, char, int, and float.
+- [] (**mandatory**) Literals are now no longer limited to integers: literals of any type (integer, floating point,
   character) can now be part of expressions
-- [x] (**mandatory**) Variables
-- [x] (**mandatory**) Pointers
-- [x] (**mandatory**) Constants
-- [x] (**mandatory**) Implicit conversions warnings
-- [x] (**mandatory**) Explicit conversions
-- [x] (**mandatory**) Pointer arithmetic
-- [x] (**mandatory**) Increment/Decrement Operations
-- [x] (**optional**) Const casting
+- [] (**mandatory**) Variables
+- [] (**mandatory**) Pointers
+- [] (**mandatory**) Constants
+- [] (**mandatory**) Implicit conversions warnings
+- [] (**mandatory**) Explicit conversions
+- [] (**mandatory**) Pointer arithmetic
+- [] (**mandatory**) Increment/Decrement Operations
+- [] (**optional**) Const casting
 
 # project 3
 
-- [x] (**mandatory**) Single line comments
-- [x] (**mandatory**) Multi line comments
-- [x] (**mandatory**) Output printf
-- [x] (**mandatory**) Typedef support
-- [x] (**mandatory**) LLVM definitions
-- [x] (**mandatory**) LLVM pointers
-- [x] (**mandatory**) LLVM comments
+- [] (**mandatory**) Single line comments
+- [] (**mandatory**) Multi line comments
+- [] (**mandatory**) Output printf
+- [] (**mandatory**) Typedef support
+- [] (**mandatory**) LLVM definitions
+- [] (**mandatory**) LLVM pointers
+- [] (**mandatory**) LLVM comments
 
 # project 4
 
-- [x] (**mandatory**) Conditional statements
-- [x] (**optional**) Else if statements
+- [] (**mandatory**) Conditional statements
+- [] (**optional**) Else if statements
 - [] (**mandatory**) Loops
-- [x] (**mandatory**) Anonymous scopes
+- [] (**mandatory**) Anonymous scopes
 - [] (**mandatory**) Switch statements
 - [] (**mandatory**) Enumerations
 
 # project 5
 
 - Functionality
-  - [x] (**mandatory**) Function scopes
-  - [x] (**mandatory**) Local and global variables
+  - [] (**mandatory**) Function scopes
+  - [] (**mandatory**) Local and global variables
   - [] (**mandatory**) Functions
     - [] Defining functions
     - [] Calling functions
@@ -61,7 +61,7 @@
   - [] (**mandatory**) Includes `#include`
   - [] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
 - Semantic Analysis
-  - [x] (**mandatory**) Function scopes in symbol table
+  - [] (**mandatory**) Function scopes in symbol table
   - [] (**mandatory**) Check consistency of return type
   - [] (**mandatory**) Check consistency of function arguments
   - [] (**mandatory**) Functions can only be called if they are declared/defined earlier
