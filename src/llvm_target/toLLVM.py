@@ -284,75 +284,117 @@ def generateLLVMfunction(node, builder):
             builder.comment(comment)
 
 
-
 def operation(node, builder):
-    vars = {}
-    cString = ""
     global definitions
     var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
     definitions[node.lvalue.value] = var
-    operationRecursive(node.rvalue, builder, vars, cString)
+    AST2 = node
+    operationRecursive(AST2.rvalue, builder, node.type[0].value)
     return False
 
-# global var copy of AST
-AST2 = AST
 
-def operationRecursive(node, builder, vars, cString): # if node.rvalue.children[0].value.isalpha():
+# global var for checking if var is loaded in llvm
+loaded = {}
+
+
+def operationRecursive(node, builder, cType):
     # apply operation and update copy of AST
     if len(node.children) != 0:
+        # if left node operation node -> recursive
         if node.children[0].value in ops:
-            operationRecursive(node.children[0], builder, vars, cString)
+            node.children[0] = operationRecursive(node.children[0], builder, cType)
+        # if right node operation node -> recursive
+        if node.children[1].value in ops:
+            node.children[1] = operationRecursive(node.children[1], builder, cType)
 
+        # decide value left and right value: 0 = literal, 1 = variable, 2 = operation
+        leftValue = 0
+        rightValue = 0
+        if isinstance(node.children[0], ir.Instruction):
+            leftValue = 2
+        elif str(node.children[0].value).isalpha() and definitions[node.children[0].value] not in loaded:
+            # if not loaded in llvm load it
+            loaded[node.children[0].value] = builder.load(definitions[node.children[0].value])
+            leftValue = 1
+        if isinstance(node.children[1], ir.Instruction):
+            rightValue = 2
+        elif str(node.children[1].value).isalpha() and definitions[node.children[1].value] not in loaded:
+            # if not loaded in llvm load it
+            loaded[node.children[1].value] = builder.load(definitions[node.children[1].value])
+            rightValue = 1
 
-
-
-
-
-
-
-    """
-    if len(node.children) != 0:
-        if len(node.children[0].children) != 0:
-            operationRecursive(node.children[0], builder, vars, cString)
+        # get values for operation
+        if leftValue == 0:
+            a = convert(cType, node.children[0].value)
+        elif leftValue == 1:
+            a = loaded[node.children[0].value]
         else:
-            print(node.children[0].value)
-        if len(node.children[1].children) != 0:
-            operationRecursive(node.children[1], builder, vars, cString)
+            a = node.children[0]
+        if rightValue == 0:
+            b = convert(cType, node.children[1].value)
+        elif rightValue == 1:
+            b = loaded[node.children[1].value]
         else:
-            print(node.children[1].value)
+            b = node.children[1]
+        # apply operation
+        node = applyOperation(node, builder, a, b)
+        return node
 
 
+def applyOperation(node, builder, a, b):
+    if isinstance(node, AST.PlusNode):
+        return builder.add(a, b)
+    elif isinstance(node, AST.MinusNode):
+        return builder.sub(a, b)
+    elif isinstance(node, AST.MultNode):
+        return builder.mul(a, b)
+    elif isinstance(node, AST.DivNode):
+        return builder.sdiv(a, b)
+    elif isinstance(node, AST.ModNode):
+        return builder.srem(a, b)
+    elif isinstance(node, AST.BitwiseAndNode):
+        return builder.and_(a, b)
+    elif isinstance(node, AST.BitwiseOrNode):
+        return builder.or_(a, b)
+    elif isinstance(node, AST.BitwiseNotNode):
+        return builder.not_(a, b)
+    elif isinstance(node, AST.BitwiseXorNode):
+        return builder.xor(a, b)
+    elif isinstance(node, AST.LogicalAndNode):
+        return builder.and_(a, b)
+    elif isinstance(node, AST.LogicalOrNode):
+        return builder.or_(a, b)
+    elif isinstance(node, AST.LogicalNotNode):
+        return builder.not_(a, b)
+    elif isinstance(node, AST.SLNode):
+        return builder.shl(a, b)
+    elif isinstance(node, AST.SRNode):
+        return builder.ashr(a, b)
 
-    if isinstance(node.rvalue, AST.PlusNode):
-        ...
-    elif isinstance(node.rvalue, AST.MinusNode):
-        ...
-    elif isinstance(node.rvalue, AST.MultNode):
-        ...
-    elif isinstance(node.rvalue, AST.DivNode):
-        ...
-    elif isinstance(node.rvalue, AST.ModNode):
-        ...
-    elif isinstance(node.rvalue, AST.BitwiseAndNode):
-        ...
-    elif isinstance(node.rvalue, AST.BitwiseOrNode):
-        ...
-    elif isinstance(node.rvalue, AST.BitwiseNotNode):
-        ...
-    elif isinstance(node.rvalue, AST.BitwiseXorNode):
-        ...
-    elif isinstance(node.rvalue, AST.LogicalAndNode):
-        ...
-    elif isinstance(node.rvalue, AST.LogicalOrNode):
-        ...
-    elif isinstance(node.rvalue, AST.LogicalNotNode):
-        ...
-    elif isinstance(node.rvalue, AST.SLNode):
-        ...
-    elif isinstance(node.rvalue, AST.SRNode):
-        ...
-    """
 
+def convert(cType, value):
+    valueType = checkDataType(value)
+    if cType == "int":
+        if valueType == "int":
+            return ir.Constant(ir.IntType(32), value)
+        elif valueType == "float":
+            return ir.Constant(ir.IntType(32), int(float(value)))
+        elif valueType == "char":
+            return ir.Constant(ir.IntType(32), ord(value))
+    elif cType == "float":
+        if valueType == "int":
+            return ir.Constant(ir.FloatType(), float(value))
+        elif valueType == "float":
+            return ir.Constant(ir.FloatType(), value)
+        elif valueType == "char":
+            return ir.Constant(ir.FloatType(), float(ord(value)))
+    elif cType == "char":
+        if valueType == "int":
+            return ir.Constant(ir.IntType(8), value)
+        elif valueType == "float":
+            return ir.Constant(ir.IntType(8), int(value))
+        elif valueType == "char":
+            return ir.Constant(ir.IntType(8), value)
 
 
 def getIRtype(Ctype):
@@ -363,11 +405,40 @@ def getIRtype(Ctype):
     elif Ctype == "char":
         return ir.IntType(8)
 
+
 def getIRpointerType(type, iterations):
     if iterations > 0:
         return ir.PointerType(getIRpointerType(type, iterations-1))
     else:
         return type
+
+
+def checkDataType(x):
+    def is_integer(x):
+        try:
+            int(x)
+            return True
+        except ValueError:
+            return False
+
+    def is_float(x):
+        try:
+            float(x)
+            return True
+        except ValueError:
+            return False
+
+    def is_char(x):
+        return len(x) == 1
+
+    if is_integer(x):
+        return 'int'
+    elif is_float(x):
+        return 'float'
+    elif is_char(x):
+        return 'char'
+    else:
+        return 'unknown'
 
 # --target_llvm
 # --render_ast_png
