@@ -85,6 +85,12 @@ class ASTGenerator(Visitor):
         if isinstance(lvalType, PointerNode):
             lvalType = lvalType.type[0].value
         rvalType = self.get_highest_type(rval)
+        while lvalType != 'char' and lvalType != 'int' and lvalType != 'float':
+            if self.scope.lookup(lvalType) is not None and self.scope.lookup(lvalType).typeDef:
+                lvalType = self.scope.lookup(lvalType).type
+        while rvalType != 'char' and rvalType != 'int' and rvalType != 'float':
+            if self.scope.lookup(rvalType) is not None and self.scope.lookup(rvalType).typeDef:
+                rvalType = self.scope.lookup(rvalType).type
         if lvalType == 'int' and rvalType == 'float':
             self.warnings.append(f"line {rval.line}:{rval.pos} Implicit type conversion from float to int!")
         elif lvalType == 'char' and rvalType == 'float':
@@ -404,7 +410,7 @@ class ASTGenerator(Visitor):
 
     def visitComment(self, ctx):
 
-        node = CommentNode(ctx.getText(), line=ctx.start.line, pos=ctx.start.column, original="")
+        node = CommentNode(ctx.getText(), line=ctx.start.line, pos=ctx.start.column, original=None)
         return node
 
     def visitPostFixDecrement(self, ctx):
@@ -489,7 +495,7 @@ class ASTGenerator(Visitor):
             lines.append(line)
         original = ""
         if len(lines) == 3:
-            node = ProgramNode(line=0, pos=0, original="")
+            node = ProgramNode(line=0, pos=0, original=None)
             if str(lines[0]) == "(" and ")" == str(lines[2]):
                 node = self.visit(lines[1])
                 node.original = f"({node.original})"
@@ -628,10 +634,10 @@ class ASTGenerator(Visitor):
         node = PrintfNode(line=ctx.start.line, pos=ctx.start.column, original=original, specifier=children[0].specifier, node=children[1])
         if self.scope.lookup(node.node.value) is None:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + node.node.value + "\' not declared yet!")
-            return ProgramNode(line=0, pos=0, original="")
+            return ProgramNode(line=0, pos=0, original=None)
         if self.scope.lookup(node.node.value).typeDef:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + node.node.value + "\' is declared as type!")
-            return ProgramNode(line=0, pos=0, original="")
+            return ProgramNode(line=0, pos=0, original=None)
         return node
 
     def visitFormatSpecifier(self, ctx):
@@ -655,7 +661,7 @@ class ASTGenerator(Visitor):
                 return None
 
         self.scope.add_symbol(Symbol(name=name, varType=type, typeDef=True, const=False))
-        original = ""
+        original = f"typedef {children[1].getText()} {children[2].getText()}"
         return TypedefNode(line=ctx.start.line, pos=ctx.start.column, original=original, type=children[1].getText(), identifier=children[2].getText())
 
     def visitWhileLoop(self, ctx):
