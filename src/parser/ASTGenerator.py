@@ -687,3 +687,102 @@ class ASTGenerator(Visitor):
                 return BreakNode(ctx.start.line, ctx.start.column)
             case 'continue':
                 return ContinueNode(ctx.start.line, ctx.start.column)
+
+    def visitSwitchStatement(self, ctx):
+        children = []
+        for child in ctx.getChildren():
+            child = self.visit(child)
+            if child is not None:
+                if isinstance(child, list):
+                    children.extend(child)
+                else:
+                    children.append(child)
+        rval = children[0]
+        cases = children[1:]
+        ifNodes = []
+        # Count default cases
+        i = 0
+        defaultNodes = []
+        for case in cases:
+            if case.condition == 'Default':
+                defaultNodes.insert(0, i)
+            i += 1
+        # Multiple default cases.
+        if len(defaultNodes) > 1:
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Multiple default cases in switch statement!")
+        # Put default cases at back.
+        for index in defaultNodes:
+            case = cases[index]
+            cases.remove(case)
+            cases.append(case)
+        # Check for duplicate cases.
+        for case1 in cases:
+            for case2 in cases:
+                if case1 != case2:
+                    if case1.condition != 'Default' and case2.condition != 'Default':
+                        if case1.condition.value == case2.condition.value:
+                            self.errors.append(f"line {case1.line}:{case1.pos} Duplicate cases in switch statement!")
+        # Make if statements
+        if len(cases) == 0:
+            return None
+        not_default_condition = None
+        condition_since_break = None
+        for case in cases:
+            if case.condition == 'Default':
+                defaultCondition = IntNode('1', case.line, case.pos)
+                if not_default_condition is not None:
+                    not_default_condition = LogicalNotNode(case.line, case.pos, [not_default_condition])
+                    defaultCondition = LogicalAndNode(case.line, case.pos, [not_default_condition, defaultCondition])
+                ifNode = IfStatementNode(case.line, case.pos, condition=defaultCondition, body=case.children)
+                ifNodes.append(ifNode)
+            else:
+                if condition_since_break is None:
+                    condition_since_break = EQNode(case.line, case.pos, [rval, case.condition])
+                else:
+                    case_condition = EQNode(case.line, case.pos, [rval, case.condition])
+                    condition_since_break = LogicalOrNode(case.line, case.pos, [condition_since_break, case_condition])
+                ifNodes.append(IfStatementNode(case.line, case.pos, condition=condition_since_break, body=case.children))
+                for child in case.children:
+                    # If break found, set condition to case condition.
+                    if isinstance(child, BreakNode):
+                        if not_default_condition is None:
+                            not_default_condition = condition_since_break
+                        else:
+                            not_default_condition = LogicalAndNode(case.line, case.pos, [not_default_condition, condition_since_break])
+                        condition_since_break = None
+                        break
+        # Remove code after break.
+        for case in cases:
+            delete = False
+            for child in case.children:
+                if delete:
+                    case.children.remove(child)
+                if isinstance(child, BreakNode):
+                    delete = True
+                    case.children.remove(child)
+
+        return ifNodes
+
+    def visitSwitchCase(self, ctx):
+        children = []
+        for child in ctx.getChildren():
+            child = self.visit(child)
+            if child is not None:
+                if isinstance(child, list):
+                    for item in child:
+                        if isinstance(item, DeclarationNode) or isinstance(item, DefinitionNode):
+                            self.scope.remove_symbol(item.lvalue.value)
+                            self.errors.append(f"line {item.line}:{item.pos} Cannot declare variable in switch case!")
+                        else:
+                            children.append(item)
+                else:
+                    if isinstance(child, DeclarationNode) or isinstance(child, DefinitionNode):
+                        self.scope.remove_symbol(child)
+                        self.errors.append(f"line {child.line}:{child.pos} Cannot declare variable in switch case!")
+                    else:
+                        children.append(child)
+        if len(children) == 0:
+            return CaseNode(ctx.start.line, ctx.start.column, "Default")
+        if isinstance(children[0], CharNode) or isinstance(children[0], IntNode) or isinstance(children[0], FloatNode):
+            return CaseNode(ctx.start.line, ctx.start.column, children[0], children[1:])
+        return CaseNode(ctx.start.line, ctx.start.column, "Default", children)

@@ -1,26 +1,18 @@
-typedef float testType;
+typedef int testType;
 
 int main() {
     int a = 5;
-    for(int i=0; i<50; i++) {
-        a = a+1;
-        int b;
-        break;
+    switch (a) {
+        case 4:
+            a = 5;
+        case 69:
+            a = 6;
+            break;
+        case 5:
+            a = 10;
+        default:
+            a = 20;
+            break;
     }
-    a = !a;
-    a = a+a/a+a;
-    float b = (int) 5.0;
-    // Test
-    if (a==a) {
-        testType a = 5.0;
-        printf("%f", a);
-    }
-    int c = 0;
-    int* d = &c;
-    int** e = &d;
-    a = **e;
-    while(a<500) {
-        a++;
-        printf("%d", a);
-    }
+    printf("%d", a);
 }

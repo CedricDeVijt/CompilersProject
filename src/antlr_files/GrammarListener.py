@@ -44,6 +44,24 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#switchStatement.
+    def enterSwitchStatement(self, ctx:GrammarParser.SwitchStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#switchStatement.
+    def exitSwitchStatement(self, ctx:GrammarParser.SwitchStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#switchCase.
+    def enterSwitchCase(self, ctx:GrammarParser.SwitchCaseContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#switchCase.
+    def exitSwitchCase(self, ctx:GrammarParser.SwitchCaseContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#conditional.
     def enterConditional(self, ctx:GrammarParser.ConditionalContext):
         pass
@@ -230,6 +248,15 @@ class GrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by GrammarParser#addr.
     def exitAddr(self, ctx:GrammarParser.AddrContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#enum.
+    def enterEnum(self, ctx:GrammarParser.EnumContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#enum.
+    def exitEnum(self, ctx:GrammarParser.EnumContext):
         pass
 
 

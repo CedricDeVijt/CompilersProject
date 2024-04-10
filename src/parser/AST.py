@@ -1,5 +1,6 @@
 from graphviz import Source
 
+
 class Node:
     def __init__(self, value: str, line: int, pos: int, children=None):
         self.value = value
@@ -522,3 +523,9 @@ class BreakNode(Node):
 class ContinueNode(Node):
     def __init__(self, line: int, pos: int, children=None):
         super().__init__("Continue", line, pos, children=children)
+
+
+class CaseNode(Node):
+    def __init__(self, line: int, pos: int, condition, children=None):
+        super().__init__("Case", line, pos, children=children)
+        self.condition = condition

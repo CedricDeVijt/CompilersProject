@@ -1,7 +1,7 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | (variable SEMICOLON+) | (typedef SEMICOLON+))* main (comment | variable | typedef)* EOF;
+program: (comment | (enum SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+))* main (comment | (enum SEMICOLON+) | variable | typedef)* EOF;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
@@ -15,7 +15,13 @@ statement: rvalue SEMICOLON+
          | conditional
          | whileLoop
          | forLoop
-         | jumpStatement SEMICOLON+;
+         | jumpStatement SEMICOLON+
+         | switchStatement;
+
+switchStatement: 'switch' LPAREN rvalue RPAREN LBRACE switchCase* RBRACE;
+
+switchCase: 'case' literal COLON statement*
+          | 'default' COLON statement*;
 
 conditional: ifStatement elseIfStatement* elseStatement?;
 ifStatement: 'if' LPAREN rvalue RPAREN scope;
@@ -99,7 +105,7 @@ deref: '*'+ identifier;
 
 addr: '&'+ identifier;
 
-
+enum: 'enum'  IDENTIFIER '{' IDENTIFIER (','  IDENTIFIER )*'}';
 
 postFixIncrement: lvalue INCREMENT;
 postFixDecrement: lvalue DECREMENT;
@@ -141,6 +147,7 @@ LOGICAL_AND: '&&';
 LOGICAL_OR: '||';
 LOGICAL_NOT: '!';
 
+COLON: ':';
 SEMICOLON: ';';
 INT:  '0' | [1-9][0-9]*;
 FLOAT: [0-9]+ ('.' [0-9]+)?;

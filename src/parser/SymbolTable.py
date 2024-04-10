@@ -10,6 +10,7 @@ class Symbol:
 class SymbolTable:
     def __init__(self):
         self.symbols = {}
+        self.enums = {}
 
     def add_symbol(self, symbol):
         if symbol.name in self.symbols:
@@ -18,9 +19,25 @@ class SymbolTable:
         else:
             self.symbols[symbol.name] = symbol
 
+    def add_enum(self, name, enum_dict):
+        if name in self.enums:
+            raise Exception(f"Enum {name} already exists in the table")
+        else:
+            self.enums[name] = enum_dict
+
+    def remove_symbol(self, symbol):
+        if symbol in self.symbols:
+            del self.symbols[symbol]
+        else:
+            raise Exception(f"Symbol {symbol} does not exist in the table")
+
     def get_symbol(self, name) -> Symbol:
         symbol = self.symbols.get(name, None)
         return symbol
+
+    def get_enum(self, name):
+        enum_dict = self.enums.get(name, None)
+        return enum_dict
 
 
 class TreeNode:
@@ -52,6 +69,9 @@ class SymbolTableTree:
         node = self.current_node
         symbol = node.table.get_symbol(name)
         return symbol
+
+    def remove_symbol(self, symbol):
+        self.current_node.table.remove_symbol(symbol)
 
     def get_all_symbols(self):
         return self.current_node.table.symbols
