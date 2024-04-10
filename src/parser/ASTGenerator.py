@@ -101,7 +101,7 @@ class ASTGenerator(Visitor):
                     children.extend(node)
                 else:
                     children.append(node)
-        self.node = ProgramNode(ctx.start.line, ctx.start.column, children)
+        self.node = ProgramNode(line=ctx.start.line, pos=ctx.start.column, original=None, children=children)
         return self
 
     def visitMain(self, ctx):
@@ -113,7 +113,8 @@ class ASTGenerator(Visitor):
                     children.extend(node)
                 else:
                     children.append(node)
-        return MainNode(ctx.start.line, ctx.start.column, children)
+        node = MainNode(line=ctx.start.line, pos=ctx.start.column, original="int main()", children=children)
+        return node
 
     def visitScope(self, ctx):
         self.scope.open_scope()
@@ -152,20 +153,25 @@ class ASTGenerator(Visitor):
 
     def visitVariable(self, ctx):
         children = []
+        original = ""
         for line in ctx.getChildren():
             if line.getText() == ";":
                 pass
             elif line.getText() == "=":
                 children.append(line.getText())
+                original += "= "
             else:
                 child = self.visit(line)
                 if isinstance(child, list):
                     children.extend(child)
+                    for item in child:
+                        original += f"{item.original} "
                 else:
-                    if child:
+                    if child is not None:
                         if isinstance(child, TypedefNode):
                             return child
                         children.append(child)
+                        original += f"{child.original} "
 
         # Ends with type + identifier -> declaration.
         if (isinstance(children[len(children) - 2], TypeNode) or isinstance(children[len(children) - 2], PointerNode)) and isinstance(children[len(children) - 1], IdentifierNode):
@@ -201,7 +207,7 @@ class ASTGenerator(Visitor):
             else:
                 symbol = Symbol(name=identifier, varType=var_type, const=const)
                 self.scope.add_symbol(symbol)
-                node = DeclarationNode(ctx.start.line, ctx.start.column, children[:len(children) - 1], children[len(children) - 1])
+                node = DeclarationNode(line=ctx.start.line, pos=ctx.start.column, original=original, type=children[:len(children) - 1], lvalue=children[len(children) - 1])
                 return node
 
         # assignment or definition
@@ -260,7 +266,7 @@ class ASTGenerator(Visitor):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
                             return None
                     self.scope.lookup(identifier).value = node
-                    node = AssignmentNode(ctx.start.line, ctx.start.column, children[0], children[2])
+                    node = AssignmentNode(line=ctx.start.line, pos=ctx.start.column, original=original, lvalue=children[0], rvalue=children[2])
                     return node
             else:
                 # "=" is not second character -> definition.
@@ -328,7 +334,7 @@ class ASTGenerator(Visitor):
                     if lval_ptr != 0 and rval_ptr == []:
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
                         return None
-                    node = DefinitionNode(ctx.start.line, ctx.start.column, children[:len(children) - 3], children[children.index("=") - 1], children[children.index("=") + 1])
+                    node = DefinitionNode(line=ctx.start.line, pos=ctx.start.column, original=original, type=children[:len(children) - 3], lvalue=children[children.index("=") - 1], rvalue=children[children.index("=") + 1])
                     return node
 
     def visitLvalue(self, ctx):
@@ -343,7 +349,7 @@ class ASTGenerator(Visitor):
         return children
 
     def visitIdentifier(self, ctx):
-        node = IdentifierNode(ctx.getText(), ctx.start.line, ctx.start.column)
+        node = IdentifierNode(value=ctx.getText(), line=ctx.start.line, pos=ctx.start.column, original=ctx.getText())
         return node
 
     def visitConditional(self, ctx):
@@ -366,7 +372,8 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        node = IfStatementNode(ctx.start.line, ctx.start.column, children[0], children[1:])
+        original = f"if ({children[0].original})" + "{}"
+        node = IfStatementNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=children[0], body=children[1:])
         return node
 
     def visitElseIfStatement(self, ctx):
@@ -378,7 +385,8 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        node = ElseIfStatementNode(ctx.start.line, ctx.start.column, children[0], children[1:])
+        original = f"else if ({children[0].original})" + "{}"
+        node = ElseIfStatementNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=children[0], body=children[1:])
         return node
 
     def visitElseStatement(self, ctx):
@@ -390,11 +398,13 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        node = ElseStatementNode(ctx.start.line, ctx.start.column, children)
+        original = "else {}"
+        node = ElseStatementNode(line=ctx.start.line, pos=ctx.start.column, original=original, body=children)
         return node
 
     def visitComment(self, ctx):
-        node = CommentNode(ctx.getText(), ctx.start.line, ctx.start.column)
+
+        node = CommentNode(ctx.getText(), line=ctx.start.line, pos=ctx.start.column, original="")
         return node
 
     def visitPostFixDecrement(self, ctx):
@@ -402,7 +412,8 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
             return None
-        node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
+        original = f"{identifier}--"
+        node = PostFixNode(value=identifier, line=ctx.start.line, pos=ctx.start.column, original=original, op='dec')
         return node
 
     def visitPostFixIncrement(self, ctx):
@@ -410,7 +421,8 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
             return None
-        node = PostFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
+        original = f"{identifier}++"
+        node = PostFixNode(value=identifier, line=ctx.start.line, pos=ctx.start.column, original=original, op='inc')
         return node
 
     def visitPreFixDecrement(self, ctx):
@@ -418,7 +430,8 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
             return None
-        node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'dec')
+        original = f"--{identifier}"
+        node = PreFixNode(value=identifier, line=ctx.start.line, pos=ctx.start.column, original=original, op='dec')
         return node
 
     def visitPreFixIncrement(self, ctx):
@@ -426,7 +439,8 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
             return None
-        node = PreFixNode(identifier, ctx.start.line, ctx.start.column, 'inc')
+        original = f"++{identifier}"
+        node = PreFixNode(value=identifier, line=ctx.start.line, pos=ctx.start.column, original=original, op='inc')
         return node
 
     def visitAddr(self, ctx):
@@ -436,14 +450,19 @@ class ASTGenerator(Visitor):
         identifier = self.visit(children[1])
         if self.scope.lookup(identifier.value) is None:
             raise Exception("Variable \'" + identifier.value + "\' not declared yet!")
-        node = AddrNode(identifier, ctx.start.line, ctx.start.column)
+        original = ""
+        node = AddrNode(value=identifier, line=ctx.start.line, pos=ctx.start.column, original=original)
         return node
 
     def visitPointer(self, ctx):
         children = []
         for line in ctx.getChildren():
             children.append(line)
-        node = PointerNode(len(children) - 1, ctx.start.line, ctx.start.column, self.visit(children[0]))
+        original = ""
+        for type in self.visit(children[0]):
+            original += f"{type.original} "
+        original += "*" * (len(children) - 1)
+        node = PointerNode(value=len(children) - 1, line=ctx.start.line, pos=ctx.start.column, original=original, type=self.visit(children[0]))
         return node
 
     def visitDeref(self, ctx):
@@ -453,51 +472,56 @@ class ASTGenerator(Visitor):
         identifier = self.visit(children[len(children) - 1])
         if self.scope.lookup(identifier.value) is None:
             raise Exception("Variable \'" + identifier.value + "\' not declared yet!")
-        node = DerefNode(len(children) - 1, ctx.start.line, ctx.start.column, self.visit(children[len(children)-1]))
+        original = "*" * (len(children) - 1)
+        original += f"{identifier.original}"
+        node = DerefNode(value=len(children) - 1, line=ctx.start.line, pos=ctx.start.column, original=original, identifier=identifier)
         return node
 
     def visitType(self, ctx):
         types = []
         for type in ctx.getChildren():
-            types.append(TypeNode(type.getText(), ctx.start.line, ctx.start.column))
+            types.append(TypeNode(value=type.getText(), line=ctx.start.line, pos=ctx.start.column, original=type.getText()))
         return types
 
     def visitRvalue(self, ctx):
         lines = []
         for line in ctx.getChildren():
             lines.append(line)
+        original = ""
         if len(lines) == 3:
-            node = ProgramNode(0, 0)
+            node = ProgramNode(line=0, pos=0, original="")
             if str(lines[0]) == "(" and ")" == str(lines[2]):
                 node = self.visit(lines[1])
+                node.original = f"({node.original})"
                 return node
+            original = f"{lines[0].getText()} {lines[1].getText()} {lines[2].getText()}"
             match str(lines[1]):
                 case "/":
                     if not isinstance(self.visit(lines[2]).value, str) and int(self.visit(lines[2]).value) == 0:
                         raise Exception("Division by zero!")
-                    node = DivNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = DivNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "%":
-                    node = ModNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = ModNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "*":
-                    node = MultNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = MultNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "-":
-                    node = MinusNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = MinusNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "+":
-                    node = PlusNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = PlusNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "<<":
-                    node = SLNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = SLNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case ">>":
-                    node = SRNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = SRNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "&":
-                    node = BitwiseAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseAndNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "|":
-                    node = BitwiseOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseOrNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "^":
-                    node = BitwiseXorNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseXorNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "&&":
-                    node = LogicalAndNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalAndNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
                 case "||":
-                    node = LogicalOrNode(ctx.start.line, ctx.start.column, [self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalOrNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
             if isinstance(node.children[0], IdentifierNode):
                 identifier = node.children[0].value
                 if self.scope.lookup(identifier) is None:
@@ -516,13 +540,15 @@ class ASTGenerator(Visitor):
                     return node
             return node
         if len(lines) == 2:
-            node = ProgramNode(0, 0)
+            original = f"{lines[0].getText()} {lines[1].getText()}"
             if str(lines[0]) == "!":
-                node = LogicalNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
+                node = LogicalNotNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[1])])
             elif str(lines[0]) == "~":
-                node = BitwiseNotNode(ctx.start.line, ctx.start.column, [self.visit(lines[1])])
+                node = BitwiseNotNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(lines[1])])
             else:
                 node = self.visit(lines[1])
+                original = f"{lines[0].getText()} {node.original}"
+                node.original = original
                 node.children[0] = self.visit(lines[0])
                 return node
             if isinstance(node.children[0], IdentifierNode):
@@ -551,19 +577,20 @@ class ASTGenerator(Visitor):
         node = ProgramNode
         for line in ctx.getChildren():
             children.append(line)
+        original = f"{children[0].getText()} {self.visit(children[1]).original}"
         match children[0].getText():
             case ">":
-                node = GTNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+                node = GTNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(children[1]), self.visit(children[1])])
             case "<":
-                node = LTNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+                node = LTNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(children[1]), self.visit(children[1])])
             case "==":
-                node = EQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+                node = EQNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(children[1]), self.visit(children[1])])
             case ">=":
-                node = GTEQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+                node = GTEQNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(children[1]), self.visit(children[1])])
             case "<=":
-                node = LTEQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+                node = LTEQNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(children[1]), self.visit(children[1])])
             case "!=":
-                node = NEQNode(ctx.start.line, ctx.start.column, [self.visit(children[1]), self.visit(children[1])])
+                node = NEQNode(line=ctx.start.line, pos=ctx.start.column, original=original, children=[self.visit(children[1]), self.visit(children[1])])
         return node
 
     def visitLiteral(self, ctx):
@@ -571,12 +598,12 @@ class ASTGenerator(Visitor):
         if literal.startswith("\'"):
             for i in literal:
                 if i.isalnum():
-                    node = CharNode(ord(i), ctx.start.line, ctx.start.column)
+                    node = CharNode(value=str(ord(i)), line=ctx.start.line, pos=ctx.start.column, original=ctx.getText())
                     return node
         elif '.' in literal:
-            node = FloatNode(ctx.getText(), ctx.start.line, ctx.start.column)
+            node = FloatNode(value=ctx.getText(), line=ctx.start.line, pos=ctx.start.column, original=ctx.getText())
         elif literal.isdigit():
-            node = IntNode(ctx.getText(), ctx.start.line, ctx.start.column)
+            node = IntNode(value=ctx.getText(), line=ctx.start.line, pos=ctx.start.column, original=ctx.getText())
         return node
 
     def visitExplicitConversion(self, ctx):
@@ -584,7 +611,8 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             children.append(line)
         type = children[1].getText()
-        node = ExplicitConversionNode(ctx.start.line, ctx.start.column, type, self.visit(children[len(children) - 1]))
+        original = f"({type}) {children[len(children) - 1].getText()}"
+        node = ExplicitConversionNode(line=ctx.start.line, pos=ctx.start.column, original=original, type=type, rval=self.visit(children[len(children) - 1]))
         return node
 
     def visitPrintfStatement(self, ctx):
@@ -596,20 +624,22 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        node = PrintfNode(ctx.start.line, ctx.start.column, children[0].children, children[1])
+        original = f"printf({children[0].original}, {children[1].original})"
+        node = PrintfNode(line=ctx.start.line, pos=ctx.start.column, original=original, specifier=children[0].specifier, node=children[1])
         if self.scope.lookup(node.node.value) is None:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + node.node.value + "\' not declared yet!")
-            return ProgramNode(0, 0)
+            return ProgramNode(line=0, pos=0, original="")
         if self.scope.lookup(node.node.value).typeDef:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + node.node.value + "\' is declared as type!")
-            return ProgramNode(0, 0)
+            return ProgramNode(line=0, pos=0, original="")
         return node
 
     def visitFormatSpecifier(self, ctx):
         children = []
         for line in ctx.getChildren():
             children.append(line)
-        return FormatSpecifierNode(ctx.start.line, ctx.start.column, children[0].getText())
+        original = f"{children[0].getText()}"
+        return FormatSpecifierNode(line=ctx.start.line, pos=ctx.start.column, original=original, specifier=children[0].getText())
 
     def visitTypedef(self, ctx):
         children = []
@@ -625,7 +655,8 @@ class ASTGenerator(Visitor):
                 return None
 
         self.scope.add_symbol(Symbol(name=name, varType=type, typeDef=True, const=False))
-        return TypedefNode(ctx.start.line, ctx.start.column, children[1].getText(), children[2].getText())
+        original = ""
+        return TypedefNode(line=ctx.start.line, pos=ctx.start.column, original=original, type=children[1].getText(), identifier=children[2].getText())
 
     def visitWhileLoop(self, ctx):
         children = []
@@ -636,7 +667,8 @@ class ASTGenerator(Visitor):
                     children.extend(child)
                 else:
                     children.append(child)
-        node = WhileLoopNode(ctx.start.line, ctx.start.column, children[0], children[1:])
+        original = f"while ({children[0].original}) " + "{}"
+        node = WhileLoopNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=children[0], body=children[1:])
         return node
 
     def visitForLoop(self, ctx):
@@ -652,11 +684,24 @@ class ASTGenerator(Visitor):
         body = children[3:]
         if children[2] is not None:
             body.append(children[2])
-        condition = IntNode('1', ctx.start.line, ctx.start.column)
+        original = ""
+        condition = IntNode('1', line=ctx.start.line, pos=ctx.start.column, original='1')
         if children[1] is not None:
             condition = children[1]
-
-        node = WhileLoopNode(ctx.start.line, ctx.start.column, condition=condition, body=body)
+        original = "for ("
+        if children[0] is not None:
+            original += f"{children[0].original}; "
+        else:
+            original += "; "
+        if not isinstance(condition, IntNode):
+            original += f"{condition.original}; "
+        else:
+            original += "; "
+        if children[2] is not None:
+            original += f"{children[2].original}) " + "{}"
+        else:
+            original += ") {}"
+        node = WhileLoopNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=condition, body=body)
         self.scope.close_scope()
         return node if children[0] is None else [children[0], node]
 
@@ -684,9 +729,9 @@ class ASTGenerator(Visitor):
         name = ctx.getText()
         match name:
             case 'break':
-                return BreakNode(ctx.start.line, ctx.start.column)
+                return BreakNode(line=ctx.start.line, pos=ctx.start.column, original="break")
             case 'continue':
-                return ContinueNode(ctx.start.line, ctx.start.column)
+                return ContinueNode(line=ctx.start.line, pos=ctx.start.column, original="continue")
 
     def visitSwitchStatement(self, ctx):
         children = []
@@ -728,27 +773,36 @@ class ASTGenerator(Visitor):
         not_default_condition = None
         condition_since_break = None
         for case in cases:
+            original = ""
             if case.condition == 'Default':
-                defaultCondition = IntNode('1', case.line, case.pos)
+                defaultCondition = IntNode(value='1', line=case.line, pos=case.pos, original='1')
                 if not_default_condition is not None:
-                    not_default_condition = LogicalNotNode(case.line, case.pos, [not_default_condition])
-                    defaultCondition = LogicalAndNode(case.line, case.pos, [not_default_condition, defaultCondition])
-                ifNode = IfStatementNode(case.line, case.pos, condition=defaultCondition, body=case.children)
+                    original = f"(! {not_default_condition.original})"
+                    not_default_condition = LogicalNotNode(case.line, case.pos, original=original, children=[not_default_condition])
+                    original = f"({not_default_condition.original} && {defaultCondition.original})"
+                    defaultCondition = LogicalAndNode(case.line, case.pos, original=original, children=[not_default_condition, defaultCondition])
+                    original = f"default:"
+                ifNode = IfStatementNode(line=case.line, pos=case.pos, original=original, condition=defaultCondition, body=case.children)
                 ifNodes.append(ifNode)
             else:
                 if condition_since_break is None:
-                    condition_since_break = EQNode(case.line, case.pos, [rval, case.condition])
+                    original = f"({rval.original} == {case.condition.original})"
+                    condition_since_break = EQNode(line=case.line, pos=case.pos, original=original, children=[rval, case.condition])
+                    original = f"case {case.condition.original}:"
                 else:
-                    case_condition = EQNode(case.line, case.pos, [rval, case.condition])
-                    condition_since_break = LogicalOrNode(case.line, case.pos, [condition_since_break, case_condition])
-                ifNodes.append(IfStatementNode(case.line, case.pos, condition=condition_since_break, body=case.children))
+                    original = f"({rval.original} == {case.condition.original})"
+                    case_condition = EQNode(line=case.line, pos=case.pos, original=original, children=[rval, case.condition])
+                    original = f"({condition_since_break.original} || {case_condition.original})"
+                    condition_since_break = LogicalOrNode(line=case.line, pos=case.pos, original=original, children=[condition_since_break, case_condition])
+                    original = f"case {case.condition.original}:"
+                ifNodes.append(IfStatementNode(line=case.line, pos=case.pos, original=original, condition=condition_since_break, body=case.children))
                 for child in case.children:
                     # If break found, set condition to case condition.
                     if isinstance(child, BreakNode):
                         if not_default_condition is None:
                             not_default_condition = condition_since_break
                         else:
-                            not_default_condition = LogicalAndNode(case.line, case.pos, [not_default_condition, condition_since_break])
+                            not_default_condition = LogicalAndNode(line=case.line, pos=case.pos, original=original, children=[not_default_condition, condition_since_break])
                         condition_since_break = None
                         break
         # Remove code after break.
@@ -781,8 +835,9 @@ class ASTGenerator(Visitor):
                         self.errors.append(f"line {child.line}:{child.pos} Cannot declare variable in switch case!")
                     else:
                         children.append(child)
+        original = ""
         if len(children) == 0:
-            return CaseNode(ctx.start.line, ctx.start.column, "Default")
+            return CaseNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition="Default")
         if isinstance(children[0], CharNode) or isinstance(children[0], IntNode) or isinstance(children[0], FloatNode):
-            return CaseNode(ctx.start.line, ctx.start.column, children[0], children[1:])
-        return CaseNode(ctx.start.line, ctx.start.column, "Default", children)
+            return CaseNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=children[0], children=children[1:])
+        return CaseNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition="Default", children=children)
