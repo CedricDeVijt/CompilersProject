@@ -15,7 +15,13 @@ statement: rvalue SEMICOLON+
          | conditional
          | whileLoop
          | forLoop
-         | jumpStatement SEMICOLON+;
+         | jumpStatement SEMICOLON+
+         | switchStatement;
+
+switchStatement: 'switch' LPAREN rvalue RPAREN LBRACE switchCase* RBRACE;
+
+switchCase: 'case' literal COLON statement*
+          | 'default' COLON statement*;
 
 conditional: ifStatement elseIfStatement* elseStatement?;
 ifStatement: 'if' LPAREN rvalue RPAREN scope;
@@ -141,6 +147,7 @@ LOGICAL_AND: '&&';
 LOGICAL_OR: '||';
 LOGICAL_NOT: '!';
 
+COLON: ':';
 SEMICOLON: ';';
 INT:  '0' | [1-9][0-9]*;
 FLOAT: [0-9]+ ('.' [0-9]+)?;

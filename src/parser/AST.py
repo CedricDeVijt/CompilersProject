@@ -1,5 +1,6 @@
 from graphviz import Source
 
+
 class Node:
     def __init__(self, value: str, line: int, pos: int, children=None):
         self.value = value

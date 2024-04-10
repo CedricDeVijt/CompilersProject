@@ -29,6 +29,16 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GrammarParser#switchStatement.
+    def visitSwitchStatement(self, ctx:GrammarParser.SwitchStatementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#switchCase.
+    def visitSwitchCase(self, ctx:GrammarParser.SwitchCaseContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by GrammarParser#conditional.
     def visitConditional(self, ctx:GrammarParser.ConditionalContext):
         return self.visitChildren(ctx)

@@ -687,3 +687,35 @@ class ASTGenerator(Visitor):
                 return BreakNode(ctx.start.line, ctx.start.column)
             case 'continue':
                 return ContinueNode(ctx.start.line, ctx.start.column)
+
+    def visitSwitchStatement(self, ctx):
+        children = []
+        for child in ctx.getChildren():
+            child = self.visit(child)
+            if child is not None:
+                if isinstance(child, list):
+                    children.extend(child)
+                else:
+                    children.append(child)
+
+        return ProgramNode(ctx.start.line, ctx.start.column, children)
+
+    def visitSwitchCase(self, ctx):
+        children = []
+        for child in ctx.getChildren():
+            child = self.visit(child)
+            if child is not None:
+                if isinstance(child, list):
+                    for item in child:
+                        if isinstance(item, DeclarationNode) or isinstance(item, DefinitionNode):
+                            self.scope.remove_symbol(item.lvalue.value)
+                            self.errors.append(f"line {item.line}:{item.pos} Cannot declare variable in switch case!")
+                        else:
+                            children.append(item)
+                else:
+                    if isinstance(child, DeclarationNode) or isinstance(child, DefinitionNode):
+                        self.scope.remove_symbol(child)
+                        self.errors.append(f"line {child.line}:{child.pos} Cannot declare variable in switch case!")
+                    else:
+                        children.append(child)
+        return children

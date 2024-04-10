@@ -25,6 +25,12 @@ class SymbolTable:
         else:
             self.enums[name] = enum_dict
 
+    def remove_symbol(self, symbol):
+        if symbol in self.symbols:
+            del self.symbols[symbol]
+        else:
+            raise Exception(f"Symbol {symbol} does not exist in the table")
+
     def get_symbol(self, name) -> Symbol:
         symbol = self.symbols.get(name, None)
         return symbol
@@ -63,6 +69,9 @@ class SymbolTableTree:
         node = self.current_node
         symbol = node.table.get_symbol(name)
         return symbol
+
+    def remove_symbol(self, symbol):
+        self.current_node.table.remove_symbol(symbol)
 
     def get_all_symbols(self):
         return self.current_node.table.symbols
