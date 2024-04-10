@@ -29,83 +29,18 @@ class DotGenerator:
         if isinstance(node, str):
             return
         if node.children:
-            dot.node(str(id(node)), str(node.value))
-            if isinstance(node, AST.IfStatementNode):
-                dot.node(str(id(node)), f"if ({str(node.condition.value)})")
-            if isinstance(node, AST.ElseIfStatementNode):
-                dot.node(str(id(node)), f"else if ({str(node.condition.value)})")
-            if isinstance(node, AST.ElseStatementNode):
-                dot.node(str(id(node)), f"else")
+            dot.node(str(id(node)), str(expandExpression(node)))
             for child in node.children:
                 DotGenerator._generateASTDot(dot, child)
                 dot.edge(str(id(node)), str(id(child)))
         else:
-            label = f"{str(node.value)}\n"
-            if isinstance(node, AST.IdentifierNode):
-                label += f"Identifier: {str(node.value)}"
-            elif isinstance(node, AST.TypeNode):
-                label += f"Type: {str(node.value)}"
-            elif isinstance(node, AST.CharNode):
-                label = f"Literal\nValue: \'{chr(str(node.value))}\'\nType: char"
-            elif isinstance(node, AST.IntNode):
-                label = f"Literal\nValue: {str(node.value)}\nType: int"
-            elif isinstance(node, AST.FloatNode):
-                label = f"Literal\n"
-                label += f"Value: {str(node.value)}\nType: float"
-            elif isinstance(node, AST.PrintfNode):
-                label = f"Printf({node.specifier}, {str(node.node.value)})"
-            elif isinstance(node, AST.CommentNode):
-                label = f"Comment\n" + str(node.value).replace('\n', '\\\\n')
-            elif isinstance(node, AST.PostFixNode):
-                label = f"PostFix"
-                if node.op == 'inc':
-                    label += f"Increment\n{str(node.value)}++"
-                else:
-                    label += f"Increment\n{str(node.value)}--"
-            elif isinstance(node, AST.TypedefNode):
-                label = f"{str(node.value)} {node.type} {node.identifier}"
-            elif isinstance(node, AST.PreFixNode):
-                label = f"PreFix"
-                if node.op == 'inc':
-                    label += f"Increment\n++{str(node.value)}"
-                else:
-                    label += f"Increment\n--{str(node.value)}"
-            elif isinstance(node, AST.DeclarationNode):
-                for child in node.type:
-                    if isinstance(child, AST.PointerNode):
-                        for child1 in child.type:
-                            label += f" {child1.value}"
-                        label += f"*" * int(child.value)
-                    else:
-                        label += f" {child.value}"
-                label += f" {node.lvalue.value}"
-            elif isinstance(node, AST.AssignmentNode):
-                label = f"Assignment\n"
-                if isinstance(node.lvalue, AST.DerefNode):
-                    label += f"*" * int(node.lvalue.value)
-                    label += f"{node.lvalue.identifier.value}"
-                    label += " = "
-                else:
-                    label += f"{node.lvalue.value} = "
-                if isinstance(node.rvalue, AST.DerefNode):
-                    label += f"*" * int(node.rvalue.value)
-                    label += f"{node.rvalue.identifier.value}"
-                else:
-                    label += f"{node.rvalue.value}"
-            elif isinstance(node, AST.DefinitionNode):
-                for child in node.type:
-                    if isinstance(child, AST.PointerNode):
-                        for child1 in child.type:
-                            label += f" {child1.value}"
-                        label += f"*" * int(child.value)
-                    else:
-                        label += f" {child.value}"
-                label += f" {node.lvalue.value} = "
-                if isinstance(node.rvalue, AST.DerefNode):
-                    label += f"*" * int(node.rvalue.value)
-                    label += f"{node.rvalue.identifier.value}"
-                else:
-                    label += f"{node.rvalue.value}"
+            if isinstance(node, AST.IfStatementNode) or isinstance(node, AST.ElseIfStatementNode) or isinstance(node, AST.ElseStatementNode) or isinstance(node, AST.WhileLoopNode):
+                dot.node(str(id(node)), str(expandExpression(node)))
+                for child in node.body:
+                    DotGenerator._generateASTDot(dot, child)
+                    dot.edge(str(id(node)), str(id(child)))
+                return
+            label = f"{str(expandExpression(node))}\n"
             dot.node(str(id(node)), label, shape='box')
 
     @staticmethod
@@ -153,3 +88,126 @@ class DotGenerator:
 
         return label
 
+
+def expandExpression(node):
+    expr = ""
+    if isinstance(node, list):
+        for item in node:
+            expr += expandExpression(item)
+        return expr
+    if isinstance(node, AST.ProgramNode) or isinstance(node, AST.MainNode):
+        return f"{node.value}"
+    if len(node.children) == 0:
+        match node:
+            case AST.BreakNode():
+                return "break"
+            case AST.ContinueNode():
+                return "continue"
+            case AST.CommentNode():
+                return f"{node.value}"
+            case AST.CharNode():
+                return f"'{chr(node.value)}'"
+            case AST.IntNode():
+                return node.value
+            case AST.FloatNode():
+                return node.value
+            case AST.IdentifierNode():
+                return node.value
+            case AST.TypeNode():
+                return node.value
+            case AST.PointerNode():
+                for type in node.type:
+                    expr += expandExpression(type)
+                expr += "*" * int(node.value)
+            case AST.DerefNode():
+                expr += "*" * int(node.value)
+                expr += expandExpression(node.identifier)
+            case AST.AddrNode():
+                expr += f"&{expandExpression(node.value)}"
+            case AST.ExplicitConversionNode():
+                expr += f"({node.type}) {expandExpression(node.rval)}"
+                pass
+            case AST.DeclarationNode():
+                expr += f"Declaration\n{expandExpression(node.type)} {expandExpression(node.lvalue)}"
+            case AST.AssignmentNode():
+                expr += f"Assignment\n{expandExpression(node.lvalue)} = {expandExpression(node.rvalue)}"
+            case AST.DefinitionNode():
+                expr += f"Definition\n{expandExpression(node.type)} {expandExpression(node.lvalue)} = {expandExpression(node.rvalue)}"
+            case AST.PostFixNode():
+                expr += f"{node.value}{'++' if node.op == 'inc' else '--'}"
+            case AST.PreFixNode():
+                expr += f"{'++' if node.op == 'inc' else '--'}{node.value}"
+            case AST.PrintfNode():
+                expr += f"Printf({node.specifier}, {expandExpression(node.node)})"
+            case AST.IfStatementNode():
+                expr += f"if({expandExpression(node.condition)})"
+                if len(node.body) == 0:
+                    expr += "{}"
+            case AST.ElseIfStatementNode():
+                expr += f"else if({expandExpression(node.condition)})"
+                if len(node.body) == 0:
+                    expr += "{}"
+            case AST.ElseStatementNode():
+                expr += f"else"
+                if len(node.body) == 0:
+                    expr += "{}"
+            case AST.WhileLoopNode():
+                expr += f"while({expandExpression(node.condition)})"
+                if len(node.body) == 0:
+                    expr += "{}"
+            case AST.TypedefNode():
+                expr += f"Typedef {node.type} {node.identifier}"
+            case _:
+                expr += node.value
+        return expr
+    elif len(node.children) == 1:
+        match node:
+            case AST.LogicalNotNode():
+                expr += f"!{expandExpression(node.children[0])}"
+            case AST.BitwiseNotNode():
+                expr += f"~{expandExpression(node.children[0])}"
+            case _:
+                expr += node.value
+    elif len(node.children) == 2:
+        expr += f"({expandExpression(node.children[0])}"
+        match node:
+            case AST.DivNode():
+                expr += "/"
+            case AST.ModNode():
+                expr += "%"
+            case AST.MultNode():
+                expr += "*"
+            case AST.MinusNode():
+                expr += "-"
+            case AST.PlusNode():
+                expr += "+"
+            case AST.LTNode():
+                expr += "<"
+            case AST.GTNode():
+                expr += ">"
+            case AST.GTEQNode():
+                expr += ">="
+            case AST.LTEQNode():
+                expr += "<="
+            case AST.EQNode():
+                expr += "=="
+            case AST.NEQNode():
+                expr += "!="
+            case AST.SLNode():
+                expr += "<<"
+            case AST.SRNode():
+                expr += ">>"
+            case AST.BitwiseAndNode():
+                expr += "&"
+            case AST.BitwiseOrNode():
+                expr += "|"
+            case AST.BitwiseXorNode():
+                expr += "^"
+            case AST.LogicalAndNode():
+                expr += "&&"
+            case AST.LogicalOrNode():
+                expr += "||"
+            case _:
+                expr += node.value
+        expr += f"{expandExpression(node.children[1])})"
+    return expr

@@ -32,13 +32,13 @@ def generate_ast(path, visitor):
     warnings = genAST.warnings
     for warning in warnings:
         print(f"Warning: {warning}")
-    if len(errors) == 0:
-        ast.constantFold()
-        return ast, symbolTable
-    err_str = ''
-    for error in errors:
-        err_str += f"Error at {error}\n"
-    raise Exception(err_str)
+    ast.constantFold(errors=errors, warnings=warnings)
+    if len(errors) != 0:
+        err_str = ''
+        for error in errors:
+            err_str += f"Error at {error}\n"
+        raise Exception(err_str)
+    return ast, symbolTable
 
 
 def compile_llvm(input_file, visitor, output_file):

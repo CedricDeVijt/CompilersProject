@@ -1,7 +1,7 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | variable | typedef)* main (comment | variable | typedef)* EOF;
+program: (comment | (variable SEMICOLON+) | (typedef SEMICOLON+))* main (comment | variable | typedef)* EOF;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
@@ -9,19 +9,13 @@ scope: LBRACE statement* RBRACE;
 
 statement: rvalue SEMICOLON+
          | variable SEMICOLON+
-         | postFixIncrement SEMICOLON+
-         | postFixDecrement SEMICOLON+
-         | preFixIncrement SEMICOLON+
-         | preFixDecrement SEMICOLON+
          | comment
          | printfStatement SEMICOLON+
          | scope
          | conditional
          | whileLoop
          | forLoop
-         | break SEMICOLON+
-         | continue SEMICOLON+
-         |typedef;
+         | jumpStatement SEMICOLON+;
 
 conditional: ifStatement elseIfStatement* elseStatement?;
 ifStatement: 'if' LPAREN rvalue RPAREN scope;
@@ -30,15 +24,9 @@ elseStatement: 'else' scope;
 
 whileLoop: 'while' LPAREN rvalue RPAREN scope;
 
-forLoop: 'for' LPAREN forInit? SEMICOLON forCondition? SEMICOLON forUpdate? RPAREN scope;
-forInit: variable | rvalue; // TODO check if this is correct
-forCondition: rvalue;
-forUpdate: postFixIncrement | postFixDecrement | preFixIncrement | preFixDecrement | variable;
-
-break: 'break';
-
-continue: 'continue';
-
+forLoop: 'for' LPAREN forCondition RPAREN scope;
+forInit: variable | rvalue;
+forCondition: variable? SEMICOLON (rvalue conditionalExpression?)? SEMICOLON rvalue?;
 
 printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')';
 
@@ -50,7 +38,8 @@ formatSpecifier: '"%s"'
 
 
 variable: lvalue '=' rvalue
-         | lvalue;
+         | lvalue
+         | typedef;
 
 lvalue: identifier
       | type identifier
@@ -68,21 +57,31 @@ rvalue: unaryExpression
       | rvalue MULT rvalue
       | rvalue MINUS rvalue
       | rvalue PLUS rvalue
-      | rvalue GREATER_THAN rvalue
-      | rvalue LESS_THAN rvalue
-      | rvalue GREATER_EQUAL rvalue
-      | rvalue LESS_EQUAL rvalue
-      | rvalue EQUALS rvalue
-      | rvalue NOT_EQUAL rvalue
       | rvalue SHIFT_LEFT rvalue
       | rvalue SHIFT_RIGHT rvalue
       | rvalue BITWISE_AND rvalue
       | rvalue BITWISE_OR rvalue
       | rvalue BITWISE_XOR rvalue
-      | rvalue LOGICAL_AND rvalue
-      | rvalue LOGICAL_OR rvalue
       | LPAREN rvalue RPAREN
-      | explicitConversion;
+      | explicitConversion
+      | postFixIncrement
+      | postFixDecrement
+      | preFixIncrement
+      | preFixDecrement
+      | rvalue conditionalExpression
+      | jumpStatement;
+
+conditionalExpression: GREATER_THAN rvalue
+                     | LESS_THAN rvalue
+                     | GREATER_EQUAL rvalue
+                     | LESS_EQUAL rvalue
+                     | EQUALS rvalue
+                     | NOT_EQUAL rvalue
+                     | LOGICAL_AND rvalue
+                     | LOGICAL_OR rvalue;
+
+jumpStatement: 'break'
+             | 'continue';
 
 unaryExpression: (PLUS | MINUS)? literal
                | (PLUS MINUS)+ (PLUS)? literal
@@ -108,7 +107,7 @@ postFixDecrement: lvalue DECREMENT;
 preFixIncrement: INCREMENT lvalue;
 preFixDecrement: DECREMENT lvalue;
 
-typedef: 'typedef' type IDENTIFIER SEMICOLON;
+typedef: 'typedef' type IDENTIFIER;
 
 type: 'const'* ('int' | 'float' | 'char' | IDENTIFIER);
 

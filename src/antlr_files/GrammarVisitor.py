@@ -69,21 +69,6 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by GrammarParser#forUpdate.
-    def visitForUpdate(self, ctx:GrammarParser.ForUpdateContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by GrammarParser#break.
-    def visitBreak(self, ctx:GrammarParser.BreakContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by GrammarParser#continue.
-    def visitContinue(self, ctx:GrammarParser.ContinueContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by GrammarParser#printfStatement.
     def visitPrintfStatement(self, ctx:GrammarParser.PrintfStatementContext):
         return self.visitChildren(ctx)
@@ -106,6 +91,16 @@ class GrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by GrammarParser#rvalue.
     def visitRvalue(self, ctx:GrammarParser.RvalueContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#conditionalExpression.
+    def visitConditionalExpression(self, ctx:GrammarParser.ConditionalExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#jumpStatement.
+    def visitJumpStatement(self, ctx:GrammarParser.JumpStatementContext):
         return self.visitChildren(ctx)
 
 
