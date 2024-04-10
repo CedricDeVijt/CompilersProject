@@ -134,6 +134,11 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GrammarParser#enum.
+    def visitEnum(self, ctx:GrammarParser.EnumContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by GrammarParser#postFixIncrement.
     def visitPostFixIncrement(self, ctx:GrammarParser.PostFixIncrementContext):
         return self.visitChildren(ctx)

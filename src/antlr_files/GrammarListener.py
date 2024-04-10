@@ -233,6 +233,15 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#enum.
+    def enterEnum(self, ctx:GrammarParser.EnumContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#enum.
+    def exitEnum(self, ctx:GrammarParser.EnumContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#postFixIncrement.
     def enterPostFixIncrement(self, ctx:GrammarParser.PostFixIncrementContext):
         pass
