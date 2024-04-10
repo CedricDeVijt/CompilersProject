@@ -3,11 +3,15 @@ typedef int testType;
 int main() {
     int a = 5;
     switch (a) {
-        case 5:
-            testType b = 5;
+        case 4:
+            a = 5;
+        case 69:
+            a = 6;
             break;
+        case 5:
+            a = 10;
         default:
-            int b = 6;
+            a = 20;
             break;
     }
     printf("%d", a);

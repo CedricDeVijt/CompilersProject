@@ -161,6 +161,7 @@ def expandExpression(node):
                 expr += node.value
         return expr
     elif len(node.children) == 1:
+        expr += "("
         match node:
             case AST.LogicalNotNode():
                 expr += f"!{expandExpression(node.children[0])}"
@@ -168,6 +169,7 @@ def expandExpression(node):
                 expr += f"~{expandExpression(node.children[0])}"
             case _:
                 expr += node.value
+        expr += ")"
     elif len(node.children) == 2:
         expr += f"({expandExpression(node.children[0])}"
         match node:
