@@ -294,8 +294,23 @@ def operation(node, builder):
     operationRecursive(node.rvalue, builder, vars, cString)
     return False
 
+# global var copy of AST
+AST2 = AST
 
 def operationRecursive(node, builder, vars, cString): # if node.rvalue.children[0].value.isalpha():
+    # apply operation and update copy of AST
+    if len(node.children) != 0:
+        if node.children[0].value in ops:
+            operationRecursive(node.children[0], builder, vars, cString)
+
+
+
+
+
+
+
+
+    """
     if len(node.children) != 0:
         if len(node.children[0].children) != 0:
             operationRecursive(node.children[0], builder, vars, cString)
@@ -306,9 +321,8 @@ def operationRecursive(node, builder, vars, cString): # if node.rvalue.children[
         else:
             print(node.children[1].value)
 
-    else:
-        ...
-    """
+
+
     if isinstance(node.rvalue, AST.PlusNode):
         ...
     elif isinstance(node.rvalue, AST.MinusNode):
@@ -338,6 +352,7 @@ def operationRecursive(node, builder, vars, cString): # if node.rvalue.children[
     elif isinstance(node.rvalue, AST.SRNode):
         ...
     """
+
 
 
 def getIRtype(Ctype):

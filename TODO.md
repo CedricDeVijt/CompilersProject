@@ -27,10 +27,13 @@
 
 # project 3
 
-- [x] (**mandatory**) Single line comments
-- [x] (**mandatory**) Multi line comments
 - [x] (**mandatory**) Output printf
 - [x] (**mandatory**) Typedef support
 - [x] (**mandatory**) LLVM definitions
+- [x] (**mandatory**) LLVM assignments
 - [x] (**mandatory**) LLVM pointers
-- [x] (**mandatory**) LLVM comments
+- [x] (**mandatory**) LLVM c code comments
+- [x] (**mandatory**) LLVM Single line comments
+- [x] (**mandatory**) LLVM Multi line comments
+- [ ] (**mandatory**) LLVM Operations
+- [ ] (**mandatory**) LLVM Typedef
