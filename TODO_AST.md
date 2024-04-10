@@ -41,7 +41,7 @@
 - [x] (**optional**) Else if statements
 - [x] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
-- [] (**mandatory**) Switch statements
+- [x] (**mandatory**) Switch statements
 - [] (**mandatory**) Enumerations
 
 # project 5
