@@ -115,7 +115,7 @@ class ASTGenerator(Visitor):
 
     def remove_after_type(self, node, node_type, remove_self=False):
         delete = []
-        if isinstance(node, IfStatementNode) or isinstance(node, ElseIfStatementNode) or isinstance(node, ElseStatementNode) or isinstance(node, WhileLoopNode):
+        if isinstance(node, IfStatementNode):
             for child in node.body:
                 if len(delete) != 0:
                     delete.append(child)
@@ -149,7 +149,7 @@ class ASTGenerator(Visitor):
 
     def place_node_before_type(self, node1, node2, node_type):
         node2 = copy.deepcopy(node2)
-        if isinstance(node1, IfStatementNode) or isinstance(node1, ElseIfStatementNode) or isinstance(node1, ElseStatementNode) or isinstance(node1, WhileLoopNode):
+        if isinstance(node1, IfStatementNode):
             for child in node1.body:
                 if isinstance(child, node_type):
                     index = node1.body.index(child)
