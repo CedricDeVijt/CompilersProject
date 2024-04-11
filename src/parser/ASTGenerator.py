@@ -1,3 +1,5 @@
+import copy
+
 from src.antlr_files.GrammarParser import GrammarParser
 from src.antlr_files.GrammarVisitor import GrammarVisitor as Visitor
 
@@ -97,6 +99,72 @@ class ASTGenerator(Visitor):
             self.warnings.append(f"line {rval.line}:{rval.pos} Implicit type conversion from float to char!")
         elif lvalType == 'char' and rvalType == 'int':
             self.warnings.append(f"line {rval.line}:{rval.pos} Implicit type conversion from int to char!")
+
+    def contains_node(self, node, node_type):
+        if isinstance(node, node_type):
+            return True
+        if isinstance(node, IfStatementNode) or isinstance(node, ElseIfStatementNode) or isinstance(node, ElseStatementNode):
+            for child in node.body:
+                if self.contains_node(child, node_type):
+                    return True
+        else:
+            for child in node.children:
+                if self.contains_node(child, node_type):
+                    return True
+        return False
+
+    def remove_after_type(self, node, node_type, remove_self=False):
+        delete = []
+        if isinstance(node, IfStatementNode) or isinstance(node, ElseIfStatementNode) or isinstance(node, ElseStatementNode) or isinstance(node, WhileLoopNode):
+            for child in node.body:
+                if len(delete) != 0:
+                    delete.append(child)
+                elif isinstance(child, node_type):
+                    if remove_self:
+                        delete.append(child)
+                    else:
+                        delete.append('')
+            if '' in delete:
+                delete.remove('')
+            for child in delete:
+                node.body.remove(child)
+            # TODO: Find scope in symbolTable and delete scope.
+            for child in node.body:
+                self.remove_after_type(child, node_type, remove_self)
+        else:
+            for child in node.children:
+                if len(delete) != 0:
+                    delete.append(child)
+                elif isinstance(child, node_type):
+                    if remove_self:
+                        delete.append(child)
+                    else:
+                        delete.append('')
+            if '' in delete:
+                delete.remove('')
+            for child in delete:
+                node.children.remove(child)
+            for child in node.children:
+                self.remove_after_type(child, node_type, remove_self)
+
+    def place_node_before_type(self, node1, node2, node_type):
+        node2 = copy.deepcopy(node2)
+        if isinstance(node1, IfStatementNode) or isinstance(node1, ElseIfStatementNode) or isinstance(node1, ElseStatementNode) or isinstance(node1, WhileLoopNode):
+            for child in node1.body:
+                if isinstance(child, node_type):
+                    index = node1.body.index(child)
+                    node1.body.insert(index, node2)
+                    break
+                else:
+                    self.place_node_before_type(child, node2, node_type)
+        else:
+            for child in node1.children:
+                if isinstance(child, node_type):
+                    index = node1.children.index(child)
+                    node1.body.insert(index, node2)
+                    break
+                else:
+                    self.place_node_before_type(child, node2, node_type)
 
     def visitProgram(self, ctx):
         children = []
@@ -675,6 +743,8 @@ class ASTGenerator(Visitor):
                     children.append(child)
         original = f"while ({children[0].original}) " + "{}"
         node = WhileLoopNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=children[0], body=children[1:])
+        self.remove_after_type(node, BreakNode)
+        self.remove_after_type(node, ContinueNode)
         return node
 
     def visitForLoop(self, ctx):
@@ -688,8 +758,6 @@ class ASTGenerator(Visitor):
                 else:
                     children.append(child)
         body = children[3:]
-        if children[2] is not None:
-            body.append(children[2])
         original = ""
         condition = IntNode('1', line=ctx.start.line, pos=ctx.start.column, original='1')
         if children[1] is not None:
@@ -708,6 +776,11 @@ class ASTGenerator(Visitor):
         else:
             original += ") {}"
         node = WhileLoopNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=condition, body=body)
+        self.remove_after_type(node, BreakNode, False)
+        self.remove_after_type(node, ContinueNode, False)
+        if children[2] is not None:
+            self.place_node_before_type(node, children[2], BreakNode)
+            self.place_node_before_type(node, children[2], ContinueNode)
         self.scope.close_scope()
         return node if children[0] is None else [children[0], node]
 
@@ -773,6 +846,9 @@ class ASTGenerator(Visitor):
                     if case1.condition != 'Default' and case2.condition != 'Default':
                         if case1.condition.value == case2.condition.value:
                             self.errors.append(f"line {case1.line}:{case1.pos} Duplicate cases in switch statement!")
+        # Remove code after break.
+        for case in cases:
+            self.remove_after_type(case, BreakNode)
         # Make if statements
         if len(cases) == 0:
             return None
@@ -804,23 +880,14 @@ class ASTGenerator(Visitor):
                 ifNodes.append(IfStatementNode(line=case.line, pos=case.pos, original=original, condition=condition_since_break, body=case.children))
                 for child in case.children:
                     # If break found, set condition to case condition.
-                    if isinstance(child, BreakNode):
+                    if self.contains_node(child, BreakNode):
                         if not_default_condition is None:
                             not_default_condition = condition_since_break
                         else:
                             not_default_condition = LogicalAndNode(line=case.line, pos=case.pos, original=original, children=[not_default_condition, condition_since_break])
                         condition_since_break = None
                         break
-        # Remove code after break.
-        for case in cases:
-            delete = False
-            for child in case.children:
-                if delete:
-                    case.children.remove(child)
-                if isinstance(child, BreakNode):
-                    delete = True
-                    case.children.remove(child)
-
+                self.remove_after_type(case, BreakNode, True)
         return ifNodes
 
     def visitSwitchCase(self, ctx):
