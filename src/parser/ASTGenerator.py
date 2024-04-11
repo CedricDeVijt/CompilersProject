@@ -546,7 +546,7 @@ class ASTGenerator(Visitor):
         identifier = self.visit(children[1])
         if self.scope.lookup(identifier.value) is None:
             raise Exception("Variable \'" + identifier.value + "\' not declared yet!")
-        original = ""
+        original = f"&{identifier.original}"
         node = AddrNode(value=identifier, line=ctx.start.line, pos=ctx.start.column, original=original)
         return node
 
@@ -932,7 +932,9 @@ class ASTGenerator(Visitor):
                         children.append(child)
         original = ""
         if len(children) == 0:
+            original = "default:"
             return CaseNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition="Default")
         if isinstance(children[0], CharNode) or isinstance(children[0], IntNode) or isinstance(children[0], FloatNode):
+            original = f"case {children[0]}:"
             return CaseNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=children[0], children=children[1:])
         return CaseNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition="Default", children=children)
