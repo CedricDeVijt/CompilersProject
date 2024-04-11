@@ -435,6 +435,28 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
+        condition = None
+        original_condition = None
+        original = None
+        for child in children:
+            if isinstance(child, IfStatementNode):
+                condition = child.condition
+                original_condition = condition
+                condition.original = f"({condition.original})"
+            elif isinstance(child, ElseIfStatementNode):
+                original = f"(! {condition.original})"
+                condition = LogicalNotNode(line=child.line, pos=child.pos, original=original, children=[condition])
+                original = f"({condition.original} && {child.original})"
+                condition = LogicalAndNode(line=child.line, pos=child.pos, original=original, children=[condition, child.condition])
+                child.condition = condition
+                child.__class__ = IfStatementNode
+            elif isinstance(child, ElseStatementNode):
+                original = f"({original_condition.original} && {condition.original})"
+                condition = LogicalOrNode(line=child.line, pos=child.pos, original=original, children=[original_condition, condition])
+                original = f"(! {condition.original})"
+                condition = LogicalNotNode(line=child.line, pos=child.pos, original=original, children=[condition])
+                child.__class__ = IfStatementNode
+                child.condition = condition
         return children
 
     def visitIfStatement(self, ctx):
@@ -459,7 +481,7 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        original = f"else if ({children[0].original})" + "{}"
+        original = f"({children[0].original})"
         node = ElseIfStatementNode(line=ctx.start.line, pos=ctx.start.column, original=original, condition=children[0], body=children[1:])
         return node
 
@@ -648,7 +670,7 @@ class ASTGenerator(Visitor):
 
     def visitConditionalExpression(self, ctx):
         children = []
-        node = ProgramNode
+        node = ProgramNode(line=0, pos=0, original=None)
         for line in ctx.getChildren():
             children.append(line)
         original = f"{children[0].getText()} {self.visit(children[1]).original}"

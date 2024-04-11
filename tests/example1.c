@@ -2,14 +2,6 @@ enum day {SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY};
 
 int main() {
     int a = 5;
-    for(int i=0; i<50; i++) {
-        printf("%d", i);
-        if (a == 20) {
-            break;
-        }
-        break;
-        int b = 50;
-    }
     while(a<50) {
         printf("%d", a);
         break;

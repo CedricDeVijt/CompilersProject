@@ -9,22 +9,37 @@ class Node:
         self.original = original_code
         self.children = children if children is not None else []
 
-    def constantFold(self, errors=None, warnings=None):
+    def constantFold(self, errors=None, warnings=None, parent=None):
         if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode) or isinstance(self, WhileLoopNode):
             self.condition.constantFold()
+            # Remove conditionals that are never true
+            if isinstance(self.condition, CharNode) or isinstance(self.condition, IntNode) or isinstance(self.condition, FloatNode):
+                if float(self.condition.value) == 0:
+                    return True
         if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode) or isinstance(self, ElseStatementNode) or isinstance(self, WhileLoopNode):
+            delete = []
             for node in self.body:
                 if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
-                    node.rvalue.constantFold(errors, warnings)
+                    node.rvalue.constantFold(errors, warnings, self)
                 elif not isinstance(node, str) and not isinstance(node, list):
                     if node is not None:
-                        node.constantFold(errors, warnings)
-        for node in self.children:
-            if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
-                node.rvalue.constantFold(errors, warnings)
-            elif not isinstance(node, str) and not isinstance(node, list):
-                if node is not None:
-                    node.constantFold(errors, warnings)
+                        result = node.constantFold(errors, warnings, self)
+                        if result:
+                            delete.append(node)
+            for node in delete:
+                self.body.remove(node)
+        else:
+            delete = []
+            for node in self.children:
+                if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
+                    node.rvalue.constantFold(errors, warnings, self)
+                elif not isinstance(node, str) and not isinstance(node, list):
+                    if node is not None:
+                        result = node.constantFold(errors, warnings, self)
+                        if result:
+                            delete.append(node)
+            for node in delete:
+                self.children.remove(node)
         match self:
             case CharNode():
                 return
@@ -238,6 +253,18 @@ class Node:
                 self.value = int(int(self.children[0].value) ^ int(self.children[1].value))
                 self.children = []
             case LogicalAndNode():
+                if isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode):
+                    if float(self.children[0].value) == 0:
+                        self.__class__ = IntNode
+                        self.value = int(0)
+                        self.children = []
+                        return
+                if isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode):
+                    if float(self.children[1].value) == 0:
+                        self.__class__ = IntNode
+                        self.value = int(0)
+                        self.children = []
+                        return
                 if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
                 if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
@@ -246,6 +273,18 @@ class Node:
                 self.value = int(float(self.children[0].value) and float(self.children[1].value))
                 self.children = []
             case LogicalOrNode():
+                if isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode):
+                    if float(self.children[0].value) == 1:
+                        self.__class__ = IntNode
+                        self.value = int(1)
+                        self.children = []
+                        return
+                if isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode):
+                    if float(self.children[1].value) == 1:
+                        self.__class__ = IntNode
+                        self.value = int(1)
+                        self.children = []
+                        return
                 if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
                     return
                 if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
