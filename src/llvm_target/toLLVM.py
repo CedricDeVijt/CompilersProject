@@ -155,7 +155,7 @@ def opeRation(node, llvm_file):
 done = True
 definitions = {}
 types = {}
-ops = ["Plus", "Minus", "Mul", "Div", "Mod"]
+ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseNot", "BitwiseXor", "LogicalAnd", "LogicalOr", "LogicalNot", "SL", "SR"]
 
 
 def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code using LLVM lite
@@ -222,7 +222,7 @@ def generateLLVMfunction(node, builder):
                 var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
                 definitions[node.lvalue.value] = var
             elif node.type[0].value.isnumeric():
-                # pointers
+                # handle pointers
                 stars = ""
                 for i in range(int(node.type[0].value)):
                     stars += "*"
@@ -286,7 +286,8 @@ def generateLLVMfunction(node, builder):
 
 def operation(node, builder):
     global definitions
-    var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
+    builder.comment(node.original)
+    var = builder.alloca(getIRtype(node.type[0].value), name=node.lvalue.value)
     definitions[node.lvalue.value] = var
     AST2 = node
     value = operationRecursive(AST2.rvalue, builder, node.type[0].value)
@@ -340,6 +341,8 @@ def operationRecursive(node, builder, cType):
 
         # apply operation
         node = applyOperation(node, builder, a, b)
+        return node
+    else:
         return node
 
 
