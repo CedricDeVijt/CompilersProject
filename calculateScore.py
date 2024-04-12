@@ -56,14 +56,29 @@ def count_completed_additional_features(file_path):
 
     return len(matches)
 
+# AST
+
+file_path_AST = 'TODO_AST.md'
+AST_total_mandatory_features = count_mandatory_features(file_path_AST)
+AST_completed_mandatory_features = count_completed_mandatory_features(file_path_AST)
+AST_percent_mandatory = AST_completed_mandatory_features/AST_total_mandatory_features
+
+AST_total_optional_features = count_optional_features(file_path_AST)
+AST_completed_optional_features = count_completed_optional_features(file_path_AST)
+AST_percent_optional = AST_completed_optional_features/AST_total_optional_features
+
+AST_score = (AST_percent_mandatory + AST_percent_optional) / 2 if AST_percent_mandatory == 1 else AST_percent_mandatory / 2
+print(f"AST Mandatory Features: {AST_completed_mandatory_features}/{AST_total_mandatory_features}")
+print(f"AST Optional Features: {AST_completed_optional_features}/{AST_total_optional_features}")
+print(f"AST Score: {round(100 * 100 * AST_score) / 100}%")
 
 # LLVM
+print("\n")
 
 file_path_LLVM = 'TODO_LLVM.md'
 LLVM_total_mandatory_features = count_mandatory_features(file_path_LLVM)
 LLVM_completed_mandatory_features = count_completed_mandatory_features(file_path_LLVM)
 LLVM_percent_mandatory = LLVM_completed_mandatory_features/LLVM_total_mandatory_features
-LLVM_percent_mandatory = 1
 
 LLVM_total_optional_features = count_optional_features(file_path_LLVM)
 LLVM_completed_optional_features = count_completed_optional_features(file_path_LLVM)

@@ -41,7 +41,7 @@
 - [x] (**optional**) Else if statements
 - [x] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
-- [] (**mandatory**) Switch statements
+- [x] (**mandatory**) Switch statements
 - [] (**mandatory**) Enumerations
 
 # project 5
@@ -69,9 +69,9 @@
   - [] (**optional**) All paths in function body end in return statement (except void functions)
 - Optimizations
   - [] (**mandatory**) Do not generate code after return statement
-  - [] (**mandatory**) Do not generate code after continue/break statement
+  - [x] (**mandatory**) Do not generate code after continue/break statement
   - [] (**mandatory**) Do not generate code for unused variables
-  - [] (**mandatory**) Do not generate code for conditionals that are never true
+  - [x] (**mandatory**) Do not generate code for conditionals that are never true
 
 # project 6
 

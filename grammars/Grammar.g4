@@ -68,6 +68,8 @@ rvalue: unaryExpression
       | rvalue BITWISE_AND rvalue
       | rvalue BITWISE_OR rvalue
       | rvalue BITWISE_XOR rvalue
+      | rvalue LOGICAL_AND rvalue
+      | rvalue LOGICAL_OR rvalue
       | LPAREN rvalue RPAREN
       | explicitConversion
       | postFixIncrement
@@ -82,9 +84,7 @@ conditionalExpression: GREATER_THAN rvalue
                      | GREATER_EQUAL rvalue
                      | LESS_EQUAL rvalue
                      | EQUALS rvalue
-                     | NOT_EQUAL rvalue
-                     | LOGICAL_AND rvalue
-                     | LOGICAL_OR rvalue;
+                     | NOT_EQUAL rvalue;
 
 jumpStatement: 'break'
              | 'continue';
