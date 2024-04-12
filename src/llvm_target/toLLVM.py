@@ -216,7 +216,7 @@ def generateLLVMfunction(node, builder):
                 var = builder.alloca(ir.FloatType(), name=node.lvalue.value)
                 definitions[node.lvalue.value] = var
             elif node.type[0].value == "char":
-                originalExpression = f"{node.type[0].value} {node.lvalue.value} = {chr(node.rvalue.value)};"
+                originalExpression = f"{node.type[0].value} {node.lvalue.value} = {node.rvalue.value};"
                 builder.comment(originalExpression)
                 constant = ir.Constant(ir.IntType(8), node.rvalue.value)
                 var = builder.alloca(ir.IntType(8), name=node.lvalue.value)
@@ -289,7 +289,8 @@ def operation(node, builder):
     var = builder.alloca(ir.IntType(32), name=node.lvalue.value)
     definitions[node.lvalue.value] = var
     AST2 = node
-    operationRecursive(AST2.rvalue, builder, node.type[0].value)
+    value = operationRecursive(AST2.rvalue, builder, node.type[0].value)
+    builder.store(value, var)
     return False
 
 
@@ -325,17 +326,18 @@ def operationRecursive(node, builder, cType):
 
         # get values for operation
         if leftValue == 0:
-            a = convert(cType, node.children[0].value)
+            a = getLiteral(cType, node.children[0].value)
         elif leftValue == 1:
-            a = loaded[node.children[0].value]
+            a = convertVar(builder, cType, loaded[node.children[0].value])
         else:
             a = node.children[0]
         if rightValue == 0:
-            b = convert(cType, node.children[1].value)
+            b = getLiteral(cType, node.children[1].value)
         elif rightValue == 1:
-            b = loaded[node.children[1].value]
+            b = convertVar(builder, cType, loaded[node.children[1].value])
         else:
             b = node.children[1]
+
         # apply operation
         node = applyOperation(node, builder, a, b)
         return node
@@ -372,7 +374,7 @@ def applyOperation(node, builder, a, b):
         return builder.ashr(a, b)
 
 
-def convert(cType, value):
+def getLiteral(cType, value):
     valueType = checkDataType(value)
     if cType == "int":
         if valueType == "int":
@@ -395,6 +397,30 @@ def convert(cType, value):
             return ir.Constant(ir.IntType(8), int(value))
         elif valueType == "char":
             return ir.Constant(ir.IntType(8), value)
+
+
+def convertVar(builder, cType, value):
+    if cType == "int":
+        if value.type == ir.IntType(32):
+            return value
+        elif value.type == ir.FloatType():
+            return builder.fptosi(value, ir.IntType(32))
+        elif value.type == ir.IntType(8):
+            return builder.zext(value, ir.IntType(32))
+    elif cType == "float":
+        if value.type == ir.IntType(32):
+            return builder.sitofp(value, ir.FloatType())
+        elif value.type == ir.FloatType():
+            return value
+        elif value.type == ir.IntType(8):
+            return builder.uitofp(value, ir.FloatType())
+    elif cType == "char":
+        if value.type == ir.IntType(32):
+            return builder.trunc(value, ir.IntType(8))
+        elif value.type == ir.FloatType():
+            return builder.trunc(builder.fptosi(value, ir.IntType(32)), ir.IntType(8))
+        elif value.type == ir.IntType(8):
+            return value
 
 
 def getIRtype(Ctype):
