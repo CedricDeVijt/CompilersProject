@@ -294,8 +294,12 @@ def operation(node, builder):
     builder.comment(node.original)
     var = builder.alloca(getIRtype(node.type[0].value), name=node.lvalue.value)
     definitions[node.lvalue.value] = var
-    AST2 = node
-    value = operationRecursive(AST2.rvalue, builder, node.type[0].value)
+    if node.rvalue.value in ops:
+        AST2 = node
+        value = operationRecursive(AST2.rvalue, builder, node.type[0].value)
+    else:
+        value = definition(node.rvalue, builder, node.type[0].value)
+    loaded[node.lvalue.value] = value
     builder.store(value, var)
     return False
 
@@ -303,6 +307,14 @@ def operation(node, builder):
 # global var for checking if var is loaded in llvm
 loaded = {}
 
+
+def definition(node, builder, cType):
+    if node.value in singleOps:
+        return applyOperation1operand(node, builder, cType)
+    elif str(node.value).isalpha():
+        return convertVar(builder, cType, loaded[node.value])
+    else:
+        return getLiteral(cType, node.value)
 
 def operationRecursive(node, builder, cType):
     # apply operation and update copy of AST
@@ -315,29 +327,24 @@ def operationRecursive(node, builder, cType):
             node.children[1] = operationRecursive(node.children[1], builder, cType)
 
         # apply all single operand operations first
-        if node.children[0].value in singleOps:
-            node.children[0] = applyOperation1operand(node.children[0], builder, cType)
-        if node.children[1].value in singleOps:
-            node.children[1] = applyOperation1operand(node.children[1], builder, cType)
+        if not isinstance(node.children[0], ir.Instruction):
+            if node.children[0].value in singleOps:
+                node.children[0] = applyOperation1operand(node.children[0], builder, cType)
+        if not isinstance(node.children[1], ir.Instruction):
+            if node.children[1].value in singleOps:
+                node.children[1] = applyOperation1operand(node.children[1], builder, cType)
 
         # apply the operation
         return applyOperation2operands(node, builder, cType)
-    else:
-        if node.value in singleOps:
-            return applyOperation1operand(node, builder, cType)
-        elif str(node.value).isalpha():
-            return convertVar(builder, cType, loaded[node.value])
-        else:
-            return getLiteral(cType, node.value)
 
 
 # apply node operation on a
 def applyOperation1operand(node, builder, cType):
     if isinstance(node, ir.Instruction):
         a = node
-    elif str(node.children[0].value).isalpha() and definitions[node.children[0].value] not in loaded:
-        # if not loaded in llvm load it
-        loaded[node.children[0].value] = builder.load(definitions[node.children[0].value])
+    elif str(node.children[0].value).isalpha():
+        if definitions[node.children[0].value] not in loaded:
+            loaded[node.children[0].value] = builder.load(definitions[node.children[0].value])
         a = convertVar(builder, cType, loaded[node.children[0].value])
     else:
         a = getLiteral(cType, node.children[0].value)
@@ -351,17 +358,17 @@ def applyOperation1operand(node, builder, cType):
 def applyOperation2operands(node, builder, cType):
     if isinstance(node.children[0], ir.Instruction):
         a = node.children[0]
-    elif str(node.children[0].value).isalpha() and definitions[node.children[0].value] not in loaded:
-        # if not loaded in llvm load it
-        loaded[node.children[0].value] = builder.load(definitions[node.children[0].value])
+    elif str(node.children[0].value).isalpha():
+        if definitions[node.children[0].value] not in loaded:
+            loaded[node.children[0].value] = builder.load(definitions[node.children[0].value])
         a = convertVar(builder, cType, loaded[node.children[0].value])
     else:
         a = getLiteral(cType, node.children[0].value)
     if isinstance(node.children[1], ir.Instruction):
         b = node.children[1]
-    elif str(node.children[1].value).isalpha() and definitions[node.children[1].value] not in loaded:
-        # if not loaded in llvm load it
-        loaded[node.children[1].value] = builder.load(definitions[node.children[1].value])
+    elif str(node.children[1].value).isalpha():
+        if definitions[node.children[1].value] not in loaded:
+            loaded[node.children[1].value] = builder.load(definitions[node.children[1].value])
         b = convertVar(builder, cType, loaded[node.children[1].value])
     else:
         b = getLiteral(cType, node.children[1].value)
@@ -411,7 +418,7 @@ def getLiteral(cType, value):
         if valueType == "int":
             return ir.Constant(ir.FloatType(), float(value))
         elif valueType == "float":
-            return ir.Constant(ir.FloatType(), value)
+            return ir.Constant(ir.FloatType(), float(value))
         elif valueType == "char":
             return ir.Constant(ir.FloatType(), float(ord(value)))
     elif cType == "char":
