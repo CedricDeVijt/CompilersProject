@@ -197,9 +197,7 @@ def generateLLVMfunction(node, builder):
     global ops
 
     if isinstance(node, AST.DefinitionNode):
-        constant = None
-        var = None
-        operation(node, builder)
+        operation(node, builder, True)
         """
         # check if definition is on an operation
         if node.rvalue.value in ops and len(node.rvalue.children) != 0:
@@ -240,9 +238,10 @@ def generateLLVMfunction(node, builder):
         """
 
     elif isinstance(node, AST.AssignmentNode):
-        originalExpression = f"{node.lvalue.value} = {node.rvalue.value};"
-        builder.comment(originalExpression)
-        builder.store(ir.Constant(getIRtype(types[node.lvalue.value]), node.rvalue.value), definitions[node.lvalue.value])
+        operation(node, builder, False)
+        #originalExpression = f"{node.lvalue.value} = {node.rvalue.value};"
+        #builder.comment(originalExpression)
+        #builder.store(ir.Constant(getIRtype(types[node.lvalue.value]), node.rvalue.value), definitions[node.lvalue.value])
 
     elif isinstance(node, AST.PostFixNode):
         if node.op == "inc":
@@ -289,16 +288,20 @@ def generateLLVMfunction(node, builder):
             builder.comment(comment)
 
 
-def operation(node, builder):
+def operation(node, builder, defOrAssigment):
     global definitions
     builder.comment(node.original)
-    var = builder.alloca(getIRtype(node.type[0].value), name=node.lvalue.value)
+    if defOrAssigment:
+        var = builder.alloca(getIRtype(node.type[0].value), name=node.lvalue.value)
+        types[node.lvalue.value] = node.type[0].value
+    else:
+        var = builder.alloca(getIRtype(types[node.lvalue.value]), name=node.lvalue.value)
     definitions[node.lvalue.value] = var
     if node.rvalue.value in ops:
         AST2 = node
-        value = operationRecursive(AST2.rvalue, builder, node.type[0].value)
+        value = operationRecursive(AST2.rvalue, builder, types[node.lvalue.value])
     else:
-        value = definition(node.rvalue, builder, node.type[0].value)
+        value = definition(node.rvalue, builder, types[node.lvalue.value])
     loaded[node.lvalue.value] = value
     builder.store(value, var)
     return False
