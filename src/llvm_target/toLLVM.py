@@ -225,11 +225,6 @@ def generateLLVMfunction(node, builder):
                 definitions[node.lvalue.value] = var
             elif node.type[0].value.isnumeric():
                 # handle pointers
-                stars = ""
-                for i in range(int(node.type[0].value)):
-                    stars += "*"
-                originalExpression = f"{node.type[0].type[0].value}{stars} {node.lvalue.value} = &{node.rvalue.value.value};"
-                builder.comment(originalExpression)
                 constant = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)))
                 var = builder.alloca(getIRpointerType(getIRtype(node.type[0].type[0].value), int(node.type[0].value)), name=node.lvalue.value)
                 definitions[node.lvalue.value] = var
@@ -239,9 +234,6 @@ def generateLLVMfunction(node, builder):
 
     elif isinstance(node, AST.AssignmentNode):
         operation(node, builder, False)
-        #originalExpression = f"{node.lvalue.value} = {node.rvalue.value};"
-        #builder.comment(originalExpression)
-        #builder.store(ir.Constant(getIRtype(types[node.lvalue.value]), node.rvalue.value), definitions[node.lvalue.value])
 
     elif isinstance(node, AST.PostFixNode):
         if node.op == "inc":
@@ -290,18 +282,27 @@ def generateLLVMfunction(node, builder):
 
 def operation(node, builder, defOrAssigment):
     global definitions
+    # original c comment
     builder.comment(node.original)
+    # create LLVM variable
     if defOrAssigment:
-        var = builder.alloca(getIRtype(node.type[0].value), name=node.lvalue.value)
+        if node.type[0].value.isnumeric():
+            var = builder.alloca(getLLVMtype(types[node.rvalue.value.value], int(node.type[0].value)), name=node.lvalue.value)
+        else:
+            var = builder.alloca(getLLVMtype(node.type[0].value, 0), name=node.lvalue.value)
         types[node.lvalue.value] = node.type[0].value
     else:
-        var = builder.alloca(getIRtype(types[node.lvalue.value]), name=node.lvalue.value)
+        var = builder.alloca(getLLVMtype(node.type[0].value, 0), name=node.lvalue.value)
     definitions[node.lvalue.value] = var
+    # create LLVM value
     if node.rvalue.value in ops:
         AST2 = node
         value = operationRecursive(AST2.rvalue, builder, types[node.lvalue.value])
     else:
-        value = definition(node.rvalue, builder, types[node.lvalue.value])
+        if node.type[0].value.isnumeric():
+            value = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getLLVMtype(node.type[0].type[0].value, 0), int(node.type[0].value)))
+        else:
+            value = definition(node.rvalue, builder, types[node.lvalue.value])
     loaded[node.lvalue.value] = value
     builder.store(value, var)
     return False
@@ -318,6 +319,7 @@ def definition(node, builder, cType):
         return convertVar(builder, cType, loaded[node.value])
     else:
         return getLiteral(cType, node.value)
+
 
 def operationRecursive(node, builder, cType):
     # apply operation and update copy of AST
@@ -459,13 +461,16 @@ def convertVar(builder, cType, value):
 
 
 # get llvm type from cType
-def getIRtype(Ctype):
-    if Ctype == "int":
-        return ir.IntType(32)
-    elif Ctype == "float":
-        return ir.FloatType()
-    elif Ctype == "char":
-        return ir.IntType(8)
+def getLLVMtype(cType, iterations):
+    if iterations == 0:
+        if cType == "int":
+            return ir.IntType(32)
+        elif cType == "float":
+            return ir.FloatType()
+        elif cType == "char":
+            return ir.IntType(8)
+    else:
+        return getIRpointerType(getLLVMtype(cType, 0), iterations)
 
 
 # get llvm pointer type from cType and iterations
