@@ -1,7 +1,7 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | (enum SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+))* main (comment | (enum SEMICOLON+) | variable | typedef)* EOF;
+program: (comment | (enumDeclaration SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+))* main (comment | (enumDeclaration SEMICOLON+) | variable | typedef)* EOF;
 
 main: 'int' 'main' LPAREN RPAREN scope;
 
@@ -15,6 +15,7 @@ statement: rvalue SEMICOLON+
          | conditional
          | whileLoop
          | forLoop
+         | enumStatement SEMICOLON+
          | jumpStatement SEMICOLON+
          | switchStatement;
 
@@ -105,7 +106,13 @@ deref: '*'+ identifier;
 
 addr: '&'+ identifier;
 
-enum: 'enum'  IDENTIFIER '{' IDENTIFIER (','  IDENTIFIER )*'}';
+enumDeclaration: 'enum'  IDENTIFIER '{' IDENTIFIER (','  IDENTIFIER )*'}';
+
+enumStatement: enumVariableDefinition
+             | enumVariableDeclaration;
+
+enumVariableDefinition: 'enum' IDENTIFIER IDENTIFIER '=' IDENTIFIER;
+enumVariableDeclaration: 'enum' IDENTIFIER IDENTIFIER;
 
 postFixIncrement: lvalue INCREMENT;
 postFixDecrement: lvalue DECREMENT;
