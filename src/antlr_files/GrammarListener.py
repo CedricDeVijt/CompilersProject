@@ -17,15 +17,6 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by GrammarParser#main.
-    def enterMain(self, ctx:GrammarParser.MainContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#main.
-    def exitMain(self, ctx:GrammarParser.MainContext):
-        pass
-
-
     # Enter a parse tree produced by GrammarParser#scope.
     def enterScope(self, ctx:GrammarParser.ScopeContext):
         pass
@@ -41,6 +32,42 @@ class GrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by GrammarParser#statement.
     def exitStatement(self, ctx:GrammarParser.StatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#function.
+    def enterFunction(self, ctx:GrammarParser.FunctionContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#function.
+    def exitFunction(self, ctx:GrammarParser.FunctionContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#functionParams.
+    def enterFunctionParams(self, ctx:GrammarParser.FunctionParamsContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#functionParams.
+    def exitFunctionParams(self, ctx:GrammarParser.FunctionParamsContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#functionCall.
+    def enterFunctionCall(self, ctx:GrammarParser.FunctionCallContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#functionCall.
+    def exitFunctionCall(self, ctx:GrammarParser.FunctionCallContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#callParams.
+    def enterCallParams(self, ctx:GrammarParser.CallParamsContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#callParams.
+    def exitCallParams(self, ctx:GrammarParser.CallParamsContext):
         pass
 
 
@@ -113,15 +140,6 @@ class GrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by GrammarParser#forLoop.
     def exitForLoop(self, ctx:GrammarParser.ForLoopContext):
-        pass
-
-
-    # Enter a parse tree produced by GrammarParser#forInit.
-    def enterForInit(self, ctx:GrammarParser.ForInitContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#forInit.
-    def exitForInit(self, ctx:GrammarParser.ForInitContext):
         pass
 
 

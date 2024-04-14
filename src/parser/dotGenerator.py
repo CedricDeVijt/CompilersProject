@@ -34,7 +34,7 @@ class DotGenerator:
                 DotGenerator._generateASTDot(dot, child)
                 dot.edge(str(id(node)), str(id(child)))
         else:
-            if isinstance(node, AST.IfStatementNode) or isinstance(node, AST.ElseIfStatementNode) or isinstance(node, AST.ElseStatementNode) or isinstance(node, AST.WhileLoopNode):
+            if isinstance(node, AST.IfStatementNode) or isinstance(node, AST.WhileLoopNode) or isinstance(node, AST.FunctionNode):
                 dot.node(str(id(node)), str(expandExpression(node)))
                 for child in node.body:
                     DotGenerator._generateASTDot(dot, child)
@@ -95,7 +95,7 @@ def expandExpression(node):
         for item in node:
             expr += expandExpression(item)
         return expr
-    if isinstance(node, AST.ProgramNode) or isinstance(node, AST.MainNode):
+    if isinstance(node, AST.ProgramNode):
         return f"{node.value}"
     if len(node.children) == 0:
         match node:
@@ -106,7 +106,7 @@ def expandExpression(node):
             case AST.CommentNode():
                 return f"{node.value}"
             case AST.CharNode():
-                return f"'{chr(node.value)}'"
+                return f"'{chr(int(node.value))}'"
             case AST.IntNode():
                 return node.value
             case AST.FloatNode():
@@ -116,12 +116,18 @@ def expandExpression(node):
             case AST.TypeNode():
                 return node.value
             case AST.PointerNode():
-                for type in node.type:
-                    expr += expandExpression(type)
+                if isinstance(node.type, list):
+                    for node_type in node.type:
+                        expr += expandExpression(node_type)
+                else:
+                    expr += expandExpression(node.type)
                 expr += "*" * int(node.value)
             case AST.DerefNode():
-                expr += "*" * int(node.value)
-                expr += expandExpression(node.identifier)
+                if expandExpression(node.identifier).startswith('-'):
+                    expr += '-' + "*" * int(node.value) + expandExpression(node.identifier).removeprefix('-')
+                else:
+                    expr += "*" * int(node.value)
+                    expr += expandExpression(node.identifier)
             case AST.AddrNode():
                 expr += f"&{expandExpression(node.value)}"
             case AST.ExplicitConversionNode():
@@ -134,9 +140,9 @@ def expandExpression(node):
             case AST.DefinitionNode():
                 expr += f"Definition\n{expandExpression(node.type)} {expandExpression(node.lvalue)} = {expandExpression(node.rvalue)}"
             case AST.PostFixNode():
-                expr += f"{node.value}{'++' if node.op == 'inc' else '--'}"
+                expr += f"({node.value}{'++' if node.op == 'inc' else '--'})"
             case AST.PreFixNode():
-                expr += f"{'++' if node.op == 'inc' else '--'}{node.value}"
+                expr += f"({'++' if node.op == 'inc' else '--'}{node.value})"
             case AST.PrintfNode():
                 expr += f"Printf({node.specifier}, {expandExpression(node.node)})"
             case AST.IfStatementNode():
@@ -155,6 +161,34 @@ def expandExpression(node):
                 expr += f"while({expandExpression(node.condition)})"
                 if len(node.body) == 0:
                     expr += "{}"
+            case AST.FunctionNode():
+                params_str = ''
+                params = node.params
+                pointer = 0
+                for param in params:
+                    param_name = param[1]
+                    param_type = param[0]
+                    const = False
+                    # Get param_name
+                    if isinstance(param_name, AST.IdentifierNode):
+                        param_name = param_name.value
+                    elif isinstance(param_name, AST.AddrNode):
+                        param_name = f"&{param_name.value.value}"
+                    # Get param type
+                    if isinstance(param_type, AST.PointerNode):
+                        pointer = int(param_type.value)
+                        param_type = param_type.type
+                    if isinstance(param_type, list):
+                        const = True
+                        pointer = 0
+                        param_type = param_type[len(param_type) - 1]
+                    param_type = param_type.value
+                    params_str = f"{'const ' if const else ''}{param_type} {'*' * pointer}{param_name}{', ' + params_str if params_str != '' else ''}"
+                expr += f"{expandType(node.type)}{node.value}({params_str})"
+                if len(node.body) == 0:
+                    expr += "{}"
+            case AST.FunctionCall():
+                expr += f""
             case AST.TypedefNode():
                 expr += f"Typedef {node.type} {node.identifier}"
             case _:
@@ -213,3 +247,19 @@ def expandExpression(node):
                 expr += node.value
         expr += f"{expandExpression(node.children[1])})"
     return expr
+
+def expandType(node):
+    str = ""
+    if isinstance(node, AST.PointerNode):
+        if isinstance(node.type, list):
+            for nodetype in node.type:
+                str += expandType(nodetype)
+        else:
+            str += expandType(node.type)
+        str += "*" * int(node.value)
+    elif isinstance(node, list):
+        for nodetype in node:
+            str += expandType(nodetype)
+    else:
+        str += f"{node.value} "
+    return str

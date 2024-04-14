@@ -49,22 +49,22 @@
 - Functionality
   - [x] (**mandatory**) Function scopes
   - [x] (**mandatory**) Local and global variables
-  - [] (**mandatory**) Functions
-    - [] Defining functions
-    - [] Calling functions
-    - [] Function arguments (basic types, pointers, constness, pass-by-value and pass-by-reference)
-    - [] Return values
-    - [] Void function
-    - [] Missing main -> error.
-  - [] (**optional**) Overloading of functions on the amount and type of parameters
+  - [x] (**mandatory**) Functions
+    - [x] Defining functions
+    - [x] Calling functions
+    - [x] Function arguments (basic types, pointers, constness, pass-by-value and pass-by-reference)
+    - [x] Return values
+    - [x] Void function
+    - [x] Missing main -> error.
+  - [x] (**optional**) Overloading of functions on the amount and type of parameters
   - [] (**mandatory**) Define `#define` 
   - [] (**mandatory**) Includes `#include`
   - [] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
 - Semantic Analysis
   - [x] (**mandatory**) Function scopes in symbol table
-  - [] (**mandatory**) Check consistency of return type
-  - [] (**mandatory**) Check consistency of function arguments
-  - [] (**mandatory**) Functions can only be called if they are declared/defined earlier
+  - [x] (**mandatory**) Check consistency of return type
+  - [x] (**mandatory**) Check consistency of function arguments
+  - [x] (**mandatory**) Functions can only be called if they are declared/defined earlier
   - [] (**mandatory**) Check redefinitions of functions (headers too)
   - [] (**optional**) All paths in function body end in return statement (except void functions)
 - Optimizations
@@ -100,6 +100,6 @@
   - [] (**optional**) File writing using fputs
   - [] (**optional**) Dynamically allocated strings and charracter buffers
 - Semantic Analysis
-  - [] (**mandatory**) Type checking for function pointers
+  - [] (**optional**) Type checking for function pointers
   - [] (**mandatory**) Type checking for accessing and assigning struct members
-  - [] (**mandatory**) Type checking for accessing and assigning union members
+  - [] (**optional**) Type checking for accessing and assigning union members

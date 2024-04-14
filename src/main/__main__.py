@@ -33,11 +33,14 @@ def generate_ast(path, visitor):
     for warning in warnings:
         print(f"Warning: {warning}")
     ast.constantFold(errors=errors, warnings=warnings)
-    if len(errors) != 0:
-        err_str = ''
-        for error in errors:
-            err_str += f"Error at {error}\n"
-        raise Exception(err_str)
+    err_str = ''
+    if not genAST.has_main:
+        err_str += "Error: No main function found!"
+    for error in errors:
+        err_str += f"\nError at {error}"
+    if err_str != '':
+        print(err_str)
+        return None, None
     return ast, symbolTable
 
 

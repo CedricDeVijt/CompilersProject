@@ -100,6 +100,6 @@
   - [] (**optional**) File writing using fputs
   - [] (**optional**) Dynamically allocated strings and charracter buffers
 - Semantic Analysis
-  - [] (**mandatory**) Type checking for function pointers
+  - [] (**optional**) Type checking for function pointers
   - [] (**mandatory**) Type checking for accessing and assigning struct members
-  - [] (**mandatory**) Type checking for accessing and assigning union members
+  - [] (**optional**) Type checking for accessing and assigning union members

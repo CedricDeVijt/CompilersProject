@@ -1,9 +1,7 @@
 grammar Grammar;
 
 // parser rules
-program: (comment | (enum SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+))* main (comment | (enum SEMICOLON+) | variable | typedef)* EOF;
-
-main: 'int' 'main' LPAREN RPAREN scope;
+program: (comment | (enum SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+) | function)+ EOF;
 
 scope: LBRACE statement* RBRACE;
 
@@ -18,6 +16,17 @@ statement: rvalue SEMICOLON+
          | jumpStatement SEMICOLON+
          | switchStatement;
 
+function: (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN scope
+        | (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN SEMICOLON;
+
+functionParams: (pointer | type) (addr | identifier)
+      | functionParams COMMA functionParams;
+
+functionCall: IDENTIFIER LPAREN callParams? RPAREN;
+
+callParams: rvalue
+          | callParams COMMA callParams;
+
 switchStatement: 'switch' LPAREN rvalue RPAREN LBRACE switchCase* RBRACE;
 
 switchCase: 'case' literal COLON statement*
@@ -31,8 +40,8 @@ elseStatement: 'else' scope;
 whileLoop: 'while' LPAREN rvalue RPAREN scope;
 
 forLoop: 'for' LPAREN forCondition RPAREN scope;
-forInit: variable | rvalue;
-forCondition: variable? SEMICOLON (rvalue conditionalExpression?)? SEMICOLON rvalue?;
+
+forCondition: variable? SEMICOLON rvalue? SEMICOLON rvalue?;
 
 printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')';
 
@@ -77,6 +86,7 @@ rvalue: unaryExpression
       | preFixIncrement
       | preFixDecrement
       | rvalue conditionalExpression
+      | functionCall
       | jumpStatement;
 
 conditionalExpression: GREATER_THAN rvalue
@@ -87,11 +97,12 @@ conditionalExpression: GREATER_THAN rvalue
                      | NOT_EQUAL rvalue;
 
 jumpStatement: 'break'
-             | 'continue';
+             | 'continue'
+             | 'return' rvalue?;
 
-unaryExpression: (PLUS | MINUS)? literal
-               | (PLUS MINUS)+ (PLUS)? literal
-               | (MINUS PLUS)+ (MINUS)? literal;
+unaryExpression: (PLUS | MINUS)? (literal | identifier | deref)
+               | (PLUS MINUS)+ (PLUS)? (literal | identifier | deref)
+               | (MINUS PLUS)+ (MINUS)? (literal | identifier | deref);
 
 literal: INT
        | FLOAT
@@ -115,7 +126,7 @@ preFixDecrement: DECREMENT lvalue;
 
 typedef: 'typedef' type IDENTIFIER;
 
-type: 'const'* ('int' | 'float' | 'char' | IDENTIFIER);
+type: 'const'* ('int' | 'float' | 'char' | 'void' | IDENTIFIER);
 
 identifier: IDENTIFIER;
 comment: COMMENT;
@@ -149,9 +160,10 @@ LOGICAL_NOT: '!';
 
 COLON: ':';
 SEMICOLON: ';';
+COMMA: ',';
 INT:  '0' | [1-9][0-9]*;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
-CHAR : '\'' [a-zA-Z0-9] '\'' ;
+CHAR : '\'' '\\'? [a-zA-Z0-9] '\'' ;
 
 WHITESPACE: [ \t\n\r]+ -> skip;
 

@@ -14,11 +14,6 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by GrammarParser#main.
-    def visitMain(self, ctx:GrammarParser.MainContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by GrammarParser#scope.
     def visitScope(self, ctx:GrammarParser.ScopeContext):
         return self.visitChildren(ctx)
@@ -26,6 +21,26 @@ class GrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by GrammarParser#statement.
     def visitStatement(self, ctx:GrammarParser.StatementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#function.
+    def visitFunction(self, ctx:GrammarParser.FunctionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#functionParams.
+    def visitFunctionParams(self, ctx:GrammarParser.FunctionParamsContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#functionCall.
+    def visitFunctionCall(self, ctx:GrammarParser.FunctionCallContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#callParams.
+    def visitCallParams(self, ctx:GrammarParser.CallParamsContext):
         return self.visitChildren(ctx)
 
 
@@ -66,11 +81,6 @@ class GrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by GrammarParser#forLoop.
     def visitForLoop(self, ctx:GrammarParser.ForLoopContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by GrammarParser#forInit.
-    def visitForInit(self, ctx:GrammarParser.ForInitContext):
         return self.visitChildren(ctx)
 
 

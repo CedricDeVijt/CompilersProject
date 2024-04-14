@@ -1,23 +1,27 @@
 class Symbol:
-    def __init__(self, name, varType, const, typeDef=False, returnType=None):
+    def __init__(self, name, var_type, const, symbol_type='variable', defined=True, params=None):
         self.name = name
         self.const = const
-        self.type = varType
-        self.typeDef = typeDef
-        self.returnType = returnType
+        self.type = var_type
+        self.symbol_type = symbol_type
+        self.defined = defined
+        self.params = params if params is not None else []
 
 
 class SymbolTable:
     def __init__(self):
-        self.symbols = {}
-        self.enums = {}
+        self.symbols = []
+        self.enums = []
 
     def add_symbol(self, symbol):
-        if symbol.name in self.symbols:
-            # Symbol already exists in the table, handle error or update entry
-            raise Exception(f"Symbol {symbol.name} already exists in the table")
-        else:
-            self.symbols[symbol.name] = symbol
+        for existing_symbol in self.symbols:
+            if symbol.name == existing_symbol.name:
+                if existing_symbol.symbol_type == 'function' and symbol.symbol_type == 'function' and existing_symbol.defined:
+                    self.symbols.append(symbol)
+                    return None
+                raise Exception("Variable already exists")
+        self.symbols.append(symbol)
+        return None
 
     def add_enum(self, name, enum_dict):
         if name in self.enums:
@@ -31,9 +35,16 @@ class SymbolTable:
         else:
             raise Exception(f"Symbol {symbol} does not exist in the table")
 
-    def get_symbol(self, name) -> Symbol:
-        symbol = self.symbols.get(name, None)
-        return symbol
+    def get_symbol(self, name) -> list:
+        symbols = []
+        if name.startswith('-'):
+            name = name[1:]
+        for symbol in self.symbols:
+            if symbol.name == name:
+                symbols.append(symbol)
+        if len(symbols) > 1:
+            return symbols
+        return symbols[0] if len(symbols) == 1 else None
 
     def get_enum(self, name):
         enum_dict = self.enums.get(name, None)
@@ -51,24 +62,40 @@ class SymbolTableTree:
     def __init__(self):
         self.root = TreeNode(SymbolTable())
         self.current_node = self.root
+        self.locked_scopes = False
+        self.locked_stack = -1
 
     def open_scope(self):
+        if self.locked_scopes:
+            self.locked_stack = 0
+            self.locked_scopes = False
+            return
+        self.locked_stack += 1
         new_node = TreeNode(SymbolTable(), self.current_node)
         self.current_node.children.append(new_node)
         self.current_node = new_node
 
     def close_scope(self):
-        if self.current_node == self.root:
-            raise Exception("Cannot close root scope")
-        self.current_node = self.current_node.parent
+        if self.locked_stack != 0:
+            if self.current_node == self.root:
+                raise Exception("Cannot close root scope")
+            self.current_node = self.current_node.parent
+        else:
+            self.locked_stack = -1
+
+    def lock_scope(self):
+        self.locked_scopes = True
+
+    def is_global(self):
+        return self.current_node == self.root
 
     def add_symbol(self, symbol):
-        self.current_node.table.add_symbol(symbol)
+        return self.current_node.table.add_symbol(symbol)
 
-    def get_symbol(self, name) -> Symbol:
+    def get_symbol(self, name) -> list | Symbol | None:
         node = self.current_node
-        symbol = node.table.get_symbol(name)
-        return symbol
+        symbols = node.table.get_symbol(name)
+        return symbols
 
     def remove_symbol(self, symbol):
         self.current_node.table.remove_symbol(symbol)
@@ -79,9 +106,9 @@ class SymbolTableTree:
     def lookup(self, name):
         node = self.current_node
         while node:
-            symbol = node.table.get_symbol(name)
-            if symbol:
-                return symbol
+            symbols = node.table.get_symbol(name)
+            if symbols:
+                return symbols
             node = node.parent
         return None
 

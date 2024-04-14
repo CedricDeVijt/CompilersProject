@@ -1,25 +1,28 @@
-enum day {SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY};
+void test() {
+    printf("%d", 5);
+    return;
+}
+
+int test(int &a) {
+    a = 20;
+    return 0;
+}
+
+int mul(int a, int b) {
+    return a*b;
+}
 
 int main() {
     int a = 5;
-    while(a<50) {
-        printf("%d", a);
-        break;
-        int b = 50;
-    }
-    switch (a) {
-        case 4:
-            a = 5;
-        case 69:
-            a = 6;
-            break;
-            a = 500;
-            printf("%d", a);
-        case 5:
-            a = 10;
-        default:
-            a = 20;
-            break;
-    }
+    char endline = 'a';
     printf("%d", a);
+    printf("%c", endline);
+    test(a);
+    printf("%d", a);
+    printf("%c", endline);
+    int b;
+    a = mul(a, b);
+    printf("%d", a);
+    printf("%c", endline);
+    return 0;
 }
