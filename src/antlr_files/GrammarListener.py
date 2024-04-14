@@ -251,12 +251,39 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by GrammarParser#enum.
-    def enterEnum(self, ctx:GrammarParser.EnumContext):
+    # Enter a parse tree produced by GrammarParser#enumDeclaration.
+    def enterEnumDeclaration(self, ctx:GrammarParser.EnumDeclarationContext):
         pass
 
-    # Exit a parse tree produced by GrammarParser#enum.
-    def exitEnum(self, ctx:GrammarParser.EnumContext):
+    # Exit a parse tree produced by GrammarParser#enumDeclaration.
+    def exitEnumDeclaration(self, ctx:GrammarParser.EnumDeclarationContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#enumStatement.
+    def enterEnumStatement(self, ctx:GrammarParser.EnumStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#enumStatement.
+    def exitEnumStatement(self, ctx:GrammarParser.EnumStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#enumVariableDefinition.
+    def enterEnumVariableDefinition(self, ctx:GrammarParser.EnumVariableDefinitionContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#enumVariableDefinition.
+    def exitEnumVariableDefinition(self, ctx:GrammarParser.EnumVariableDefinitionContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#enumVariableDeclaration.
+    def enterEnumVariableDeclaration(self, ctx:GrammarParser.EnumVariableDeclarationContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#enumVariableDeclaration.
+    def exitEnumVariableDeclaration(self, ctx:GrammarParser.EnumVariableDeclarationContext):
         pass
 
 

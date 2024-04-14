@@ -144,8 +144,23 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by GrammarParser#enum.
-    def visitEnum(self, ctx:GrammarParser.EnumContext):
+    # Visit a parse tree produced by GrammarParser#enumDeclaration.
+    def visitEnumDeclaration(self, ctx:GrammarParser.EnumDeclarationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#enumStatement.
+    def visitEnumStatement(self, ctx:GrammarParser.EnumStatementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#enumVariableDefinition.
+    def visitEnumVariableDefinition(self, ctx:GrammarParser.EnumVariableDefinitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#enumVariableDeclaration.
+    def visitEnumVariableDeclaration(self, ctx:GrammarParser.EnumVariableDeclarationContext):
         return self.visitChildren(ctx)
 
 
