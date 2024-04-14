@@ -70,13 +70,14 @@ class SymbolTableTree:
             self.locked_stack = 0
             self.locked_scopes = False
             return
-        self.locked_stack += 1
+        if self.locked_stack != -1:
+            self.locked_stack += 1
         new_node = TreeNode(SymbolTable(), self.current_node)
         self.current_node.children.append(new_node)
         self.current_node = new_node
 
     def close_scope(self):
-        if self.locked_stack != 0:
+        if self.locked_stack == -1:
             if self.current_node == self.root:
                 raise Exception("Cannot close root scope")
             self.current_node = self.current_node.parent
