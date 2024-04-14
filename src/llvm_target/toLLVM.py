@@ -161,7 +161,7 @@ types = {}
 # all operations with two operands
 ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd", "LogicalOr", "SL", "SR"]
 # all operations with one operand
-singleOps = ["PreFix", "BitwiseNot", "LogicalNot"]
+singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
 # typedefs
 typedefs = {'int': 'int', 'float': 'float', 'char': 'char'}
 
@@ -259,23 +259,23 @@ def operation(node, builder, defOrAssigment):
     # create LLVM variable
     if defOrAssigment:
         if node.type[0].value.isnumeric():
-            var = builder.alloca(getLLVMtype(types[node.rvalue.value.value][0], int(node.type[0].value)), name=node.lvalue.value)
-            types[node.lvalue.value] = [types[node.rvalue.value.value][0], node.type[0].value]
+            var = builder.alloca(getLLVMtype(typedefs[types[node.rvalue.value.value][0]], int(node.type[0].value)), name=node.lvalue.value)
+            types[node.lvalue.value] = [typedefs[types[node.rvalue.value.value][0]], node.type[0].value]
         else:
-            var = builder.alloca(getLLVMtype(node.type[0].value, 0), name=node.lvalue.value)
-            types[node.lvalue.value] = [node.type[0].value, 0]
+            var = builder.alloca(getLLVMtype(typedefs[node.type[0].value], 0), name=node.lvalue.value)
+            types[node.lvalue.value] = [typedefs[node.type[0].value], 0]
     else:
         var = builder.alloca(getLLVMtype(node.type[0].value, 0), name=node.lvalue.value)
     definitions[node.lvalue.value] = var
     # create LLVM value
     if node.rvalue.value in ops:
         AST2 = node
-        value = operationRecursive(AST2.rvalue, builder, types[node.lvalue.value][0])
+        value = operationRecursive(AST2.rvalue, builder, typedefs[types[node.lvalue.value][0]])
     else:
         if node.type[0].value.isnumeric():
-            value = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getLLVMtype(node.type[0].type[0].value, 0), int(node.type[0].value)))
+            value = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getLLVMtype(typedefs[node.type[0].type.value], 0), int(node.type[0].value)))
         else:
-            value = definition(node, builder, types[node.lvalue.value][0])
+            value = definition(node, builder, typedefs[types[node.lvalue.value][0]], True)
     loaded[node.lvalue.value] = value
     builder.store(value, var)
     return False
@@ -285,22 +285,36 @@ def operation(node, builder, defOrAssigment):
 loaded = {}
 
 
-def definition(node, builder, cType):
-    if node.rvalue.value in singleOps:
-        # apply single operand operation: !a, ~a, ++a, --a
-        return applyOperation1operand(node.rvalue, builder, cType)
-    elif isinstance(node.rvalue, AST.DerefNode):
-        # dereference pointer
-        ptr = builder.load(definitions[node.rvalue.identifier.value])
-        while ptr.type != definitions[node.lvalue.value].type:
-            ptr = builder.load(ptr)
-        return builder.load(ptr)
-    elif str(node.rvalue.value).isalpha():
-        # load variable
-        return convertVar(builder, cType, loaded[node.rvalue.value])
+# get LLVM value
+def definition(node, builder, cType, varLit):
+    if varLit:
+        if node.rvalue.value in singleOps:
+            # apply single operand operation: !a, ~a, ++a, --a
+            return applyOperation1operand(node.rvalue, builder, cType)
+        elif isinstance(node.rvalue, AST.DerefNode):
+            # dereference pointer
+            ptr = builder.load(definitions[node.rvalue.identifier.value])
+            while ptr.type != definitions[node.lvalue.value].type:
+                ptr = builder.load(ptr)
+            return builder.load(ptr)
+        elif str(node.rvalue.value).isalpha():
+            # load variable
+            return convertVar(builder, cType, loaded[node.rvalue.value])
+        else:
+            # get literal value
+            return getLiteral(cType, node.rvalue.value)
     else:
-        # get literal value
-        return getLiteral(cType, node.rvalue.value)
+        if node.value in singleOps:
+            # apply single operand operation: !a, ~a, ++a, --a
+            return applyOperation1operand(node, builder, cType)
+        elif isinstance(node, AST.DerefNode):
+            # dereference pointer
+            ptr = builder.load(definitions[node.identifier.value])
+            print(ptr.type)
+            print(definitions[node.identifier.value].type)
+            while ptr.type != definitions[node.identifier.value].type:
+                ptr = builder.load(ptr)
+            return builder.load(ptr)
 
 
 def operationRecursive(node, builder, cType):
@@ -315,11 +329,11 @@ def operationRecursive(node, builder, cType):
 
         # apply all single operand operations first
         if not isinstance(node.children[0], ir.Instruction):
-            if node.children[0].value in singleOps:
-                node.children[0] = applyOperation1operand(node.children[0], builder, cType)
+            if node.children[0].value in singleOps or isinstance(node.children[1], AST.DerefNode):
+                node.children[0] = definition(node.children[0], builder, cType, False)
         if not isinstance(node.children[1], ir.Instruction):
-            if node.children[1].value in singleOps:
-                node.children[1] = applyOperation1operand(node.children[1], builder, cType)
+            if node.children[1].value in singleOps or isinstance(node.children[1], AST.DerefNode):
+                node.children[1] = definition(node.children[1], builder, cType, False)
 
         # apply the operation
         return applyOperation2operands(node, builder, cType)
