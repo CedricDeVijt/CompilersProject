@@ -162,9 +162,10 @@ types = {}
 ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd", "LogicalOr", "SL", "SR"]
 # all operations with one operand
 singleOps = ["PreFix", "BitwiseNot", "LogicalNot"]
+# typedefs
+typedefs = {'int': 'int', 'float': 'float', 'char': 'char'}
 
-
-def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code using LLVM lite
+def generateLLVMcodeLite(node, llvm_file):    # generate LLVM code using LLVM lite
     # Create module
     module = ir.Module()
     # Set the module ID
@@ -174,24 +175,29 @@ def generateLLVMcodeLite(node, llvm_file, symbol_table):    # generate LLVM code
     # Set the target data layout
     module.data_layout = ""
 
-    builder = None
     global done
     if isinstance(node, AST.Node):
         if isinstance(node, AST.ProgramNode):
             for child in node.children:
-                generateLLVMcodeLite(child, llvm_file, symbol_table)
-        elif isinstance(node, AST.MainNode):
-            function = ir.Function(module, ir.FunctionType(ir.IntType(32), []), name="main")
-            block = function.append_basic_block(name="entry")
-            builder = ir.IRBuilder(block)
-            for child in node.children:
-                generateLLVMfunction(child, builder)
-            builder.ret(ir.Constant(ir.IntType(32), 0))
-        # elif isinstance(node, AST.CommentNode):   add comment outside of function if possible
-
+                generateLLVMcodeLiteBlock(child, module)
     if done:
         llvm_file.write(str(module))
         done = False
+
+
+def generateLLVMcodeLiteBlock(node, module):
+    if isinstance(node, AST.FunctionNode):
+        function = ir.Function(module, ir.FunctionType(ir.IntType(32), []), name=node.value)
+        block = function.append_basic_block(name="entry")
+        builder = ir.IRBuilder(block)
+        for child in node.body:
+            generateLLVMfunction(child, builder)
+        builder.ret(ir.Constant(ir.IntType(32), 0))
+    elif isinstance(node, AST.CommentNode):  # add comment outside of function if possible
+        # add comment to the ir module
+        module.add_named_metadata("llvm.module.flags", [ir.MetaDataString(module, node.value)])
+    elif isinstance(node, AST.TypedefNode):
+        typedefs[node.identifier] = node.type
 
 
 def generateLLVMfunction(node, builder):

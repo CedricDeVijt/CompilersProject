@@ -57,7 +57,7 @@ def compile_llvm(input_file, visitor, output_file):
         llvm_file.write(f"source_filename = \"{output_file}\"\n")
         llvm_file.write("\n")
 
-        generateLLVMcodeLite(ast, llvm_file, {})
+        generateLLVMcodeLite(ast, llvm_file)
 
 
 def compile_mips(input_file, visitor, output_file):
