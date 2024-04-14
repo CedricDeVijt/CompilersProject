@@ -738,16 +738,16 @@ class ASTGenerator(Visitor):
                 condition.original = f"({condition.original})"
             elif isinstance(child, ElseIfStatementNode):
                 original = f"(! {condition.original})"
-                condition = LogicalNotNode(line=child.line, column=child.pos, original=original, children=[condition])
+                new_condition = LogicalNotNode(line=child.line, column=child.column, original=original, children=[condition])
                 original = f"({condition.original} && {child.original})"
-                condition = LogicalAndNode(line=child.line, column=child.pos, original=original, children=[condition, child.condition])
-                child.condition = condition
+                new_condition = LogicalAndNode(line=child.line, column=child.column, original=original, children=[new_condition, child.condition])
+                original = f"({condition.original} || {child.condition.original})"
+                condition = LogicalOrNode(line=child.line, column=child.column, original=original, children=[condition, child.condition])
+                child.condition = new_condition
                 child.__class__ = IfStatementNode
             elif isinstance(child, ElseStatementNode):
-                original = f"({original_condition.original} && {condition.original})"
-                condition = LogicalOrNode(line=child.line, column=child.pos, original=original, children=[original_condition, condition])
                 original = f"(! {condition.original})"
-                condition = LogicalNotNode(line=child.line, column=child.pos, original=original, children=[condition])
+                condition = LogicalNotNode(line=child.line, column=child.column, original=original, children=[condition])
                 child.__class__ = IfStatementNode
                 child.condition = condition
         return children
@@ -1195,7 +1195,7 @@ class ASTGenerator(Visitor):
                 if case1 != case2:
                     if case1.condition != 'Default' and case2.condition != 'Default':
                         if case1.condition.value == case2.condition.value:
-                            self.errors.append(f"line {case1.line}:{case1.pos} Duplicate cases in switch statement!")
+                            self.errors.append(f"line {case1.line}:{case1.column} Duplicate cases in switch statement!")
         # Remove code after break.
         for case in cases:
             self.remove_after_type(case, BreakNode)
@@ -1207,34 +1207,34 @@ class ASTGenerator(Visitor):
         for case in cases:
             original = ""
             if case.condition == 'Default':
-                defaultCondition = IntNode(value='1', line=case.line, column=case.pos, original='1')
+                defaultCondition = IntNode(value='1', line=case.line, column=case.column, original='1')
                 if not_default_condition is not None:
                     original = f"(! {not_default_condition.original})"
-                    not_default_condition = LogicalNotNode(case.line, case.pos, original=original, children=[not_default_condition])
+                    not_default_condition = LogicalNotNode(case.line, case.column, original=original, children=[not_default_condition])
                     original = f"({not_default_condition.original} && {defaultCondition.original})"
-                    defaultCondition = LogicalAndNode(case.line, case.pos, original=original, children=[not_default_condition, defaultCondition])
+                    defaultCondition = LogicalAndNode(case.line, case.column, original=original, children=[not_default_condition, defaultCondition])
                     original = f"default:"
-                ifNode = IfStatementNode(line=case.line, column=case.pos, original=original, condition=defaultCondition, body=case.children)
+                ifNode = IfStatementNode(line=case.line, column=case.column, original=original, condition=defaultCondition, body=case.children)
                 ifNodes.append(ifNode)
             else:
                 if condition_since_break is None:
                     original = f"({rval.original} == {case.condition.original})"
-                    condition_since_break = EQNode(line=case.line, column=case.pos, original=original, children=[rval, case.condition])
+                    condition_since_break = EQNode(line=case.line, column=case.column, original=original, children=[rval, case.condition])
                     original = f"case {case.condition.original}:"
                 else:
                     original = f"({rval.original} == {case.condition.original})"
-                    case_condition = EQNode(line=case.line, column=case.pos, original=original, children=[rval, case.condition])
+                    case_condition = EQNode(line=case.line, column=case.column, original=original, children=[rval, case.condition])
                     original = f"({condition_since_break.original} || {case_condition.original})"
-                    condition_since_break = LogicalOrNode(line=case.line, column=case.pos, original=original, children=[condition_since_break, case_condition])
+                    condition_since_break = LogicalOrNode(line=case.line, column=case.column, original=original, children=[condition_since_break, case_condition])
                     original = f"case {case.condition.original}:"
-                ifNodes.append(IfStatementNode(line=case.line, column=case.pos, original=original, condition=condition_since_break, body=case.children))
+                ifNodes.append(IfStatementNode(line=case.line, column=case.column, original=original, condition=condition_since_break, body=case.children))
                 for child in case.children:
                     # If break found, set condition to case condition.
                     if self.contains_node(child, BreakNode):
                         if not_default_condition is None:
                             not_default_condition = condition_since_break
                         else:
-                            not_default_condition = LogicalAndNode(line=case.line, column=case.pos, original=original, children=[not_default_condition, condition_since_break])
+                            not_default_condition = LogicalAndNode(line=case.line, column=case.column, original=original, children=[not_default_condition, condition_since_break])
                         condition_since_break = None
                         break
                 self.remove_after_type(case, BreakNode, True)
@@ -1249,13 +1249,13 @@ class ASTGenerator(Visitor):
                     for item in child:
                         if isinstance(item, DeclarationNode) or isinstance(item, DefinitionNode):
                             self.scope.remove_symbol(item.lvalue.value)
-                            self.errors.append(f"line {item.line}:{item.pos} Cannot declare variable in switch case!")
+                            self.errors.append(f"line {item.line}:{item.column} Cannot declare variable in switch case!")
                         else:
                             children.append(item)
                 else:
                     if isinstance(child, DeclarationNode) or isinstance(child, DefinitionNode):
                         self.scope.remove_symbol(child)
-                        self.errors.append(f"line {child.line}:{child.pos} Cannot declare variable in switch case!")
+                        self.errors.append(f"line {child.line}:{child.column} Cannot declare variable in switch case!")
                     else:
                         children.append(child)
         original = ""
