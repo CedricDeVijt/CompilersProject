@@ -42,7 +42,7 @@
 - [x] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
 - [x] (**mandatory**) Switch statements
-- [ ] (**mandatory**) Enumerations
+- [x] (**mandatory**) Enumerations
 
 # project 5
 
