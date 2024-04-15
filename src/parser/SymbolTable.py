@@ -1,5 +1,5 @@
 class Symbol:
-    def __init__(self, name, var_type, const, symbol_type='variable', defined=True, params=None):
+    def __init__(self, name, var_type, const=False, symbol_type='variable', defined=True, params=None):
         self.name = name
         self.const = const
         self.type = var_type
@@ -11,7 +11,7 @@ class Symbol:
 class SymbolTable:
     def __init__(self):
         self.symbols = []
-        self.enums = []
+        self.enums = {}
 
     def add_symbol(self, symbol):
         for existing_symbol in self.symbols:
@@ -23,11 +23,11 @@ class SymbolTable:
         self.symbols.append(symbol)
         return None
 
-    def add_enum(self, name, enum_dict):
+    def add_enum(self, name, enum_list):
         if name in self.enums:
             raise Exception(f"Enum {name} already exists in the table")
         else:
-            self.enums[name] = enum_dict
+            self.enums[name] = enum_list
 
     def remove_symbol(self, symbol):
         for symb in self.symbols:
@@ -48,8 +48,8 @@ class SymbolTable:
         return symbols[0] if len(symbols) == 1 else None
 
     def get_enum(self, name):
-        enum_dict = self.enums.get(name, None)
-        return enum_dict
+        # get list of enum values from the enum name
+        return self.enums.get(name, None)
 
 
 class TreeNode:
@@ -91,7 +91,7 @@ class SymbolTableTree:
     def is_global(self):
         return self.current_node == self.root
 
-    def add_symbol(self, symbol):
+    def add_symbol(self, symbol: Symbol):
         return self.current_node.table.add_symbol(symbol)
 
     def get_symbol(self, name) -> list | Symbol | None:
@@ -103,7 +103,13 @@ class SymbolTableTree:
         self.current_node.table.remove_symbol(symbol)
 
     def get_all_symbols(self):
-        return self.current_node.table.symbols
+        symbols = []
+        node = self.current_node
+        while node:
+            for symbol in node.table.symbols:
+                symbols.append(symbol)
+            node = node.parent
+        return symbols
 
     def lookup(self, name):
         node = self.current_node
@@ -114,5 +120,52 @@ class SymbolTableTree:
             node = node.parent
         return None
 
+    def add_enum(self, name, enum_list):
+        self.current_node.table.add_enum(name, enum_list)
+
+    def get_all_enums(self):
+        enums = []
+        node = self.current_node
+        while node:
+            for enum in node.table.enums:
+                enums.append(enum)
+            node = node.parent
+        return enums
+
+    def get_enum_values(self):
+        # get all values of the enum in the current scope as a list
+        enum_values = []
+        for enum in self.current_node.table.enums:
+            enum_values.extend(self.current_node.table.enums[enum])
+        return enum_values
+
+    def get_enum_list(self, enum_name):
+        # get all values of the enum in the current scope and parent scopes
+        node = self.current_node
+        while node:
+            enum_dict = node.table.get_enum(enum_name)
+            if enum_dict:
+                return enum_dict
+            node = node.parent
+        return None
+
+    def get_all_enum_values(self):
+        enums = []
+        node = self.current_node
+        while node:
+            for enum in node.table.enums:
+                enums.extend(node.table.enums[enum])
+            node = node.parent
+        return enums
+
     def current_scope(self):
         return self.current_node.table
+
+
+    def get_enum_values_of_enum(self, enum_name):
+        # get all values of the enum in the current scope as a list
+        enum_values = []
+        for enum in self.current_node.table.enums:
+            if enum == enum_name:
+                enum_values.extend(self.current_node.table.enums[enum])
+        return enum_values
