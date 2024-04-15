@@ -588,3 +588,11 @@ class CaseNode(Node):
     def __init__(self, line: int, column: int, original: str | None, condition, children=None):
         super().__init__(value="Case", line=line, column=column, original_code=original, children=children)
         self.condition = condition
+
+
+class EnumNode(Node):
+    def __init__(self, line: int, pos: int, original: str | None, enum_name: str, enum_list: list, children=None):
+        super().__init__(value="Enum", line=line, column=pos, original_code=original, children=children)
+        self.enum_name = enum_name
+        self.enum_list = enum_list
+
