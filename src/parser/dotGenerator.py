@@ -72,10 +72,9 @@ class DotGenerator:
     def _generateSymbolTableLabel(symbol_table):
         # Create a label for the symbol table node
         label = ""
-        for symbol in symbol_table.symbols.values():
-            if symbol.typeDef:
+        for symbol in symbol_table.symbols:
+            if symbol.symbol_type == 'typedef':
                 label += f"typedef "
-
             if symbol.const:
                 label += "const "
 
@@ -83,6 +82,9 @@ class DotGenerator:
                 varType = symbol.type.type[-1].value
                 pointerCount = int(symbol.type.value)
                 label += f"{varType}{'*' * pointerCount} {symbol.name}\n"
+            elif isinstance(symbol.type, list):
+                varType = symbol.type[-1].value
+                label += f"{varType} {symbol.name}\n"
             else:
                 label += f"{symbol.type} {symbol.name}\n"
 
@@ -251,6 +253,7 @@ def expandExpression(node):
                 expr += node.value
         expr += f"{expandExpression(node.children[1])})"
     return expr
+
 
 def expandType(node):
     str = ""
