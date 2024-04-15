@@ -7,7 +7,7 @@ def count_mandatory_features(file_path):
         content = file.read()
 
     # Regular expression to match the mandatory features
-    pattern = r'\[\]\s\(\*\*mandatory\*\*\)'
+    pattern = r'\[ \]\s\(\*\*mandatory\*\*\)'
     matches = re.findall(pattern, content)
 
     return len(matches) + count_completed_mandatory_features(file_path)
@@ -29,7 +29,7 @@ def count_optional_features(file_path):
         content = file.read()
 
     # Regular expression to match the optional features
-    pattern = r'\[\]\s\(\*\*optional\*\*\)'
+    pattern = r'\[ \]\s\(\*\*optional\*\*\)'
     matches = re.findall(pattern, content)
 
     return len(matches) + count_completed_optional_features(file_path)

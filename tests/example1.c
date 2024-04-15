@@ -1,6 +1,7 @@
 void test() {
     printf("%d", 5);
     return;
+    // test
 }
 
 int test(int &a) {

@@ -30,10 +30,11 @@ class SymbolTable:
             self.enums[name] = enum_dict
 
     def remove_symbol(self, symbol):
-        if symbol in self.symbols:
-            del self.symbols[symbol]
-        else:
-            raise Exception(f"Symbol {symbol} does not exist in the table")
+        for symb in self.symbols:
+            if symbol == symb.name:
+                del self.symbols[self.symbols.index(symb)]
+                return
+        raise Exception(f"Symbol {symbol} does not exist in the table")
 
     def get_symbol(self, name) -> list:
         symbols = []

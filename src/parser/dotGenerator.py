@@ -91,6 +91,8 @@ class DotGenerator:
 
 def expandExpression(node):
     expr = ""
+    if node is None:
+        return expr
     if isinstance(node, list):
         for item in node:
             expr += expandExpression(item)
@@ -189,6 +191,8 @@ def expandExpression(node):
                     expr += "{}"
             case AST.FunctionCall():
                 expr += f"{node.value}({expandArguments(node.arguments)})"
+            case AST.ReturnNode():
+                expr += f"return {expandExpression(node.return_value)}"
             case AST.TypedefNode():
                 expr += f"Typedef {node.type} {node.identifier}"
             case _:

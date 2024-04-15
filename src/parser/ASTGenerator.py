@@ -1,11 +1,59 @@
 import copy
 
-from src.antlr_files.GrammarParser import GrammarParser
+from src.antlr_files.GrammarParser import GrammarParser as Parser
 from src.antlr_files.GrammarVisitor import GrammarVisitor as Visitor
 
 from src.parser.AST import *
 from src.parser.dotGenerator import expandExpression
 from src.parser.SymbolTable import SymbolTableTree, Symbol
+
+
+def matching_params(type1, type2):
+    # Amount of params
+    if len(type1) != len(type2):
+        return False
+    for i in range(0, len(type1)):
+        # Check if both are identifier or both are by reference
+        if type(type1[i][1]) != type(type2[i][1]):
+            return False
+        # Ignore identifier
+        type_1 = type1[i][0]
+        type_2 = type2[i][0]
+        # If types are different --> different params, except if list.
+        if (isinstance(type_1, TypeNode) or isinstance(type_1, list)) and isinstance(type_2, PointerNode):
+            return False
+        if (isinstance(type_2, TypeNode) or isinstance(type_2, list)) and isinstance(type_1, PointerNode):
+            return False
+        if isinstance(type_1, PointerNode):
+            # Check depth of pointer
+            if type_1.value != type_2.value:
+                return False
+            # Check values of type (ignore const)
+            if isinstance(type_1.type, list) and isinstance(type_2.type, list):
+                if type_1.type[len(type_1.type) - 1].value != type_2.type[len(type_2.type) - 1].value:
+                    return False
+            elif isinstance(type_1.type, list):
+                if type_1.type[len(type_1.type) - 1].value != type_2.type.value:
+                    return False
+            elif isinstance(type_2.type, list):
+                if type_1.type.value != type_2.type[len(type_2.type) - 1].value:
+                    return False
+            else:
+                if type_1.type.value != type_2.type.value:
+                    return False
+        elif isinstance(type_1, list) and isinstance(type_2, list):
+            if type_1[len(type_1) - 1].value != type_2[len(type_2) - 1].value:
+                return False
+        elif isinstance(type_1, list):
+            if type_1[len(type_1) - 1].value != type_2.value:
+                return False
+        elif isinstance(type_2, list):
+            if type_1.value != type_2[len(type_2) - 1].value:
+                return False
+        else:
+            if type_1.value != type_2.value:
+                return False
+    return True
 
 
 class ASTGenerator(Visitor):
@@ -49,9 +97,9 @@ class ASTGenerator(Visitor):
             return []
         else:
             for child in node.children:
-                list = self.get_pointer_size(child)
-                if len(list) != 0:
-                    size.extend(list)
+                plist = self.get_pointer_size(child)
+                if len(plist) != 0:
+                    size.extend(plist)
         return size
 
     def get_highest_type(self, rval):
@@ -99,7 +147,6 @@ class ASTGenerator(Visitor):
                         similar = True
                         params = symbol.params
                         if len(rval.arguments) != len(params):
-                            similar = False
                             continue
                         for i in range(0, len(params)):
                             type1 = self.get_highest_type(params[i])
@@ -164,39 +211,22 @@ class ASTGenerator(Visitor):
             for child in node.children:
                 self.set_valid(child, node_type)
 
-    def remove_after_type(self, node, node_type, remove_self=False):
+    def remove_type(self, node, node_type):
         delete = []
-        if isinstance(node, IfStatementNode):
+        if isinstance(node, IfStatementNode) or isinstance(node, FunctionNode) or isinstance(node, WhileLoopNode):
             for child in node.body:
-                if len(delete) != 0:
+                if isinstance(child, node_type):
                     delete.append(child)
-                elif isinstance(child, node_type):
-                    if remove_self:
-                        delete.append(child)
-                    else:
-                        delete.append('')
-            if '' in delete:
-                delete.remove('')
+                self.remove_type(child, node_type)
             for child in delete:
                 node.body.remove(child)
-            # TODO: Find scope in symbolTable and delete scope.
-            for child in node.body:
-                self.remove_after_type(child, node_type, remove_self)
         else:
             for child in node.children:
-                if len(delete) != 0:
+                if isinstance(child, node_type):
                     delete.append(child)
-                elif isinstance(child, node_type):
-                    if remove_self:
-                        delete.append(child)
-                    else:
-                        delete.append('')
-            if '' in delete:
-                delete.remove('')
+                self.remove_type(child, node_type)
             for child in delete:
                 node.children.remove(child)
-            for child in node.children:
-                self.remove_after_type(child, node_type, remove_self)
 
     def place_node_before_type(self, node1, node2, node_type):
         node2 = copy.deepcopy(node2)
@@ -216,53 +246,6 @@ class ASTGenerator(Visitor):
                     break
                 else:
                     self.place_node_before_type(child, node2, node_type)
-
-    def matching_params(self, type1, type2):
-        # Amount of params
-        if len(type1) != len(type2):
-            return False
-        for i in range(0, len(type1)):
-            # Check if both are identifier or both are by reference
-            if type(type1[i][1]) != type(type2[i][1]):
-                return False
-            # Ignore identifier
-            type_1 = type1[i][0]
-            type_2 = type2[i][0]
-            # If types are different --> different params, except if list.
-            if (isinstance(type_1, TypeNode) or isinstance(type_1, list)) and isinstance(type_2, PointerNode):
-                return False
-            if (isinstance(type_2, TypeNode) or isinstance(type_2, list)) and isinstance(type_1, PointerNode):
-                return False
-            if isinstance(type_1, PointerNode):
-                # Check depth of pointer
-                if type_1.value != type_2.value:
-                    return False
-                # Check values of type (ignore const)
-                if isinstance(type_1.type, list) and isinstance(type_2.type, list):
-                    if type_1.type[len(type_1.type) - 1].value != type_2.type[len(type_2.type) - 1].value:
-                        return False
-                elif isinstance(type_1.type, list):
-                    if type_1.type[len(type_1.type) - 1].value != type_2.type.value:
-                        return False
-                elif isinstance(type_2.type, list):
-                    if type_1.type.value != type_2.type[len(type_2.type) - 1].value:
-                        return False
-                else:
-                    if type_1.type.value != type_2.type.value:
-                        return False
-            elif isinstance(type_1, list) and isinstance(type_2, list):
-                if type_1[len(type_1) - 1].value != type_2[len(type_2) - 1].value:
-                    return False
-            elif isinstance(type_1, list):
-                if type_1[len(type_1) - 1].value != type_2.value:
-                    return False
-            elif isinstance(type_2, list):
-                if type_1.value != type_2[len(type_2) - 1].value:
-                    return False
-            else:
-                if type_1.value != type_2.value:
-                    return False
-        return True
 
     def check_validity(self, node):
         if node is None:
@@ -347,7 +330,7 @@ class ASTGenerator(Visitor):
                 elif not symb.defined:
                     continue
                 elif len(symbol.params) == len(symb.params):
-                    if self.matching_params(symb.params, params):
+                    if matching_params(symb.params, params):
                         if symb.defined == symbol.defined:
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} {name} has already been defined")
                             return None
@@ -390,6 +373,7 @@ class ASTGenerator(Visitor):
         # Check if return types match function type.
         for child in body:
             self.check_returns(child, return_type.value)
+        # Close scope after function body.
         self.scope.close_scope()
         return node
 
@@ -468,7 +452,14 @@ class ASTGenerator(Visitor):
     def visitScope(self, ctx):
         self.scope.open_scope()
         children = []
+        stop = False
         for line in ctx.getChildren():
+            if stop:
+                break
+            if line.getChildCount() == 2:
+                if isinstance(line.getChild(0), Parser.RvalueContext):
+                    if isinstance(line.getChild(0).getChild(0), Parser.JumpStatementContext):
+                        stop = True
             node = self.visit(line)
             if node is not None:
                 if isinstance(node, list):
@@ -488,6 +479,8 @@ class ASTGenerator(Visitor):
                 if isinstance(child, list):
                     children.extend(child)
                 else:
+                    if child is None:
+                        return None
                     if isinstance(child, IdentifierNode):
                         if self.scope.lookup(child.value) is None:
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child.value + "\' not declared yet!")
@@ -993,6 +986,7 @@ class ASTGenerator(Visitor):
 
     def visitLiteral(self, ctx):
         literal = ctx.getText()
+        node = ProgramNode(line=0, column=0, original=None)
         if literal.startswith("\'"):
             # TODO: fix things like '\n' as character.
             for i in literal:
@@ -1055,10 +1049,10 @@ class ASTGenerator(Visitor):
         type = children[1].getText()
 
         if self.scope.get_symbol(name) is not None:
-            if self.scope.get_symbol(name).symbolType == 'variable':
+            if self.scope.get_symbol(name).symbol_type == 'variable':
                 self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + name + "\' is declared a variable!")
                 return None
-            if self.scope.get_symbol(name).symbolType == 'function':
+            if self.scope.get_symbol(name).symbol_type == 'function':
                 self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + name + "\' is declared a function!")
                 return None
 
@@ -1077,9 +1071,6 @@ class ASTGenerator(Visitor):
                     children.append(child)
         original = f"while ({children[0].original}) " + "{}"
         node = WhileLoopNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=children[0], body=children[1:])
-        # Remove everything after break/continue
-        self.remove_after_type(node, BreakNode)
-        self.remove_after_type(node, ContinueNode)
         # Continue and break are valid.
         self.set_valid(node, BreakNode)
         self.set_valid(node, ContinueNode)
@@ -1114,9 +1105,6 @@ class ASTGenerator(Visitor):
         else:
             original += ") {}"
         node = WhileLoopNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=condition, body=body)
-        # Remove everything after break/continue
-        self.remove_after_type(node, BreakNode, False)
-        self.remove_after_type(node, ContinueNode, False)
         # Continue and break are valid.
         self.set_valid(node, BreakNode)
         self.set_valid(node, ContinueNode)
@@ -1196,9 +1184,9 @@ class ASTGenerator(Visitor):
                     if case1.condition != 'Default' and case2.condition != 'Default':
                         if case1.condition.value == case2.condition.value:
                             self.errors.append(f"line {case1.line}:{case1.column} Duplicate cases in switch statement!")
-        # Remove code after break.
+        # Remove breaks
         for case in cases:
-            self.remove_after_type(case, BreakNode)
+            self.remove_type(case, BreakNode)
         # Make if statements
         if len(cases) == 0:
             return None
@@ -1237,7 +1225,6 @@ class ASTGenerator(Visitor):
                             not_default_condition = LogicalAndNode(line=case.line, column=case.column, original=original, children=[not_default_condition, condition_since_break])
                         condition_since_break = None
                         break
-                self.remove_after_type(case, BreakNode, True)
         return ifNodes
 
     def visitSwitchCase(self, ctx):
