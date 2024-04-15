@@ -188,7 +188,7 @@ def expandExpression(node):
                 if len(node.body) == 0:
                     expr += "{}"
             case AST.FunctionCall():
-                expr += f""
+                expr += f"{node.value}({expandArguments(node.arguments)})"
             case AST.TypedefNode():
                 expr += f"Typedef {node.type} {node.identifier}"
             case _:
@@ -263,3 +263,10 @@ def expandType(node):
     else:
         str += f"{node.value} "
     return str
+
+
+def expandArguments(arguments):
+    str = ""
+    for arg in arguments:
+        str += f"{expandExpression(arg)}, "
+    return str[:-2]
