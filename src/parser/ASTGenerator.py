@@ -213,6 +213,8 @@ class ASTGenerator(Visitor):
         return False
 
     def set_valid(self, node, node_type):
+        if node is None:
+            return
         if isinstance(node, node_type):
             node.valid = True
         if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode) or isinstance(node, FunctionNode):
@@ -544,8 +546,10 @@ class ASTGenerator(Visitor):
                 const = isinstance(children[0].type, list)
 
             # Check if variable already declared in current scope.
-
-            if self.scope.get_symbol(identifier) is not None:
+            if self.scope.get_symbol(identifier) is not None or identifier in self.scope.get_enum_values():
+                if identifier in self.scope.get_all_enum_values():
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+                    return None
                 if self.scope.get_symbol(identifier).symbol_type == 'typeDef':
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + identifier + "\' is declared as type!")
                     return None
@@ -555,6 +559,8 @@ class ASTGenerator(Visitor):
                 if not self.scope.is_global():
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
                     return None
+
+
             symbol = Symbol(name=identifier, var_type=var_type, const=const, symbol_type='variable')
             if self.scope.is_global():
                 symbol.defined = False
@@ -571,7 +577,6 @@ class ASTGenerator(Visitor):
                 identifier = children[children.index("=") - 1].identifier.value
             # "=" is second character -> assignment and no definition.
             if children.index("=") == 1:
-                test = self.scope.lookup(identifier)
                 if self.scope.lookup(identifier) is None:
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
                     return None
@@ -586,6 +591,21 @@ class ASTGenerator(Visitor):
                     if not isinstance(self.scope.lookup(lval.name).type, PointerNode):
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
                         return None
+                if lval.symbol_type == 'enum':
+                    type = lval.type
+                    if isinstance(node, IdentifierNode):
+                        value = node.value
+                        if value not in self.scope.get_enum_values_of_enum(type):
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + value + "\' not declared!")
+                            return None
+
+                        # get index of value in enum
+                        index = self.scope.get_enum_values_of_enum(type).index(value)
+                        rval_node = IntNode(line=ctx.start.line, column=ctx.start.column, original=original, value=index)
+
+                        node = AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=original, lvalue=children[0], rvalue=rval_node)
+                        return node
+
                 rval = node
                 if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
                     if isinstance(rval, AddrNode):
@@ -645,7 +665,10 @@ class ASTGenerator(Visitor):
                     elif not self.scope.lookup(var_type).symbol_type == 'typeDef':
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + var_type + "\' not declared as type!")
                         return None
-                if self.scope.get_symbol(identifier) is not None:
+                if self.scope.get_symbol(identifier) is not None or identifier in self.scope.get_enum_values():
+                    if identifier in self.scope.get_all_enum_values():
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+                        return None
                     if self.scope.get_symbol(identifier).symbol_type == 'typeDef':
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + identifier + "\' is declared as type!")
                         return None
@@ -1160,7 +1183,6 @@ class ASTGenerator(Visitor):
                     original += f" {expandExpression(ret_val)}"
                 return ReturnNode(line=ctx.start.line, column=ctx.start.column, original=original, ret_val=ret_val)
 
-
     def visitSwitchStatement(self, ctx):
         children = []
         for child in ctx.getChildren():
@@ -1264,3 +1286,94 @@ class ASTGenerator(Visitor):
             original = f"case {children[0]}:"
             return CaseNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=children[0], children=children[1:])
         return CaseNode(line=ctx.start.line, column=ctx.start.column, original=original, condition="Default", children=children)
+
+    def visitEnumDeclaration(self, ctx):
+        enum_name = ctx.children[1].getText()
+        enum_list = []
+
+        original = f"enum {enum_name} " + "{"
+        for i in range(3, len(ctx.children)-1):
+            if ctx.children[i].getText() == ",":
+                continue
+            enum_list.append(ctx.children[i].getText())
+            original += f"{ctx.children[i].getText()}, "
+        original = original[:-2] + "}"
+
+        # Check if enum value in list is unique
+        if len(enum_list) != len(set(enum_list)):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum values must be unique!")
+            return None
+
+        # Check if enum is already declared as symbol
+        for enum_value in self.scope.get_all_symbols():
+            if enum_value in self.scope.get_all_symbols():
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'{enum_value.name}\' already declared!")
+                return None
+
+        self.scope.add_enum(enum_name, enum_list)
+
+        return EnumNode(line=ctx.start.line, pos=ctx.start.column, original=original, enum_name=enum_name, enum_list=enum_list)
+
+    def visitEnumStatement(self, ctx):
+        return self.visit(ctx.children[0])
+
+    def visitEnumVariableDeclaration(self, ctx):
+        enum_type_name = ctx.children[1].getText()
+        enum_var_name = ctx.children[2].getText()
+
+        # Check if enum type is declared
+        if enum_type_name not in self.scope.get_all_enums():
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum type \'{enum_type_name}\' not declared!")
+            return None
+
+        # Check if variable is already declared
+        if enum_var_name in self.scope.get_all_symbols():
+            self.errors.append(
+                f"line {ctx.start.line}:{ctx.start.column} Variable \'{enum_var_name}\' already declared!")
+            return None
+
+        # Add symbol to scope
+        self.scope.add_symbol(Symbol(name=enum_var_name, var_type=enum_type_name, symbol_type='enum'))
+
+        # Create definition node
+        type = TypeNode(value=enum_type_name, line=ctx.start.line, column=ctx.start.column, original=enum_type_name)
+        lvalue = IdentifierNode(value=enum_var_name, line=ctx.start.line, column=ctx.start.column, original=enum_var_name)
+
+        original = f"{enum_type_name} {enum_var_name}"
+
+        return DeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type, lvalue=lvalue)
+
+    def visitEnumVariableDefinition(self, ctx):
+        enum_type_name = ctx.children[1].getText()
+        enum_var_name = ctx.children[2].getText()
+        enum_value = ctx.children[4].getText()
+
+        # Check if enum type is declared
+        if enum_type_name not in self.scope.get_all_enums():
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum type \'{enum_type_name}\' not declared!")
+            return None
+
+        # Check if variable is already declared
+        if enum_var_name in self.scope.get_all_symbols():
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'{enum_var_name}\' already declared!")
+            return None
+
+        # Check if enum value is declared
+        if enum_value not in self.scope.get_enum_values_of_enum(enum_type_name):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'{enum_value}\' not declared!")
+            return None
+
+        # Add symbol to scope
+        self.scope.add_symbol(Symbol(name=enum_var_name, var_type=enum_type_name, symbol_type='enum'))
+
+        # Create definition node
+        type = TypeNode(value=enum_type_name, line=ctx.start.line, column=ctx.start.column, original=enum_type_name)
+        lvalue = IdentifierNode(value=enum_var_name, line=ctx.start.line, column=ctx.start.column, original=enum_var_name)
+
+        # get the index of the enum value using get_enum_values
+        enum_value_index = self.scope.get_enum_values_of_enum(enum_type_name).index(enum_value)
+
+        rvalue = IntNode(value=enum_value_index, line=ctx.start.line, column=ctx.start.column, original=enum_value)
+
+
+        return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type, lvalue=lvalue, rvalue=rvalue)

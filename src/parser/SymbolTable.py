@@ -163,9 +163,13 @@ class SymbolTableTree:
 
 
     def get_enum_values_of_enum(self, enum_name):
-        # get all values of the enum in the current scope as a list
+        # get all values of the enum in the current scope or parent as a list
         enum_values = []
-        for enum in self.current_node.table.enums:
-            if enum == enum_name:
-                enum_values.extend(self.current_node.table.enums[enum])
+        node = self.current_node
+        while node:
+            enum_dict = node.table.get_enum(enum_name)
+            if enum_dict:
+                enum_values.extend(enum_dict)
+                return enum_values
+            node = node.parent
         return enum_values
