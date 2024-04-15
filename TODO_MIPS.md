@@ -1,14 +1,14 @@
 # project 1
 
-- [ ] (mandatory) Binary operations +, -, *, and /.
-- [ ] (mandatory) Binary operations >, <, and ==.
-- [ ] (mandatory) Unary operators + and -.
-- [ ] (mandatory) Parenthesis to overwrite the order of operations.
-- [ ] (mandatory) Logical operators &&, ||, and !.
-- [ ] (mandatory) Comparison operators >=, <=, and !=.
-- [ ] (mandatory) Binary operator %.
-- [ ] (mandatory) Shift operators <<, >>.
-- [ ] (mandatory) Bitwise operators &, |, ~, and ^.
+- [ ] (**mandatory**) Binary operations +, -, *, and /.
+- [ ] (**mandatory**) Binary operations >, <, and ==.
+- [ ] (**mandatory**) Unary operators + and -.
+- [ ] (**mandatory**) Parenthesis to overwrite the order of operations.
+- [ ] (**mandatory**) Logical operators &&, ||, and !.
+- [ ] (**mandatory**) Comparison operators >=, <=, and !=.
+- [ ] (**mandatory**) Binary operator %.
+- [ ] (**mandatory**) Shift operators <<, >>.
+- [ ] (**mandatory**) Bitwise operators &, |, ~, and ^.
 
 # project 2
 
