@@ -131,7 +131,9 @@ class ASTGenerator(Visitor):
                 if self.scope.lookup(identifier):
                     if isinstance(self.scope.lookup(identifier).type, str):
                         return self.scope.lookup(identifier).type
-                    return self.scope.lookup(identifier).type.type[0].value
+                    if isinstance(self.scope.lookup(identifier).type.type, list):
+                        return self.scope.lookup(identifier).type.type[0].value
+                    return self.scope.lookup(identifier).type.type
             if isinstance(rval, ExplicitConversionNode):
                 return type
             if isinstance(rval, PreFixNode) or isinstance(rval, PostFixNode):
@@ -179,6 +181,15 @@ class ASTGenerator(Visitor):
             if self.scope.lookup(lvalType) is not None and self.scope.lookup(lvalType).symbol_type == 'typeDef':
                 lvalType = self.scope.lookup(lvalType).type
         while rvalType != 'char' and rvalType != 'int' and rvalType != 'float':
+            if isinstance(rvalType, PointerNode):
+                if isinstance(rvalType.type, list):
+                    rvalType = rvalType.type[len(rvalType.type) - 1].value
+                else:
+                    rvalType = rvalType.type.value
+            elif isinstance(rvalType, list):
+                rvalType = rvalType[len(rvalType) - 1].value
+            elif isinstance(rvalType, TypeNode):
+                rvalType = rvalType.value
             if self.scope.lookup(rvalType) is not None and self.scope.lookup(rvalType).symbol_type == 'typeDef':
                 rvalType = self.scope.lookup(rvalType).type
         if lvalType == 'int' and rvalType == 'float':
