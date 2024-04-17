@@ -114,8 +114,10 @@ class ASTGenerator(Visitor):
             identifier = rval.value
             symbols = self.scope.lookup(identifier)
             if symbols:
-                if isinstance(symbols.type, str):
+                if not isinstance(symbols.type, PointerNode):
                     return symbols.type
+                if isinstance(symbols.type.type, list):
+                    return symbols.type.type[len(symbols.type.type) - 1].value
                 return symbols.type.type.value
         elif isinstance(rval, IntNode):
             return 'int'

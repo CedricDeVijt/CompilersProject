@@ -65,7 +65,7 @@
   - [x] (**mandatory**) Check consistency of return type
   - [x] (**mandatory**) Check consistency of function arguments
   - [x] (**mandatory**) Functions can only be called if they are declared/defined earlier
-  - [ ] (**mandatory**) Check redefinitions of functions (headers too)
+  - [x] (**mandatory**) Check redefinitions of functions (headers too)
   - [ ] (**optional**) All paths in function body end in return statement (except void functions)
 - Optimizations
   - [x] (**mandatory**) Do not generate code after return statement

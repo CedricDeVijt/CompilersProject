@@ -97,7 +97,7 @@ def expandExpression(node):
         return expr
     if isinstance(node, list):
         for item in node:
-            expr += expandExpression(item)
+            expr += f"{expandExpression(item)} "
         return expr
     if isinstance(node, AST.ProgramNode):
         return f"{node.value}"
@@ -122,7 +122,7 @@ def expandExpression(node):
             case AST.PointerNode():
                 if isinstance(node.type, list):
                     for node_type in node.type:
-                        expr += expandExpression(node_type)
+                        expr += f"{expandExpression(node_type)} "
                 else:
                     expr += expandExpression(node.type)
                 expr += "*" * int(node.value)
