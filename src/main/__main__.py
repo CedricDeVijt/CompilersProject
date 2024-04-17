@@ -1,3 +1,4 @@
+import os
 import sys
 
 import antlr4
@@ -15,24 +16,68 @@ class ThrowingErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         raise SyntaxError(f"Syntax error at line {line}:{column}")
 
+def pre_processing(path):
+    with open(path, 'r') as file:
+        lines = file.readlines()
+    stdio_found = False
+    macros = []
+    for line in lines:
+        if line.startswith("#include"):
+            # Split in words.
+            words = line.split()
+            if words[1] == '<stdio.h>':
+                stdio_found = True
+                macros.append(line)
+                continue
+            # Check if file exists.
+            if not os.path.exists(words[1][1:-1]):
+                raise Exception(f"File {words[1][1:-1]} not found.")
+            # Read file.
+            file_lines = pre_processing(words[1][1:-1])
+            # Insert file content.
+            lines.insert(lines.index(line), *file_lines)
+            # Add include to removal
+            macros.append(line)
+    if 'printf' or 'scanf' in lines:
+        if not stdio_found:
+            raise Exception("<stdio.h> not included.")
+    for macro in macros:
+        lines.remove(macro)
+    return lines
+
 
 def generate_ast(path, visitor):
-    input_stream = antlr4.FileStream(path)
+    # Preprocessor
+    new_code = pre_processing(path)
+    # Save new code to file
+    new_path = 'temp.c'
+    i = 2
+    while os.path.exists(new_path):
+        new_path = f'temp_{i}.c'
+        i += 1
+    with open(new_path, 'w') as file:
+        file.writelines(new_code)
+
+    # Generate CST
+    input_stream = antlr4.FileStream(new_path)
     lexer = Lexer(input_stream)
     stream = antlr4.CommonTokenStream(lexer)
     parser = Parser(stream)
-    parser.addErrorListener(ThrowingErrorListener())  # Add the custom listener
+    parser.addErrorListener(ThrowingErrorListener())
     tree = parser.program()
 
+    # Generate AST
     genAST = visitor.visit(tree)
 
     ast = genAST.node
     symbolTable = genAST.scope
     errors = genAST.errors
     warnings = genAST.warnings
+    # Print Warnings
     for warning in warnings:
         print(f"Warning: {warning}")
     ast.constantFold(errors=errors, warnings=warnings)
+    # Print Errors
     err_str = ''
     if not genAST.has_main:
         err_str += "Error: No main function found!"
@@ -40,7 +85,9 @@ def generate_ast(path, visitor):
         err_str += f"\nError at {error}"
     if err_str != '':
         print(err_str)
+        os.remove(new_path)
         return None, None
+    os.remove(new_path)
     return ast, symbolTable
 
 

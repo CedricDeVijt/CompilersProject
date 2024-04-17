@@ -58,7 +58,7 @@
     - [x] Missing main -> error.
   - [x] (**optional**) Overloading of functions on the amount and type of parameters
   - [ ] (**mandatory**) Define `#define` 
-  - [ ] (**mandatory**) Includes `#include`
+  - [x] (**mandatory**) Includes `#include`
   - [ ] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
 - Semantic Analysis
   - [x] (**mandatory**) Function scopes in symbol table

@@ -1,29 +1,5 @@
-void test() {
-    printf("%d", 5);
-    return;
-    // test
-}
-
-int test(int &a) {
-    a = 20;
-    return 0;
-}
-
-int mul(int a, int b) {
-    return a*b;
-}
+#include <test.c>
 
 int main() {
-    int a = 5;
-    char endline = 'a';
-    printf("%d", a);
-    printf("%c", endline);
-    test(a);
-    printf("%d", a);
-    printf("%c", endline);
-    int b;
-    a = mul(a, b);
-    printf("%d", a);
-    printf("%c", endline);
-    return 0;
+    int a = 1+1;
 }
