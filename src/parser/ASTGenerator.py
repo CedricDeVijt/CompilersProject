@@ -103,6 +103,15 @@ class ASTGenerator(Visitor):
         return size
 
     def get_highest_type(self, rval):
+        if isinstance(rval, str):
+            while True:
+                if rval == 'char' or rval == 'int' or rval == 'float':
+                    return rval
+                symbols = self.scope.lookup(rval)
+                if symbols is not None:
+                    if not isinstance(symbols.type, list):
+                        if symbols.symbol_type == 'typeDef':
+                            rval = symbols.type
         if isinstance(rval, DerefNode):
             identifier = rval.identifier.value
             symbols = self.scope.lookup(identifier)
@@ -520,8 +529,10 @@ class ASTGenerator(Visitor):
             else:
                 child = self.visit(line)
                 if isinstance(child, list):
-                    children.extend(child)
                     for item in child:
+                        if isinstance(item, TypeNode):
+                            item.value = self.get_highest_type(item.value)
+                        children.append(item)
                         original += f"{item.original} "
                 else:
                     if child is not None:
