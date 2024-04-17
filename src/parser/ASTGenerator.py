@@ -639,7 +639,7 @@ class ASTGenerator(Visitor):
                         node = AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=original, lvalue=children[0], rvalue=rval_node)
                         return node
                     else:
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + node.value + "\' not declared!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + str(node.value) + "\' not declared!")
                         return None
 
                 rval = node
