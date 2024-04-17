@@ -170,6 +170,16 @@ class SymbolTableTree:
             node = node.parent
         return enums
 
+    def get_index_of_enum_value(self, value):
+        # get the name of the enum from the value
+        node = self.current_node
+        while node:
+            for enum in node.table.enums:
+                if value in node.table.enums[enum]:
+                    return node.table.enums[enum].index(value)
+            node = node.parent
+        return None
+
     def current_scope(self):
         return self.current_node.table
 
