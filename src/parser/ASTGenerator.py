@@ -673,8 +673,7 @@ class ASTGenerator(Visitor):
                 # Check if type is declared.
                 if var_type not in self.types:
                     if self.scope.lookup(var_type) is None:
-                        self.errors.append(
-                            f"line {ctx.start.line}:{ctx.start.column} Type \'" + var_type + "\' not declared yet!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Type \'" + var_type + "\' not declared yet!")
                         return None
                     elif not self.scope.lookup(var_type).symbol_type == 'typeDef':
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + var_type + "\' not declared as type!")
@@ -707,19 +706,19 @@ class ASTGenerator(Visitor):
                 rval = node
                 if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
                     if isinstance(rval, AddrNode):
-                        if not self.scope.get_symbol(rval.value.value):
+                        if not self.scope.lookup(rval.value.value):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value.value + "\' not declared yet!")
                             return None
                     else:
-                        if not self.scope.get_symbol(rval.value):
+                        if not self.scope.lookup(rval.value):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
                             return None
-                        rvalType = self.scope.get_symbol(rval.value).type
+                        rvalType = self.scope.lookup(rval.value).type
                 elif isinstance(rval, DerefNode):
-                    if not self.scope.get_symbol(rval.identifier.value):
+                    if not self.scope.lookup(rval.identifier.value):
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
                         return None
-                    rvalType = self.scope.get_symbol(rval.identifier.value).type
+                    rvalType = self.scope.lookup(rval.identifier.value).type
                     if not isinstance(rvalType, PointerNode):
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
                         return None
