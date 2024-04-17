@@ -3,12 +3,18 @@
 # Define the paths for rendering AST and symbol table, and compiling to LLVM and MIPS
 MAIN_SCRIPT="python -m src.main"
 OUTPUT_DIR="output"
-INPUT_DIR="tests"  # Default input directory
+INPUT_DIR="tests/extra_tests"  # Default input directory
 
 # Create and activate Python 3 virtual environment
 python3 -m venv venv
 source venv/bin/activate
 python -m pip install -r requirements.txt
+
+# Array to store errors
+ERRORS=()
+FAILED_TESTS=()
+SUCCESSFUL_TESTS=0
+UNSUCCESSFUL_TESTS=0
 
 # Function to process each input file
 process_file() {
@@ -21,16 +27,18 @@ process_file() {
     mips_output="$OUTPUT_DIR/${filename_without_extension}.mips"
 
     # Rendering the AST
-    $MAIN_SCRIPT --input "$input_file" --render_ast_png "$ast_output"
+    if $MAIN_SCRIPT --input "$input_file" --render_ast_png "$ast_output" &> /dev/null; then
+        echo "Processing $input_file"
+        ((SUCCESSFUL_TESTS++))
+    else
+        echo "Processing $input_file"
+        # Add error to the array
+        ERRORS+=("$input_file: rendering AST failed")
+        FAILED_TESTS+=("$input_file")
+        ((UNSUCCESSFUL_TESTS++))
+    fi
 
-#    # Rendering the symbol table
-#    $MAIN_SCRIPT --input "$input_file" --render_symb "$symb_output"
-#
-#    # Compile to LLVM
-#    $MAIN_SCRIPT --input "$input_file" --target_llvm "$llvm_output"
-#
-#    # Compile to MIPS
-#    $MAIN_SCRIPT --input "$input_file" --target_mips "$mips_output"
+    # Add code to handle other tasks like rendering symbol table, compiling to LLVM, compiling to MIPS
 }
 
 # Recursive function to process files in a directory or a single file
@@ -39,29 +47,20 @@ process_directory() {
     if [ -d "$path" ]; then
         for file in "$path"/*; do
             if [ -f "$file" ]; then
-                echo "Processing $file"
                 process_file "$file"
-                echo "Finished processing $file"
-                echo
             elif [ -d "$file" ]; then
                 process_directory "$file"
             fi
         done
     elif [ -f "$path" ]; then
         if [[ "$path" == *.c ]]; then
-            echo "Processing $path"
             process_file "$path"
-            echo "Finished processing $path"
-            echo
         fi
     fi
 }
 
-
 # Parse command-line options
-while getopts i: flag
-do
-    # shellcheck disable=SC2220
+while getopts i: flag; do
     case "${flag}" in
         i) INPUT_DIR=${OPTARG};;
     esac
@@ -69,3 +68,35 @@ done
 
 # Start processing from the input directory
 process_directory "$INPUT_DIR"
+
+# Calculate total tests
+TOTAL_TESTS=$((SUCCESSFUL_TESTS + UNSUCCESSFUL_TESTS))
+
+# Get the width of the terminal
+TERMINAL_WIDTH=$(tput cols)
+
+
+echo ""
+echo "collected $TOTAL_TESTS items"
+
+# Print individual test results
+for ((i = 0; i < TOTAL_TESTS; i++)); do
+    if [ "$i" -lt "$SUCCESSFUL_TESTS" ]; then
+        echo -n "."
+    else
+        echo -n "F"
+    fi
+done
+
+# Print summary
+echo ""
+echo " $(printf '=%.0s' $(seq 1 $((TERMINAL_WIDTH/2 - ${#SUCCESSFUL_TESTS} - ${#UNSUCCESSFUL_TESTS} - 11)))) $SUCCESSFUL_TESTS passed, $UNSUCCESSFUL_TESTS failed $(printf '=%.0s' $(seq 1 $((TERMINAL_WIDTH/2 - ${#SUCCESSFUL_TESTS} - ${#UNSUCCESSFUL_TESTS} - 11))))"
+echo ""
+
+# Print paths of failed tests
+if [ "$UNSUCCESSFUL_TESTS" -gt 0 ]; then
+    echo "Failed Tests:"
+    for ((i = 0; i < ${#FAILED_TESTS[@]}; i++)); do
+        echo "${FAILED_TESTS[$i]}"
+    done
+fi
