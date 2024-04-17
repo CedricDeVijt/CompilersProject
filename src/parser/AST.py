@@ -10,13 +10,13 @@ class Node:
         self.children = children if children is not None else []
 
     def constantFold(self, errors=None, warnings=None, parent=None):
-        if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode) or isinstance(self, WhileLoopNode):
+        if isinstance(self, IfStatementNode) or isinstance(self, WhileLoopNode):
             self.condition.constantFold()
             # Remove conditionals that are never true
             if isinstance(self.condition, CharNode) or isinstance(self.condition, IntNode) or isinstance(self.condition, FloatNode):
                 if float(self.condition.value) == 0:
                     return True
-        if isinstance(self, IfStatementNode) or isinstance(self, ElseIfStatementNode) or isinstance(self, ElseStatementNode) or isinstance(self, WhileLoopNode):
+        if isinstance(self, IfStatementNode) or isinstance(self, WhileLoopNode) or isinstance(self, FunctionNode):
             delete = []
             for node in self.body:
                 if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
