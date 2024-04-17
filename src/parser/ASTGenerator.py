@@ -283,6 +283,18 @@ class ASTGenerator(Visitor):
             if not node.valid:
                 self.errors.append(f"line {node.line}:{node.column} {node.value} is not in it's respective while/switch statement or in a function.")
 
+    def remove_unused_children(self, children: list):
+        # check in current scope which variables are not used. (remove them)
+        unused_children = []
+        for child in children:
+            if isinstance(child, DeclarationNode) or isinstance(child, DefinitionNode):
+                # find symbol in scope
+                symbol = self.scope.lookup(child.lvalue.value, remove_unused=True)
+                if not symbol.used:
+                    unused_children.append(child)
+        for child in unused_children:
+            children.remove(child)
+
     def check_returns(self, node, type):
         if node is None:
             return
@@ -308,6 +320,10 @@ class ASTGenerator(Visitor):
                     children.extend(node)
                 else:
                     children.append(node)
+
+        self.remove_unused_children(children)
+
+
         self.node = ProgramNode(line=ctx.start.line, column=ctx.start.column, original=None, children=children)
         self.check_validity(self.node)
         return self
@@ -490,6 +506,9 @@ class ASTGenerator(Visitor):
                     children.extend(node)
                 else:
                     children.append(node)
+
+        self.remove_unused_children(children)
+
         self.scope.close_scope()
         return children
 
@@ -619,6 +638,9 @@ class ASTGenerator(Visitor):
 
                         node = AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=original, lvalue=children[0], rvalue=rval_node)
                         return node
+                    else:
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + node.value + "\' not declared!")
+                        return None
 
                 rval = node
                 if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
@@ -956,16 +978,24 @@ class ASTGenerator(Visitor):
             if isinstance(node.children[0], IdentifierNode):
                 identifier = node.children[0].value
                 if self.scope.lookup(identifier) is None:
-                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-                    return node
+                    if identifier not in self.scope.get_all_enum_values():
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+                        return node
+                    else:
+                        node.children[0] = IntNode(value=self.scope.get_index_of_enum_value(identifier), line=ctx.start.line, column=ctx.start.column, original=identifier)
+                        return node
                 if self.scope.lookup(identifier).symbol_type == 'typeDef':
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + identifier + "\' is declared as type!")
                     return node
             if isinstance(node.children[1], IdentifierNode):
                 identifier = node.children[1].value
                 if self.scope.lookup(identifier) is None:
-                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-                    return node
+                    if identifier not in self.scope.get_all_enum_values():
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+                        return node
+                    else:
+                        node.children[1] = IntNode(value=self.scope.get_index_of_enum_value(identifier), line=ctx.start.line, column=ctx.start.column, original=identifier)
+                        return node
                 if self.scope.lookup(identifier).symbol_type == 'typeDef':
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} \'" + identifier + "\' is declared as type!")
                     return node
@@ -1008,6 +1038,9 @@ class ASTGenerator(Visitor):
                     node.identifier.value = f"-{node.identifier.value}"
                 else:
                     node.value = f"-{node.value}"
+        if isinstance(node, IdentifierNode):
+            if self.scope.get_index_of_enum_value(node.value) is not None:
+                node = IntNode(value=self.scope.get_index_of_enum_value(node.value), line=ctx.start.line, column=ctx.start.column, original=node.value)
         return node
 
     def visitConditionalExpression(self, ctx):
@@ -1316,6 +1349,11 @@ class ASTGenerator(Visitor):
         if len(enum_list) != len(set(enum_list)):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum values must be unique!")
             return None
+
+        for enum_value in enum_list:
+            if enum_value in self.scope.get_all_enum_values():
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'{enum_value}\' already declared!")
+                return None
 
         # Check if enum is already declared as symbol
         for enum_value in self.scope.get_all_symbols():

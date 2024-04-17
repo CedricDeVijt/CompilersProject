@@ -70,7 +70,7 @@
 - Optimizations
   - [x] (**mandatory**) Do not generate code after return statement
   - [x] (**mandatory**) Do not generate code after continue/break statement
-  - [ ] (**mandatory**) Do not generate code for unused variables
+  - [x] (**mandatory**) Do not generate code for unused variables
   - [x] (**mandatory**) Do not generate code for conditionals that are never true
 
 # project 6

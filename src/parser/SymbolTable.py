@@ -6,6 +6,7 @@ class Symbol:
         self.symbol_type = symbol_type
         self.defined = defined
         self.params = params if params is not None else []
+        self.used = False
 
 
 class SymbolTable:
@@ -97,6 +98,12 @@ class SymbolTableTree:
     def get_symbol(self, name) -> list | Symbol | None:
         node = self.current_node
         symbols = node.table.get_symbol(name)
+        if isinstance(symbols, Symbol):
+            symbols.used = True
+            return symbols
+        if isinstance(symbols, list):
+            for symbol in symbols:
+                symbol.used = True
         return symbols
 
     def remove_symbol(self, symbol):
@@ -111,11 +118,16 @@ class SymbolTableTree:
             node = node.parent
         return symbols
 
-    def lookup(self, name):
+    def lookup(self, name, remove_unused=False):
         node = self.current_node
         while node:
             symbols = node.table.get_symbol(name)
             if symbols:
+                if isinstance(symbols, Symbol) and not remove_unused:
+                    symbols.used = True
+                if isinstance(symbols, list) and not remove_unused:
+                    for symbol in symbols:
+                        symbol.used = True
                 return symbols
             node = node.parent
         return None
@@ -157,6 +169,16 @@ class SymbolTableTree:
                 enums.extend(node.table.enums[enum])
             node = node.parent
         return enums
+
+    def get_index_of_enum_value(self, value):
+        # get the name of the enum from the value
+        node = self.current_node
+        while node:
+            for enum in node.table.enums:
+                if value in node.table.enums[enum]:
+                    return node.table.enums[enum].index(value)
+            node = node.parent
+        return None
 
     def current_scope(self):
         return self.current_node.table
