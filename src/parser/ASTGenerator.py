@@ -137,7 +137,7 @@ class ASTGenerator(Visitor):
                         return self.scope.lookup(identifier).type.type[0].value
                     return self.scope.lookup(identifier).type.type
             if isinstance(rval, ExplicitConversionNode):
-                return type
+                return rval.type
             if isinstance(rval, PreFixNode) or isinstance(rval, PostFixNode):
                 if self.scope.lookup(rval.value):
                     if isinstance(self.scope.lookup(rval.value).type, str):
