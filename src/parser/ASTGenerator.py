@@ -531,7 +531,8 @@ class ASTGenerator(Visitor):
                 if isinstance(child, list):
                     for item in child:
                         if isinstance(item, TypeNode):
-                            item.value = self.get_highest_type(item.value)
+                            if item.value != 'const':
+                                item.value = self.get_highest_type(item.value)
                         children.append(item)
                         original += f"{item.original} "
                 else:
