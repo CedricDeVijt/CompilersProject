@@ -27,11 +27,10 @@ process_file() {
     mips_output="$OUTPUT_DIR/${filename_without_extension}.mips"
 
     # Rendering the AST
+    echo "Processing $input_file"
     if $MAIN_SCRIPT --input "$input_file" --render_ast_png "$ast_output" &> /dev/null; then
-        echo "Processing $input_file"
         ((SUCCESSFUL_TESTS++))
     else
-        echo "Processing $input_file"
         # Add error to the array
         ERRORS+=("$input_file: rendering AST failed")
         FAILED_TESTS+=("$input_file")
