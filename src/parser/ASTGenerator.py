@@ -283,6 +283,18 @@ class ASTGenerator(Visitor):
             if not node.valid:
                 self.errors.append(f"line {node.line}:{node.column} {node.value} is not in it's respective while/switch statement or in a function.")
 
+    def remove_unused_children(self, children: list):
+        # check in current scope which variables are not used. (remove them)
+        unused_children = []
+        for child in children:
+            if isinstance(child, DeclarationNode) or isinstance(child, DefinitionNode):
+                # find symbol in scope
+                symbol = self.scope.lookup(child.lvalue.value, remove_unused=True)
+                if not symbol.used:
+                    unused_children.append(child)
+        for child in unused_children:
+            children.remove(child)
+
     def check_returns(self, node, type):
         if node is None:
             return
@@ -308,6 +320,10 @@ class ASTGenerator(Visitor):
                     children.extend(node)
                 else:
                     children.append(node)
+
+        self.remove_unused_children(children)
+
+
         self.node = ProgramNode(line=ctx.start.line, column=ctx.start.column, original=None, children=children)
         self.check_validity(self.node)
         return self
@@ -490,6 +506,9 @@ class ASTGenerator(Visitor):
                     children.extend(node)
                 else:
                     children.append(node)
+
+        self.remove_unused_children(children)
+
         self.scope.close_scope()
         return children
 
