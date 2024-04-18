@@ -100,6 +100,10 @@ def expandExpression(node):
             expr += f"{expandExpression(item)} "
     elif isinstance(node, AST.ProgramNode):
         expr += "Program"
+    elif isinstance(node, AST.IfStatementNode) or isinstance(node, AST.WhileLoopNode):
+        expr += 'if' if isinstance(node, AST.IfStatementNode) else 'while'
+        expr += f"({expandExpression(node.condition)})"
+        expr += '{}' if not node.body else ''
     elif isinstance(node, AST.Node):
         expr += f"{node.original}"
     return expr
