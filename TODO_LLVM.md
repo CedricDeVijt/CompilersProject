@@ -37,7 +37,7 @@
 
 # project 4
 
-- [ ] (**mandatory**) Conditional statements
+- [x] (**mandatory**) Conditional statements
 - [ ] (**optional**) Else if statements
 - [ ] (**mandatory**) Loops
 - [ ] (**mandatory**) Anonymous scopes

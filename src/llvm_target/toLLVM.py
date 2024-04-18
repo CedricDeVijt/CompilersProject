@@ -153,7 +153,6 @@ def opeRation(node, llvm_file):
 
 
 # global vars
-done = True
 # store var names with their LLVM values: {var_name: value}  int a -> {a: %"a" = alloca i32}
 definitions = {}
 # store var names with their types: {var_name: [type, iterations]}  char a, int** b -> {a: [char, 0], b: [int, 2]}
@@ -177,14 +176,12 @@ def generateLLVMcodeLite(node, llvm_file):    # generate LLVM code using LLVM li
     # Set the target data layout
     module.data_layout = ""
 
-    global done
     if isinstance(node, AST.Node):
         if isinstance(node, AST.ProgramNode):
             for child in node.children:
                 generateLLVMcodeLiteBlock(child, module)
-    if done:
-        llvm_file.write(str(module))
-        done = False
+
+    llvm_file.write(str(module))
 
 
 def generateLLVMcodeLiteBlock(node, module):
@@ -193,7 +190,7 @@ def generateLLVMcodeLiteBlock(node, module):
         block = function.append_basic_block(name="entry")
         builder = ir.IRBuilder(block)
         for child in node.body:
-            generateLLVMfunction(module, child, builder)
+            generateLLVMfunction(module, function, child, builder)
         builder.ret(ir.Constant(ir.IntType(32), 0))
     elif isinstance(node, AST.CommentNode):  # add comment outside of function if possible
         # add comment to the ir module
@@ -202,7 +199,7 @@ def generateLLVMcodeLiteBlock(node, module):
         typedefs[node.identifier] = node.type
 
 
-def generateLLVMfunction(module, node, builder):
+def generateLLVMfunction(module, function, node, builder):
     global printfNumber
     if isinstance(node, AST.DefinitionNode):
         operation(node, builder, True)
@@ -255,6 +252,7 @@ def generateLLVMfunction(module, node, builder):
             builder.comment(comment)
 
     elif isinstance(node, AST.PrintfNode):
+        # printf
         builder.comment(node.original)
         printf_ty = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
         printf_func = ir.Function(module, printf_ty, name="printf" + str(printfNumber))
@@ -271,6 +269,33 @@ def generateLLVMfunction(module, node, builder):
             a = getLiteral(cType, node.node.value)
         builder.call(printf_func, [ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), len(node.specifier)), name=".str" + str(printfNumber)).gep(
             (ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), 0))), a])
+
+    elif isinstance(node, AST.IfStatementNode):
+        # if else statement
+        builder.comment(node.original)
+
+        # define statement block
+        ifThenBlock = function.append_basic_block(name="if.then")
+        ifEndBlock = function.append_basic_block(name="if.end")
+
+        # perform comparison
+        comparisonResult = operationRecursive(node.condition, builder, "int", 0)
+
+        # Conditional branch based on the result of the comparison
+        builder.cbranch(comparisonResult, ifThenBlock, ifEndBlock)
+
+        # Define the if-then block
+        builder.position_at_start(ifThenBlock)
+
+        for child in node.body:
+            generateLLVMfunction(module, function, child, builder)
+
+        # Branch to the end of the if-else block
+        builder.branch(ifEndBlock)
+
+        # Define the if-end block
+        builder.position_at_start(ifEndBlock)
+
 
 
 def operation(node, builder, defOrAssigment):
