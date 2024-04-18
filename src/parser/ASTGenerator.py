@@ -189,6 +189,8 @@ class ASTGenerator(Visitor):
                 lvalType = lvalType.type.value
         rvalType = self.get_highest_type(rval)
         while lvalType != 'char' and lvalType != 'int' and lvalType != 'float':
+            if isinstance(lvalType, TypeNode):
+                lvalType = lvalType.value
             if self.scope.lookup(lvalType) is not None and self.scope.lookup(lvalType).symbol_type == 'typeDef':
                 lvalType = self.scope.lookup(lvalType).type
         while rvalType != 'char' and rvalType != 'int' and rvalType != 'float':
@@ -636,22 +638,27 @@ class ASTGenerator(Visitor):
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot dereference non-pointer type!")
                         return None
                 if lval.symbol_type == 'enum':
-                    type = lval.type
+                    enum_type = lval.type
                     if isinstance(node, IdentifierNode):
                         value = node.value
-                        if value not in self.scope.get_enum_values_of_enum(type):
+                        if value not in self.scope.get_enum_values_of_enum(enum_type):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + value + "\' not declared!")
                             return None
 
                         # get index of value in enum
-                        index = self.scope.get_enum_values_of_enum(type).index(value)
+                        index = self.scope.get_enum_values_of_enum(enum_type).index(value)
                         rval_node = IntNode(line=ctx.start.line, column=ctx.start.column, original=original, value=index)
 
                         node = AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=original, lvalue=children[0], rvalue=rval_node)
                         return node
                     else:
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + str(node.value) + "\' not declared!")
-                        return None
+                        if isinstance(node, IntNode):
+                            if int(node.value) >= len(self.scope.get_enum_values_of_enum(enum_type.original)):
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + str(node.value) + "\' not declared!")
+                                return None
+                        else:
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'" + str(node.value) + "\' not declared!")
+                            return None
 
                 rval = node
                 if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
@@ -865,8 +872,7 @@ class ASTGenerator(Visitor):
         return node
 
     def visitComment(self, ctx):
-
-        node = CommentNode(ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=None)
+        node = CommentNode(ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
         return node
 
     def visitPostFixDecrement(self, ctx):
@@ -1395,7 +1401,7 @@ class ASTGenerator(Visitor):
             return None
 
         # Add symbol to scope
-        self.scope.add_symbol(Symbol(name=enum_var_name, var_type=enum_type_name, symbol_type='enum'))
+        self.scope.add_symbol(Symbol(name=enum_var_name, var_type=TypeNode(value='int', line=ctx.start.line, column=ctx.start.column, original=enum_type_name), symbol_type='enum'))
 
         # Create definition node
         type = TypeNode(value=enum_type_name, line=ctx.start.line, column=ctx.start.column, original=enum_type_name)
@@ -1421,19 +1427,19 @@ class ASTGenerator(Visitor):
             return None
 
         # Check if enum value is declared
-        if enum_value not in self.scope.get_enum_values_of_enum(enum_type_name):
+        if enum_value not in self.scope.get_all_enum_values():
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Enum value \'{enum_value}\' not declared!")
             return None
 
         # Add symbol to scope
-        self.scope.add_symbol(Symbol(name=enum_var_name, var_type=enum_type_name, symbol_type='enum'))
+        self.scope.add_symbol(Symbol(name=enum_var_name, var_type=TypeNode(value='int', line=ctx.start.line, column=ctx.start.column, original=enum_type_name), symbol_type='enum'))
 
         # Create definition node
         type = TypeNode(value=enum_type_name, line=ctx.start.line, column=ctx.start.column, original=enum_type_name)
         lvalue = IdentifierNode(value=enum_var_name, line=ctx.start.line, column=ctx.start.column, original=enum_var_name)
 
         # get the index of the enum value using get_enum_values
-        enum_value_index = self.scope.get_enum_values_of_enum(enum_type_name).index(enum_value)
+        enum_value_index = self.scope.get_all_enum_values().index(enum_value)
 
         rvalue = IntNode(value=enum_value_index, line=ctx.start.line, column=ctx.start.column, original=enum_value)
 

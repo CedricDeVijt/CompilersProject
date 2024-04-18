@@ -62,7 +62,7 @@ class Node:
                     self.children = []
                 elif isinstance(self.children[0], IntNode) and isinstance(self.children[1], IntNode):
                     self.__class__ = IntNode
-                    self.value = str(int(self.children[0].value) / int(self.children[1].value))
+                    self.value = str(int(self.children[0].value) // int(self.children[1].value))
                     self.children = []
                 elif isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
                     self.__class__ = FloatNode
@@ -70,7 +70,7 @@ class Node:
                     self.children = []
                 else:
                     self.__class__ = IntNode
-                    self.value = str(int(self.children[0].value) / int(self.children[1].value))
+                    self.value = str(int(self.children[0].value) // int(self.children[1].value))
                     self.children = []
             case ModNode():
                 if isinstance(self.children[0], FloatNode) or isinstance(self.children[1], FloatNode):
