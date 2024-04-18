@@ -13,8 +13,8 @@ python -m pip install -r requirements.txt
 # Array to store errors
 ERRORS=()
 FAILED_TESTS=()
-SUCCESSFUL_TESTS=0
-UNSUCCESSFUL_TESTS=0
+SUCCESS_STRING=""
+$UNSUCCESSFUL_TESTS=0
 
 # Function to process each input file
 process_file() {
@@ -28,12 +28,16 @@ process_file() {
 
     # Rendering the AST
     echo "Processing $input_file"
-    if $MAIN_SCRIPT --input "$input_file" --render_ast_png "$ast_output" &> /dev/null; then
-        ((SUCCESSFUL_TESTS++))
+    #
+    $MAIN_SCRIPT --input "$input_file" --render_ast "$ast_output" &> /dev/null
+
+    # if output file exists, then the rendering was successful
+    if [ -f "$ast_output" ]; then
+        SUCCESS_STRING+="."
     else
-        # Add error to the array
         ERRORS+=("$input_file: rendering AST failed")
         FAILED_TESTS+=("$input_file")
+        SUCCESS_STRING+="F"
         ((UNSUCCESSFUL_TESTS++))
     fi
 
@@ -79,13 +83,7 @@ echo ""
 echo "collected $TOTAL_TESTS items"
 
 # Print individual test results
-for ((i = 0; i < TOTAL_TESTS; i++)); do
-    if [ "$i" -lt "$SUCCESSFUL_TESTS" ]; then
-        echo -n "."
-    else
-        echo -n "F"
-    fi
-done
+echo $SUCCESS_STRING
 
 # Print summary
 echo ""
