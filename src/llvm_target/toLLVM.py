@@ -159,7 +159,7 @@ definitions = {}
 # store var names with their types: {var_name: [type, iterations]}  char a, int** b -> {a: [char, 0], b: [int, 2]}
 types = {}
 # all operations with two operands
-ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd", "LogicalOr", "SL", "SR"]
+ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd", "LogicalOr", "SL", "SR", "LT", "GT", "LTEQ", "GTEQ", "EQ", "NEQ"]
 # all operations with one operand
 singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
 # typedefs
@@ -258,6 +258,7 @@ def operation(node, builder, defOrAssigment):
     builder.comment(node.original)
     # create LLVM variable
     if defOrAssigment:
+        # create var for definition
         if node.type[0].value.isnumeric():
             var = builder.alloca(getLLVMtype(typedefs[types[node.rvalue.value.value][0]], int(node.type[0].value)), name=node.lvalue.value)
             types[node.lvalue.value] = [typedefs[types[node.rvalue.value.value][0]], node.type[0].value]
@@ -265,17 +266,18 @@ def operation(node, builder, defOrAssigment):
             var = builder.alloca(getLLVMtype(typedefs[node.type[0].value], 0), name=node.lvalue.value)
             types[node.lvalue.value] = [typedefs[node.type[0].value], 0]
     else:
-        var = builder.alloca(getLLVMtype(node.type[0].value, 0), name=node.lvalue.value)
+        # create var for assigment
+        var = definitions[node.lvalue.value]
     definitions[node.lvalue.value] = var
     # create LLVM value
     if node.rvalue.value in ops:
         AST2 = node
-        value = operationRecursive(AST2.rvalue, builder, typedefs[types[node.lvalue.value][0]])
+        value = operationRecursive(AST2.rvalue, builder, typedefs[types[node.lvalue.value][0]], node.lvalue.value)
     else:
-        if node.type[0].value.isnumeric():
-            value = builder.bitcast(definitions[node.rvalue.value.value], getIRpointerType(getLLVMtype(typedefs[node.type[0].type.value], 0), int(node.type[0].value)))
+        if types[node.lvalue.value][1] != 0:
+            value = builder.bitcast(definitions[node.rvalue.value.value], getLLVMtype(typedefs[types[node.lvalue.value][0]], int(types[node.lvalue.value][1])))
         else:
-            value = definition(node, builder, typedefs[types[node.lvalue.value][0]], True)
+            value = definition(node, builder, typedefs[types[node.lvalue.value][0]], 0, True)
     loaded[node.lvalue.value] = value
     builder.store(value, var)
     return False
@@ -286,14 +288,15 @@ loaded = {}
 
 
 # get LLVM value
-def definition(node, builder, cType, varLit):
+def definition(node, builder, cType, lValue, varLit):
     if varLit:
         if node.rvalue.value in singleOps:
             # apply single operand operation: !a, ~a, ++a, --a
             return applyOperation1operand(node.rvalue, builder, cType)
         elif isinstance(node.rvalue, AST.DerefNode):
-            # dereference pointer
+            # dereference pointer: *a, **a
             ptr = builder.load(definitions[node.rvalue.identifier.value])
+            d = definitions
             while ptr.type != definitions[node.lvalue.value].type:
                 ptr = builder.load(ptr)
             return builder.load(ptr)
@@ -310,30 +313,28 @@ def definition(node, builder, cType, varLit):
         elif isinstance(node, AST.DerefNode):
             # dereference pointer
             ptr = builder.load(definitions[node.identifier.value])
-            print(ptr.type)
-            print(definitions[node.identifier.value].type)
-            while ptr.type != definitions[node.identifier.value].type:
+            while ptr.type != definitions[lValue].type:
                 ptr = builder.load(ptr)
             return builder.load(ptr)
 
 
-def operationRecursive(node, builder, cType):
+def operationRecursive(node, builder, cType, lValue):
     # apply operation and update copy of AST
     if len(node.children) != 0:
         # if left node operation node -> recursive
         if node.children[0].value in ops:
-            node.children[0] = operationRecursive(node.children[0], builder, cType)
+            node.children[0] = operationRecursive(node.children[0], builder, cType, lValue)
         # if right node operation node -> recursive
         if node.children[1].value in ops:
-            node.children[1] = operationRecursive(node.children[1], builder, cType)
+            node.children[1] = operationRecursive(node.children[1], builder, cType, lValue)
 
         # apply all single operand operations first
         if not isinstance(node.children[0], ir.Instruction):
-            if node.children[0].value in singleOps or isinstance(node.children[1], AST.DerefNode):
-                node.children[0] = definition(node.children[0], builder, cType, False)
+            if node.children[0].value in singleOps or isinstance(node.children[0], AST.DerefNode):
+                node.children[0] = definition(node.children[0], builder, cType, lValue, False)
         if not isinstance(node.children[1], ir.Instruction):
             if node.children[1].value in singleOps or isinstance(node.children[1], AST.DerefNode):
-                node.children[1] = definition(node.children[1], builder, cType, False)
+                node.children[1] = definition(node.children[1], builder, cType, lValue, False)
 
         # apply the operation
         return applyOperation2operands(node, builder, cType)
@@ -358,7 +359,7 @@ def applyOperation1operand(node, builder, cType):
             return builder.add(a, ir.Constant(ir.IntType(32), 1))
         elif node.op == "dec":
             return builder.sub(a, ir.Constant(ir.IntType(32), 1))
-    elif isinstance(node, AST.DereferenceNode):
+    elif isinstance(node, AST.DerefNode):
         return builder.load(a)
 
 
@@ -410,6 +411,18 @@ def applyOperation2operands(node, builder, cType):
         return builder.shl(a, b)
     elif isinstance(node, AST.SRNode):
         return builder.ashr(a, b)
+    elif isinstance(node, AST.LTNode):
+        return builder.zext(builder.icmp_signed("<", a, b), ir.IntType(32))
+    elif isinstance(node, AST.GTNode):
+        return builder.zext(builder.icmp_signed(">", a, b), ir.IntType(32))
+    elif isinstance(node, AST.LTEQNode):
+        return builder.zext(builder.icmp_signed("<=", a, b), ir.IntType(32))
+    elif isinstance(node, AST.GTEQNode):
+        return builder.zext(builder.icmp_signed(">=", a, b), ir.IntType(32))
+    elif isinstance(node, AST.EQNode):
+        return builder.zext(builder.icmp_signed("==", a, b), ir.IntType(32))
+    elif isinstance(node, AST.NEQNode):
+        return builder.zext(builder.icmp_signed("!=", a, b), ir.IntType(32))
 
 
 # get llvm literal using cType and literal value
