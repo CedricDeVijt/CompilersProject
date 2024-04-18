@@ -14,7 +14,8 @@ python -m pip install -r requirements.txt
 ERRORS=()
 FAILED_TESTS=()
 SUCCESS_STRING=""
-$UNSUCCESSFUL_TESTS=0
+UNSUCCESSFUL_TESTS=0
+SUCCESSFUL_TESTS=0
 
 # Function to process each input file
 process_file() {
@@ -34,6 +35,7 @@ process_file() {
     # if output file exists, then the rendering was successful
     if [ -f "$ast_output" ]; then
         SUCCESS_STRING+="."
+        ((SUCCESSFUL_TESTS++))
     else
         ERRORS+=("$input_file: rendering AST failed")
         FAILED_TESTS+=("$input_file")
