@@ -865,8 +865,7 @@ class ASTGenerator(Visitor):
         return node
 
     def visitComment(self, ctx):
-
-        node = CommentNode(ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=None)
+        node = CommentNode(ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
         return node
 
     def visitPostFixDecrement(self, ctx):

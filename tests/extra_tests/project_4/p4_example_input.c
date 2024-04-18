@@ -1,6 +1,7 @@
 /*
  * My program
  */
+#include <stdio.h>
 enum SYS_IO_ReceiverStatusBit {
    READY,
    BUSY,

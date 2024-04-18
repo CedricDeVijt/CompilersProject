@@ -1,6 +1,7 @@
  /*
   * My program
   */
+#include <stdio.h>
  typedef float speed;
  int main() {
          int x = 5*(3/10 + 9/10);
