@@ -16,31 +16,43 @@ class ThrowingErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         raise SyntaxError(f"Syntax error at line {line}:{column}")
 
-def pre_processing(path):
+
+def pre_processing(path, stdio_found=None):
+    if stdio_found is None:
+        stdio_found = [False]
     with open(path, 'r') as file:
         lines = file.readlines()
-    stdio_found = False
     macros = []
     for line in lines:
         if line.startswith("#include"):
             # Split in words.
             words = line.split()
+            if len(words) == 1:
+                raise Exception("#include expects \"FILENAME\" or <FILENAME>!")
+            if len(words) > 2:
+                raise Exception('extra tokens at end of #include directive!')
+            if not ((words[1].startswith('\"') and words[1].endswith('\"')) or (words[1].startswith('<') and words[1].endswith('>'))):
+                raise Exception("#include expects \"FILENAME\" or <FILENAME>!")
             if words[1] == '<stdio.h>':
-                stdio_found = True
+                stdio_found[0] = True
                 macros.append(line)
                 continue
             # Check if file exists.
             if not os.path.exists(words[1][1:-1]):
                 raise Exception(f"File {words[1][1:-1]} not found.")
             # Read file.
-            file_lines = pre_processing(words[1][1:-1])
+            file_lines = pre_processing(path=words[1][1:-1], stdio_found=stdio_found)
             # Insert file content.
-            lines.insert(lines.index(line), *file_lines)
+            index = lines.index(line) + 1
+            for file_line in file_lines:
+                lines.insert(index, file_line)
+                index += 1
             # Add include to removal
             macros.append(line)
-    if 'printf' or 'scanf' in lines:
-        if not stdio_found:
-            raise Exception("<stdio.h> not included.")
+    for line in lines:
+        if 'printf(' in line or 'scanf(' in line:
+            if not stdio_found[0]:
+                raise Exception("<stdio.h> not included.")
     for macro in macros:
         lines.remove(macro)
     return lines

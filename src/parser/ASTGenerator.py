@@ -336,7 +336,13 @@ class ASTGenerator(Visitor):
         else:
             return_type = self.visit(ctx.getChild(0))
         name = ctx.getChild(1).getText()
-        original = ""
+        if isinstance(return_type, TypeNode):
+            original = f"{return_type.value} {name}("
+        else:
+            original = ''
+            for ret_type in return_type:
+                original += f"{ret_type.original} "
+            original += f"{name}("
         defined = ctx.getChild(ctx.getChildCount() - 1).getText() != ";"
         const = isinstance(return_type.type, list) if isinstance(return_type, PointerNode) else isinstance(return_type, list)
         params = [] if ctx.getChild(3).getText() == ")" else self.visit(ctx.getChild(3))
@@ -386,6 +392,10 @@ class ASTGenerator(Visitor):
             param_type = param[0]
             param_name = param[1]
             const = False
+            if params.index(param) == 0:
+                original += f"{param_type.original} {param_name.original}"
+            else:
+                original += f", {param_type.original} {param_name.original}"
             # Get name
             if isinstance(param_name, IdentifierNode):
                 param_name = param_name.value
@@ -407,6 +417,7 @@ class ASTGenerator(Visitor):
         if isinstance(return_type, TypeNode) and return_type.value == 'int' and name == 'main' and len(params) == 0:
             self.has_main = True
         body = [] if ctx.getChild(ctx.getChildCount() - 1).getText() == ";" else self.visit(ctx.getChild(ctx.getChildCount() - 1))
+        original += ")" if body != [] else ") {}"
         node = FunctionNode(value=name, line=ctx.start.line, column=ctx.start.column, original=original, return_type=return_type, params=params, body=body, children=children)
         # Return nodes are valid in function.
         self.set_valid(node, ReturnNode)
