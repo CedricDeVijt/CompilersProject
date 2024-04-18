@@ -72,6 +72,7 @@ def generate_ast(path, visitor):
 
     # Generate CST
     input_stream = antlr4.FileStream(new_path)
+    os.remove(new_path)
     lexer = Lexer(input_stream)
     stream = antlr4.CommonTokenStream(lexer)
     parser = Parser(stream)
@@ -97,9 +98,7 @@ def generate_ast(path, visitor):
         err_str += f"\nError at {error}"
     if err_str != '':
         print(err_str)
-        os.remove(new_path)
         return None, None
-    os.remove(new_path)
     return ast, symbolTable
 
 
