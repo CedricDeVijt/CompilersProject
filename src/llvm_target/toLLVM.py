@@ -164,6 +164,8 @@ ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "Bitwise
 singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
 # typedefs
 typedefs = {'int': 'int', 'float': 'float', 'char': 'char'}
+# printf number
+printfNumber = 0
 
 def generateLLVMcodeLite(node, llvm_file):    # generate LLVM code using LLVM lite
     # Create module
@@ -191,7 +193,7 @@ def generateLLVMcodeLiteBlock(node, module):
         block = function.append_basic_block(name="entry")
         builder = ir.IRBuilder(block)
         for child in node.body:
-            generateLLVMfunction(child, builder)
+            generateLLVMfunction(module, child, builder)
         builder.ret(ir.Constant(ir.IntType(32), 0))
     elif isinstance(node, AST.CommentNode):  # add comment outside of function if possible
         # add comment to the ir module
@@ -200,7 +202,8 @@ def generateLLVMcodeLiteBlock(node, module):
         typedefs[node.identifier] = node.type
 
 
-def generateLLVMfunction(node, builder):
+def generateLLVMfunction(module, node, builder):
+    global printfNumber
     if isinstance(node, AST.DefinitionNode):
         operation(node, builder, True)
 
@@ -209,22 +212,22 @@ def generateLLVMfunction(node, builder):
 
     elif isinstance(node, AST.PostFixNode):
         if node.op == "inc":
-            originalExpression = f"{node.value}++;"
+            originalExpression = f"{node.value}++"
             builder.comment(originalExpression)
             constant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         else:
-            originalExpression = f"{node.value}--;"
+            originalExpression = f"{node.value}--"
             builder.comment(originalExpression)
             constant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         builder.store(constant, definitions[node.value])
 
     elif isinstance(node, AST.PreFixNode):
         if node.op == "inc":
-            originalExpression = f"++{node.value};"
+            originalExpression = f"++{node.value}"
             builder.comment(originalExpression)
             constant = builder.add(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         else:
-            originalExpression = f"--{node.value};"
+            originalExpression = f"--{node.value}"
             builder.comment(originalExpression)
             constant = builder.sub(builder.load(definitions[node.value]), ir.Constant(ir.IntType(32), 1))
         builder.store(constant, definitions[node.value])
@@ -250,6 +253,24 @@ def generateLLVMfunction(node, builder):
             # single line comments
             comment = node.value[2:]
             builder.comment(comment)
+
+    elif isinstance(node, AST.PrintfNode):
+        builder.comment(node.original)
+        printf_ty = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
+        printf_func = ir.Function(module, printf_ty, name="printf" + str(printfNumber))
+        printfNumber += 1
+        if node.specifier[2] == 'd':
+            cType = "int"
+        elif node.specifier[2] == 'f':
+            cType = "float"
+        elif node.specifier[2] == 'c':
+            cType = "char"
+        if isinstance(node.node, AST.IdentifierNode):
+            a = builder.load(definitions[node.node.value])
+        else:
+            a = getLiteral(cType, node.node.value)
+        builder.call(printf_func, [ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), len(node.specifier)), name=".str" + str(printfNumber)).gep(
+            (ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), 0))), a])
 
 
 def operation(node, builder, defOrAssigment):
@@ -290,6 +311,7 @@ loaded = {}
 # get LLVM value
 def definition(node, builder, cType, lValue, varLit):
     if varLit:
+        # get value
         if node.rvalue.value in singleOps:
             # apply single operand operation: !a, ~a, ++a, --a
             return applyOperation1operand(node.rvalue, builder, cType)
@@ -307,6 +329,7 @@ def definition(node, builder, cType, lValue, varLit):
             # get literal value
             return getLiteral(cType, node.rvalue.value)
     else:
+        # only perform operation and dereference pointer
         if node.value in singleOps:
             # apply single operand operation: !a, ~a, ++a, --a
             return applyOperation1operand(node, builder, cType)

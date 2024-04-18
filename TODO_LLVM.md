@@ -1,39 +1,39 @@
 # project 1
 
-- [ ] (**mandatory**) Binary operations +, -, *, and /.
-- [ ] (**mandatory**) Binary operations >, <, and ==.
-- [ ] (**mandatory**) Unary operators + and -.
-- [ ] (**mandatory**) Parenthesis to overwrite the order of operations.
-- [ ] (**mandatory**) Logical operators &&, ||, and !.
-- [ ] (**mandatory**) Comparison operators >=, <=, and !=.
-- [ ] (**mandatory**) Binary operator %.
-- [ ] (**mandatory**) Shift operators <<, >>.
-- [ ] (**mandatory**) Bitwise operators &, |, ~, and ^.
+- [x] (**mandatory**) Binary operations +, -, *, and /.
+- [x] (**mandatory**) Binary operations >, <, and ==.
+- [x] (**mandatory**) Unary operators + and -.
+- [x] (**mandatory**) Parenthesis to overwrite the order of operations.
+- [x] (**mandatory**) Logical operators &&, ||, and !.
+- [x] (**mandatory**) Comparison operators >=, <=, and !=.
+- [x] (**mandatory**) Binary operator %.
+- [x] (**mandatory**) Shift operators <<, >>.
+- [x] (**mandatory**) Bitwise operators &, |, ~, and ^.
 
 # project 2
 
-- [ ] (**mandatory**) Add an int main() { ... } function
-- [ ] (**mandatory**) Extra reserved keywords need to be supported: const, char, int, and float.
-- [ ] (**mandatory**) Literals are now no longer limited to integers: literals of any type (integer, floating point,
+- [x] (**mandatory**) Add an int main() { ... } function
+- [x] (**mandatory**) Extra reserved keywords need to be supported: const, char, int, and float.
+- [x] (**mandatory**) Literals are now no longer limited to integers: literals of any type (integer, floating point,
   character) can now be part of expressions
-- [ ] (**mandatory**) Variables
-- [ ] (**mandatory**) Pointers
-- [ ] (**mandatory**) Constants
-- [ ] (**mandatory**) Implicit conversions warnings
-- [ ] (**mandatory**) Explicit conversions
+- [x] (**mandatory**) Variables
+- [x] (**mandatory**) Pointers
+- [x] (**mandatory**) Constants
+- [x] (**mandatory**) Implicit conversions warnings
+- [x] (**mandatory**) Explicit conversions
 - [ ] (**mandatory**) Pointer arithmetic
-- [ ] (**mandatory**) Increment/Decrement Operations
-- [ ] (**optional**) Const casting
+- [x] (**mandatory**) Increment/Decrement Operations
+- [x] (**optional**) Const casting
 
 # project 3
 
-- [ ] (**mandatory**) Single line comments
-- [ ] (**mandatory**) Multi line comments
-- [ ] (**mandatory**) Output printf
-- [ ] (**mandatory**) Typedef support
-- [ ] (**mandatory**) LLVM definitions
-- [ ] (**mandatory**) LLVM pointers
-- [ ] (**mandatory**) LLVM comments
+- [x] (**mandatory**) Single line comments
+- [x] (**mandatory**) Multi line comments
+- [x] (**mandatory**) Output printf
+- [x] (**mandatory**) Typedef support
+- [x] (**mandatory**) LLVM definitions
+- [x] (**mandatory**) LLVM pointers
+- [x] (**mandatory**) LLVM comments
 
 # project 4
 
