@@ -159,7 +159,7 @@ definitions = {}
 # store var names with their types: {var_name: [type, iterations]}  char a, int** b -> {a: [char, 0], b: [int, 2]}
 types = {}
 # all operations with two operands
-ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd", "LogicalOr", "SL", "SR"]
+ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd", "LogicalOr", "SL", "SR", "LT", "GT", "LTEQ", "GTEQ", "EQ", "NEQ"]
 # all operations with one operand
 singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
 # typedefs
@@ -411,6 +411,18 @@ def applyOperation2operands(node, builder, cType):
         return builder.shl(a, b)
     elif isinstance(node, AST.SRNode):
         return builder.ashr(a, b)
+    elif isinstance(node, AST.LTNode):
+        return builder.zext(builder.icmp_signed("<", a, b), ir.IntType(32))
+    elif isinstance(node, AST.GTNode):
+        return builder.zext(builder.icmp_signed(">", a, b), ir.IntType(32))
+    elif isinstance(node, AST.LTEQNode):
+        return builder.zext(builder.icmp_signed("<=", a, b), ir.IntType(32))
+    elif isinstance(node, AST.GTEQNode):
+        return builder.zext(builder.icmp_signed(">=", a, b), ir.IntType(32))
+    elif isinstance(node, AST.EQNode):
+        return builder.zext(builder.icmp_signed("==", a, b), ir.IntType(32))
+    elif isinstance(node, AST.NEQNode):
+        return builder.zext(builder.icmp_signed("!=", a, b), ir.IntType(32))
 
 
 # get llvm literal using cType and literal value
