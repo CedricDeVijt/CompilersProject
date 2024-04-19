@@ -830,7 +830,7 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        original = f"({children[0].original})"
+        original = f"else if({children[0].original})" + "{}"
         node = ElseIfStatementNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=children[0], body=children[1:])
         return node
 
@@ -1013,10 +1013,10 @@ class ASTGenerator(Visitor):
             if isinstance(child0, IdentifierNode):
                 if self.scope.lookup(child0.value) is None:
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
-                    return None
+                    return child0
                 if self.scope.lookup(child0.value).symbol_type != 'variable':
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
-                    return None
+                    return child0
             if str(lines[0]) == "!":
                 node = LogicalNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0])
             elif str(lines[0]) == "~":
