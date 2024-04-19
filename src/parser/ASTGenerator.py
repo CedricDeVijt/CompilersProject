@@ -855,7 +855,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[:-2]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"{identifier}--"
         node = PostFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
         return node
@@ -864,7 +863,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[:-2]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"{identifier}++"
         node = PostFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
         return node
@@ -873,7 +871,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"--{identifier}"
         node = PreFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
         return node
@@ -882,7 +879,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"++{identifier}"
         node = PreFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
         return node
@@ -941,33 +937,51 @@ class ASTGenerator(Visitor):
                 node.original = f"({node.original})"
                 return node
             original = f"{lines[0].getText()} {lines[1].getText()} {lines[2].getText()}"
+            child0 = self.visit(lines[0])
+            child2 = self.visit(lines[2])
+            if isinstance(child0, IdentifierNode):
+                if self.scope.lookup(child0.value) is None:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return node
+                if self.scope.lookup(child0.value).symbol_type != 'variable':
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return node
+            if isinstance(child2, IdentifierNode):
+                if self.scope.lookup(child2.value) is None:
+                    self.errors.append(
+                        f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
+                    return node
+                if self.scope.lookup(child2.value).symbol_type != 'variable':
+                    self.errors.append(
+                        f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
+                    return node
             match str(lines[1]):
                 case "/":
                     if not isinstance(self.visit(lines[2]).value, str) and int(self.visit(lines[2]).value) == 0:
                         raise Exception("Division by zero!")
-                    node = DivNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = DivNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "%":
-                    node = ModNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = ModNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "*":
-                    node = MultNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = MultNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "-":
-                    node = MinusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = MinusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "+":
-                    node = PlusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = PlusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "<<":
-                    node = SLNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = SLNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case ">>":
-                    node = SRNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = SRNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "&":
-                    node = BitwiseAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "|":
-                    node = BitwiseOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "^":
-                    node = BitwiseXorNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseXorNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "&&":
-                    node = LogicalAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "||":
-                    node = LogicalOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
             if isinstance(node.children[0], IdentifierNode):
                 identifier = node.children[0].value
                 if self.scope.lookup(identifier) is None:
@@ -995,10 +1009,18 @@ class ASTGenerator(Visitor):
             return node
         if len(lines) == 2:
             original = f"{lines[0].getText()} {lines[1].getText()}"
+            child0 = self.visit(lines[0])
+            if isinstance(child0, IdentifierNode):
+                if self.scope.lookup(child0.value) is None:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return None
+                if self.scope.lookup(child0.value).symbol_type != 'variable':
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return None
             if str(lines[0]) == "!":
-                node = LogicalNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[1])])
+                node = LogicalNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0])
             elif str(lines[0]) == "~":
-                node = BitwiseNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[1])])
+                node = BitwiseNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0])
             else:
                 node = self.visit(lines[1])
                 original = f"{lines[0].getText()} {node.original}"
@@ -1017,6 +1039,8 @@ class ASTGenerator(Visitor):
                     return node
             return node
         node = self.visitChildren(ctx)
+        if node is None:
+            pass
         if len(lines) == 1:
             negatives = 0
             original = ""
