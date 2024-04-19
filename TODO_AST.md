@@ -82,7 +82,7 @@
   - [ ] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays
   - [ ] (**mandatory**) C-strings
-  - [ ] (**mandatory**) Including stdio.h
+  - [x] (**mandatory**) Including stdio.h
 - Semantical Analysis
   - [ ] (**mandatory**) Type checking arrays
   - [ ] (**mandatory**) Type of specified index is int when accessing arrays
