@@ -193,14 +193,12 @@ class ASTGenerator(Visitor):
     def contains_node(self, node, node_type):
         if isinstance(node, node_type):
             return True
-        if isinstance(node, IfStatementNode):
-            for child in node.body:
-                if self.contains_node(child, node_type):
-                    return True
-        else:
-            for child in node.children:
-                if self.contains_node(child, node_type):
-                    return True
+
+        children = node.body if isinstance(node, IfStatementNode) else node.children
+        for child in children:
+            if self.contains_node(child, node_type):
+                return True
+
         return False
 
     def set_valid(self, node, node_type):
