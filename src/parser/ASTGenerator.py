@@ -795,7 +795,7 @@ class ASTGenerator(Visitor):
             elif isinstance(child, ElseIfStatementNode):
                 original = f"(! {condition.original})"
                 new_condition = LogicalNotNode(line=child.line, column=child.column, original=original, children=[condition])
-                original = f"({condition.original} && {child.original})"
+                original = f"({new_condition.original} && {child.original})"
                 new_condition = LogicalAndNode(line=child.line, column=child.column, original=original, children=[new_condition, child.condition])
                 original = f"({condition.original} || {child.condition.original})"
                 condition = LogicalOrNode(line=child.line, column=child.column, original=original, children=[condition, child.condition])
