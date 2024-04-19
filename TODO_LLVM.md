@@ -38,7 +38,7 @@
 # project 4
 
 - [x] (**mandatory**) Conditional statements
-- [ ] (**optional**) Else if statements
+- [x] (**optional**) Else if statements
 - [ ] (**mandatory**) Loops
 - [ ] (**mandatory**) Anonymous scopes
 - [ ] (**mandatory**) Switch statements
