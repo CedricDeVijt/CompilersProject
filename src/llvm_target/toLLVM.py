@@ -165,6 +165,8 @@ singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
 typedefs = {'int': 'int', 'float': 'float', 'char': 'char'}
 # printf number
 printfNumber = 0
+# literal nodes
+literalNodes = [AST.IntNode, AST.FloatNode, AST.CharNode]
 
 def generateLLVMcodeLite(node, llvm_file):    # generate LLVM code using LLVM lite
     # Create module
@@ -368,7 +370,7 @@ def definition(node, builder, cType, lValue, varLit):
 
 def operationRecursive(node, builder, cType, lValue):
     # apply operation and update copy of AST
-    if len(node.children) != 0:
+    if len(node.children) == 2:
         # if left node operation node -> recursive
         if node.children[0].value in ops:
             node.children[0] = operationRecursive(node.children[0], builder, cType, lValue)
@@ -386,18 +388,33 @@ def operationRecursive(node, builder, cType, lValue):
 
         # apply the operation
         return applyOperation2operands(node, builder, cType)
+    else:
+        if node.value in singleOps:
+            # apply single operand operation: !a, ~a, ++a, --a
+            return applyOperation1operand(node, builder, cType)
+        else:
+            # get value
+            if isinstance(node, AST.DefinitionNode):
+                loaded[node.children[0].value] = builder.load(definitions[node.children[0].value])
+                a = convertVar(builder, cType, loaded[node.value])
+            else:
+                a = getLiteral(cType, node.value)
+            return a
+
 
 
 # apply node operation on a
 def applyOperation1operand(node, builder, cType):
     if isinstance(node, ir.Instruction):
         a = node
-    elif str(node.children[0].value).isalpha():
+    elif isinstance(node.children[0], AST.IdentifierNode):
         if definitions[node.children[0].value] not in loaded:
             loaded[node.children[0].value] = builder.load(definitions[node.children[0].value])
         a = convertVar(builder, cType, loaded[node.children[0].value])
-    else:
+    elif type(node.children[0]) in literalNodes:
         a = getLiteral(cType, node.children[0].value)
+    else:
+        a = operationRecursive(node.children[0], builder, cType, node.value)
     if isinstance(node, AST.BitwiseNotNode):
         return builder.not_(a)
     elif isinstance(node, AST.LogicalNotNode):
