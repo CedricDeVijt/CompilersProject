@@ -13,6 +13,7 @@ statement: rvalue SEMICOLON+
          | whileLoop
          | forLoop
          | enumStatement SEMICOLON+
+         | arrayStatement SEMICOLON+
          | jumpStatement SEMICOLON+
          | function
          | switchStatement;
@@ -55,12 +56,14 @@ formatSpecifier: '"%s"'
 
 variable: lvalue '=' rvalue
          | lvalue
-         | typedef;
+         | typedef
+         | arrayDeclaration;
 
 lvalue: identifier
       | type identifier
       | pointer identifier
-      | deref;
+      | deref
+      | arrayElement;
 
 rvalue: unaryExpression
       | identifier
@@ -88,7 +91,9 @@ rvalue: unaryExpression
       | preFixDecrement
       | rvalue conditionalExpression
       | functionCall
-      | jumpStatement;
+      | jumpStatement
+      | arrayElement
+      | arrayInitializer;
 
 conditionalExpression: GREATER_THAN rvalue
                      | LESS_THAN rvalue
@@ -138,6 +143,15 @@ type: 'const'* ('int' | 'float' | 'char' | 'void' | IDENTIFIER);
 identifier: IDENTIFIER;
 comment: COMMENT;
 
+arrayStatement: arrayDeclaration
+              | arrayDefinition '=' rvalue;
+
+arrayDeclaration: type IDENTIFIER ('[' INT ']')+;
+arrayDefinition: type IDENTIFIER ('[' INT ']')+ '=' (arrayInitializer | identifier);
+
+arrayInitializer: '{' (rvalue (',' rvalue)*)? '}';
+
+arrayElement: identifier ('[' (rvalue | identifier) ']')+;
 
 // lexer rules
 LPAREN: '(';

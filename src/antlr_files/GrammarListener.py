@@ -377,5 +377,50 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#arrayStatement.
+    def enterArrayStatement(self, ctx:GrammarParser.ArrayStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#arrayStatement.
+    def exitArrayStatement(self, ctx:GrammarParser.ArrayStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#arrayDeclaration.
+    def enterArrayDeclaration(self, ctx:GrammarParser.ArrayDeclarationContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#arrayDeclaration.
+    def exitArrayDeclaration(self, ctx:GrammarParser.ArrayDeclarationContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#arrayDefinition.
+    def enterArrayDefinition(self, ctx:GrammarParser.ArrayDefinitionContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#arrayDefinition.
+    def exitArrayDefinition(self, ctx:GrammarParser.ArrayDefinitionContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#arrayInitializer.
+    def enterArrayInitializer(self, ctx:GrammarParser.ArrayInitializerContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#arrayInitializer.
+    def exitArrayInitializer(self, ctx:GrammarParser.ArrayInitializerContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#arrayElement.
+    def enterArrayElement(self, ctx:GrammarParser.ArrayElementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#arrayElement.
+    def exitArrayElement(self, ctx:GrammarParser.ArrayElementContext):
+        pass
+
+
 
 del GrammarParser

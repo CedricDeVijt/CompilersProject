@@ -214,5 +214,30 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GrammarParser#arrayStatement.
+    def visitArrayStatement(self, ctx:GrammarParser.ArrayStatementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#arrayDeclaration.
+    def visitArrayDeclaration(self, ctx:GrammarParser.ArrayDeclarationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#arrayDefinition.
+    def visitArrayDefinition(self, ctx:GrammarParser.ArrayDefinitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#arrayInitializer.
+    def visitArrayInitializer(self, ctx:GrammarParser.ArrayInitializerContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#arrayElement.
+    def visitArrayElement(self, ctx:GrammarParser.ArrayElementContext):
+        return self.visitChildren(ctx)
+
+
 
 del GrammarParser
