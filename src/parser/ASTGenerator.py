@@ -103,108 +103,86 @@ class ASTGenerator(Visitor):
         return size
 
     def get_highest_type(self, rval):
+        type_check_dict = {
+            DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier.value),
+            IdentifierNode: lambda rval: self.lookup_and_get_type(rval.value),
+            IntNode: lambda rval: 'int',
+            FloatNode: lambda rval: 'float',
+            CharNode: lambda rval: 'char',
+            Node: self.handle_node_type
+        }
+
         if isinstance(rval, str):
             while True:
-                if rval == 'char' or rval == 'int' or rval == 'float':
+                if rval in ['char', 'int', 'float']:
                     return rval
                 symbols = self.scope.lookup(rval)
-                if symbols is not None:
-                    if not isinstance(symbols.type, list):
-                        if symbols.symbol_type == 'typeDef':
-                            rval = symbols.type
-        if isinstance(rval, DerefNode):
-            identifier = rval.identifier.value
-            symbols = self.scope.lookup(identifier)
-            if symbols:
-                if isinstance(symbols.type, str):
-                    return symbols.type
-                return symbols.type.type.value
-        elif isinstance(rval, IdentifierNode):
-            identifier = rval.value
-            symbols = self.scope.lookup(identifier)
-            if symbols:
-                if not isinstance(symbols.type, PointerNode):
-                    return symbols.type
-                if isinstance(symbols.type.type, list):
-                    return symbols.type.type[len(symbols.type.type) - 1].value
-                return symbols.type.type.value
-        elif isinstance(rval, IntNode):
-            return 'int'
-        elif isinstance(rval, FloatNode):
+                if symbols and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
+                    rval = symbols.type
+
+        for key, value in type_check_dict.items():
+            if isinstance(rval, key):
+                return value(rval)
+
+        return 'char'
+
+    def lookup_and_get_type(self, identifier):
+        symbols = self.scope.lookup(identifier)
+        if symbols:
+            if isinstance(symbols.type, str):
+                return symbols.type
+            return symbols.type.type.value
+
+    def handle_node_type(self, rval):
+        if isinstance(rval, PointerNode):
+            return self.get_highest_type(rval.type)
+        if isinstance(rval, AddrNode):
+            return self.lookup_and_get_type(rval.value.value)
+        if isinstance(rval, ExplicitConversionNode):
+            return rval.type
+        if isinstance(rval, (PreFixNode, PostFixNode)):
+            return self.lookup_and_get_type(rval.value)
+        if isinstance(rval, FunctionCall):
+            return self.handle_function_call(rval)
+        if isinstance(rval, TypeNode):
+            return rval.value
+        type1 = self.get_highest_type(rval.children[0])
+        type2 = self.get_highest_type(rval.children[-1])
+        if 'float' in [type1, type2]:
             return 'float'
-        elif isinstance(rval, CharNode):
-            return 'char'
-        elif isinstance(rval, Node):
-            if isinstance(rval, PointerNode):
-                return self.get_highest_type(rval.type)
-            if isinstance(rval, AddrNode):
-                identifier = rval.value.value
-                if self.scope.lookup(identifier):
-                    if isinstance(self.scope.lookup(identifier).type, str):
-                        return self.scope.lookup(identifier).type
-                    if isinstance(self.scope.lookup(identifier).type.type, list):
-                        return self.scope.lookup(identifier).type.type[0].value
-                    return self.scope.lookup(identifier).type.type
-            if isinstance(rval, ExplicitConversionNode):
-                return rval.type
-            if isinstance(rval, PreFixNode) or isinstance(rval, PostFixNode):
-                if self.scope.lookup(rval.value):
-                    if isinstance(self.scope.lookup(rval.value).type, str):
-                        return self.scope.lookup(rval.value).type
-                    return self.scope.lookup(rval.value).type.type[0].value
-            if isinstance(rval, FunctionCall):
-                symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
-                if isinstance(symbols, Symbol):
-                    symbols = [symbols]
-                    for symbol in symbols:
-                        similar = True
-                        params = symbol.params
-                        if len(rval.arguments) != len(params):
-                            continue
-                        for i in range(0, len(params)):
-                            type1 = self.get_highest_type(params[i])
-                            type2 = self.get_highest_type(rval.arguments[i])
-                            if type1 != type2:
-                                similar = False
-                                continue
-                        if similar:
-                            return symbol.type
-                # No function found for call.
-                return 'char'
-            if isinstance(rval, TypeNode):
-                return rval.value
-            type1 = self.get_highest_type(rval.children[0])
-            type2 = self.get_highest_type(rval.children[len(rval.children) - 1])
-            if type1 == 'float' or type2 == 'float':
-                return 'float'
-            elif type1 == 'int' or type2 == 'int':
-                return 'int'
-            return 'char'
+        elif 'int' in [type1, type2]:
+            return 'int'
+        return 'char'
+
+    def handle_function_call(self, rval):
+        symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
+        if isinstance(symbols, Symbol):
+            symbols = [symbols]
+            for symbol in symbols:
+                similar = all(self.get_highest_type(param) == self.get_highest_type(arg) for param, arg in
+                              zip(symbol.params, rval.arguments))
+                if similar:
+                    return symbol.type
+        return 'char'
 
     def implicit_type_conversion(self, lvalType, rval):
-        if isinstance(lvalType, PointerNode):
-            if isinstance(lvalType.type, list):
-                lvalType = lvalType.type[len(lvalType.type) - 1].value
-            else:
-                lvalType = lvalType.type.value
+        def check_type_and_lookup(type_value):
+            while type_value not in ['char', 'int', 'float']:
+                if isinstance(type_value, TypeNode):
+                    type_value = type_value.value
+                elif isinstance(type_value, PointerNode):
+                    type_value = type_value.type[-1].value if isinstance(type_value.type,
+                                                                         list) else type_value.type.value
+                elif isinstance(type_value, list):
+                    type_value = type_value[-1].value
+                if self.scope.lookup(type_value) is not None and self.scope.lookup(type_value).symbol_type == 'typeDef':
+                    type_value = self.scope.lookup(type_value).type
+            return type_value
+
+        lvalType = check_type_and_lookup(lvalType)
         rvalType = self.get_highest_type(rval)
-        while lvalType != 'char' and lvalType != 'int' and lvalType != 'float':
-            if isinstance(lvalType, TypeNode):
-                lvalType = lvalType.value
-            if self.scope.lookup(lvalType) is not None and self.scope.lookup(lvalType).symbol_type == 'typeDef':
-                lvalType = self.scope.lookup(lvalType).type
-        while rvalType != 'char' and rvalType != 'int' and rvalType != 'float':
-            if isinstance(rvalType, PointerNode):
-                if isinstance(rvalType.type, list):
-                    rvalType = rvalType.type[len(rvalType.type) - 1].value
-                else:
-                    rvalType = rvalType.type.value
-            elif isinstance(rvalType, list):
-                rvalType = rvalType[len(rvalType) - 1].value
-            elif isinstance(rvalType, TypeNode):
-                rvalType = rvalType.value
-            if self.scope.lookup(rvalType) is not None and self.scope.lookup(rvalType).symbol_type == 'typeDef':
-                rvalType = self.scope.lookup(rvalType).type
+        rvalType = check_type_and_lookup(rvalType)
+
         if lvalType == 'int' and rvalType == 'float':
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from float to int!")
         elif lvalType == 'char' and rvalType == 'float':
