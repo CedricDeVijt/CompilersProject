@@ -1,6 +1,5 @@
 grammar Grammar;
 
-// parser rules
 program: (comment | (enumDeclaration SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+) | function)+ EOF;
 
 scope: LBRACE statement* RBRACE;
@@ -15,6 +14,7 @@ statement: rvalue SEMICOLON+
          | forLoop
          | enumStatement SEMICOLON+
          | jumpStatement SEMICOLON+
+         | function
          | switchStatement;
 
 function: (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN scope
