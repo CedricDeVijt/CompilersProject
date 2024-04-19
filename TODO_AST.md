@@ -57,7 +57,7 @@
     - [x] Void function
     - [x] Missing main -> error.
   - [x] (**optional**) Overloading of functions on the amount and type of parameters
-  - [ ] (**mandatory**) Define `#define` 
+  - [x] (**mandatory**) Define `#define` 
   - [x] (**mandatory**) Includes `#include`
   - [x] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
 - Semantic Analysis
