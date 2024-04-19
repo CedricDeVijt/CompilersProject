@@ -59,7 +59,7 @@
   - [x] (**optional**) Overloading of functions on the amount and type of parameters
   - [ ] (**mandatory**) Define `#define` 
   - [x] (**mandatory**) Includes `#include`
-  - [ ] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
+  - [x] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
 - Semantic Analysis
   - [x] (**mandatory**) Function scopes in symbol table
   - [x] (**mandatory**) Check consistency of return type
