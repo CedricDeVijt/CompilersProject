@@ -18,10 +18,24 @@ class ThrowingErrorListener(ErrorListener):
 
 
 def pre_processing(path, stdio_found=None):
+    lines = []
     if stdio_found is None:
         stdio_found = [False]
     with open(path, 'r') as file:
         lines = file.readlines()
+
+    lines = pre_process_include(lines, stdio_found)
+    lines = pre_process_define(lines)
+    return lines
+
+
+def pre_process_include(lines, stdio_found):
+    lines = pre_process_include_file(lines, stdio_found)
+    lines = pre_process_include_guards(lines)
+    return lines
+
+
+def pre_process_include_file(lines, stdio_found=None):
     macros = []
     for line in lines:
         if line.startswith("#include"):
@@ -55,6 +69,39 @@ def pre_processing(path, stdio_found=None):
                 raise Exception("<stdio.h> not included.")
     for macro in macros:
         lines.remove(macro)
+    return lines
+
+
+def pre_process_include_guards(lines):
+    included_guards = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("#ifndef"):
+            guard = line.split()[1]
+            if guard in included_guards:
+                # Remove all lines until #endif
+                while not lines[i].startswith("#endif"):
+                    lines.pop(i)
+                lines.pop(i)
+                i += 1
+            else:
+                included_guards.append(guard)
+                while not lines[i].startswith("#endif"):
+                    if lines[i].startswith("#ifndef") or lines[i].startswith("#define") or lines[i].startswith("#endif"):
+                        lines.pop(i)
+                    else:
+                        i += 1
+                lines.pop(i)
+                i -= 1
+        else:
+            i += 1
+
+    return lines
+
+
+def pre_process_define(lines):
+    # TODO: Implement define preprocessor
     return lines
 
 
