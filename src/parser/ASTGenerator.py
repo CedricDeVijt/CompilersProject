@@ -166,29 +166,23 @@ class ASTGenerator(Visitor):
         return 'char'
 
     def implicit_type_conversion(self, lvalType, rval):
-        if isinstance(lvalType, PointerNode):
-            if isinstance(lvalType.type, list):
-                lvalType = lvalType.type[len(lvalType.type) - 1].value
-            else:
-                lvalType = lvalType.type.value
+        def check_type_and_lookup(type_value):
+            while type_value not in ['char', 'int', 'float']:
+                if isinstance(type_value, TypeNode):
+                    type_value = type_value.value
+                elif isinstance(type_value, PointerNode):
+                    type_value = type_value.type[-1].value if isinstance(type_value.type,
+                                                                         list) else type_value.type.value
+                elif isinstance(type_value, list):
+                    type_value = type_value[-1].value
+                if self.scope.lookup(type_value) is not None and self.scope.lookup(type_value).symbol_type == 'typeDef':
+                    type_value = self.scope.lookup(type_value).type
+            return type_value
+
+        lvalType = check_type_and_lookup(lvalType)
         rvalType = self.get_highest_type(rval)
-        while lvalType != 'char' and lvalType != 'int' and lvalType != 'float':
-            if isinstance(lvalType, TypeNode):
-                lvalType = lvalType.value
-            if self.scope.lookup(lvalType) is not None and self.scope.lookup(lvalType).symbol_type == 'typeDef':
-                lvalType = self.scope.lookup(lvalType).type
-        while rvalType != 'char' and rvalType != 'int' and rvalType != 'float':
-            if isinstance(rvalType, PointerNode):
-                if isinstance(rvalType.type, list):
-                    rvalType = rvalType.type[len(rvalType.type) - 1].value
-                else:
-                    rvalType = rvalType.type.value
-            elif isinstance(rvalType, list):
-                rvalType = rvalType[len(rvalType) - 1].value
-            elif isinstance(rvalType, TypeNode):
-                rvalType = rvalType.value
-            if self.scope.lookup(rvalType) is not None and self.scope.lookup(rvalType).symbol_type == 'typeDef':
-                rvalType = self.scope.lookup(rvalType).type
+        rvalType = check_type_and_lookup(rvalType)
+
         if lvalType == 'int' and rvalType == 'float':
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from float to int!")
         elif lvalType == 'char' and rvalType == 'float':
