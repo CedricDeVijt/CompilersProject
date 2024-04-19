@@ -68,10 +68,6 @@ class SymbolTableTree:
         self.locked_stack = -1
 
     def open_scope(self):
-        if self.locked_scopes:
-            self.locked_stack = 0
-            self.locked_scopes = False
-            return
         if self.locked_stack != -1:
             self.locked_stack += 1
         new_node = TreeNode(SymbolTable(), self.current_node)
@@ -79,15 +75,17 @@ class SymbolTableTree:
         self.current_node = new_node
 
     def close_scope(self):
-        if self.locked_stack == -1:
+        if self.locked_stack != 0:
             if self.current_node == self.root:
                 raise Exception("Cannot close root scope")
             self.current_node = self.current_node.parent
+            if self.locked_stack != -1:
+                self.locked_stack -= 1
         else:
             self.locked_stack = -1
 
     def lock_scope(self):
-        self.locked_scopes = True
+        self.locked_stack = 0
 
     def is_global(self):
         return self.current_node == self.root

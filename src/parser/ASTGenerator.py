@@ -103,108 +103,86 @@ class ASTGenerator(Visitor):
         return size
 
     def get_highest_type(self, rval):
+        type_check_dict = {
+            DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier.value),
+            IdentifierNode: lambda rval: self.lookup_and_get_type(rval.value),
+            IntNode: lambda rval: 'int',
+            FloatNode: lambda rval: 'float',
+            CharNode: lambda rval: 'char',
+            Node: self.handle_node_type
+        }
+
         if isinstance(rval, str):
             while True:
-                if rval == 'char' or rval == 'int' or rval == 'float':
+                if rval in ['char', 'int', 'float']:
                     return rval
                 symbols = self.scope.lookup(rval)
-                if symbols is not None:
-                    if not isinstance(symbols.type, list):
-                        if symbols.symbol_type == 'typeDef':
-                            rval = symbols.type
-        if isinstance(rval, DerefNode):
-            identifier = rval.identifier.value
-            symbols = self.scope.lookup(identifier)
-            if symbols:
-                if isinstance(symbols.type, str):
-                    return symbols.type
-                return symbols.type.type.value
-        elif isinstance(rval, IdentifierNode):
-            identifier = rval.value
-            symbols = self.scope.lookup(identifier)
-            if symbols:
-                if not isinstance(symbols.type, PointerNode):
-                    return symbols.type
-                if isinstance(symbols.type.type, list):
-                    return symbols.type.type[len(symbols.type.type) - 1].value
-                return symbols.type.type.value
-        elif isinstance(rval, IntNode):
-            return 'int'
-        elif isinstance(rval, FloatNode):
+                if symbols and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
+                    rval = symbols.type
+
+        for key, value in type_check_dict.items():
+            if isinstance(rval, key):
+                return value(rval)
+
+        return 'char'
+
+    def lookup_and_get_type(self, identifier):
+        symbols = self.scope.lookup(identifier)
+        if symbols:
+            if isinstance(symbols.type, str):
+                return symbols.type
+            return symbols.type.type.value
+
+    def handle_node_type(self, rval):
+        if isinstance(rval, PointerNode):
+            return self.get_highest_type(rval.type)
+        if isinstance(rval, AddrNode):
+            return self.lookup_and_get_type(rval.value.value)
+        if isinstance(rval, ExplicitConversionNode):
+            return rval.type
+        if isinstance(rval, (PreFixNode, PostFixNode)):
+            return self.lookup_and_get_type(rval.value)
+        if isinstance(rval, FunctionCall):
+            return self.handle_function_call(rval)
+        if isinstance(rval, TypeNode):
+            return rval.value
+        type1 = self.get_highest_type(rval.children[0])
+        type2 = self.get_highest_type(rval.children[-1])
+        if 'float' in [type1, type2]:
             return 'float'
-        elif isinstance(rval, CharNode):
-            return 'char'
-        elif isinstance(rval, Node):
-            if isinstance(rval, PointerNode):
-                return self.get_highest_type(rval.type)
-            if isinstance(rval, AddrNode):
-                identifier = rval.value.value
-                if self.scope.lookup(identifier):
-                    if isinstance(self.scope.lookup(identifier).type, str):
-                        return self.scope.lookup(identifier).type
-                    if isinstance(self.scope.lookup(identifier).type.type, list):
-                        return self.scope.lookup(identifier).type.type[0].value
-                    return self.scope.lookup(identifier).type.type
-            if isinstance(rval, ExplicitConversionNode):
-                return rval.type
-            if isinstance(rval, PreFixNode) or isinstance(rval, PostFixNode):
-                if self.scope.lookup(rval.value):
-                    if isinstance(self.scope.lookup(rval.value).type, str):
-                        return self.scope.lookup(rval.value).type
-                    return self.scope.lookup(rval.value).type.type[0].value
-            if isinstance(rval, FunctionCall):
-                symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
-                if isinstance(symbols, Symbol):
-                    symbols = [symbols]
-                    for symbol in symbols:
-                        similar = True
-                        params = symbol.params
-                        if len(rval.arguments) != len(params):
-                            continue
-                        for i in range(0, len(params)):
-                            type1 = self.get_highest_type(params[i])
-                            type2 = self.get_highest_type(rval.arguments[i])
-                            if type1 != type2:
-                                similar = False
-                                continue
-                        if similar:
-                            return symbol.type
-                # No function found for call.
-                return 'char'
-            if isinstance(rval, TypeNode):
-                return rval.value
-            type1 = self.get_highest_type(rval.children[0])
-            type2 = self.get_highest_type(rval.children[len(rval.children) - 1])
-            if type1 == 'float' or type2 == 'float':
-                return 'float'
-            elif type1 == 'int' or type2 == 'int':
-                return 'int'
-            return 'char'
+        elif 'int' in [type1, type2]:
+            return 'int'
+        return 'char'
+
+    def handle_function_call(self, rval):
+        symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
+        if isinstance(symbols, Symbol):
+            symbols = [symbols]
+            for symbol in symbols:
+                similar = all(self.get_highest_type(param) == self.get_highest_type(arg) for param, arg in
+                              zip(symbol.params, rval.arguments))
+                if similar:
+                    return symbol.type
+        return 'char'
 
     def implicit_type_conversion(self, lvalType, rval):
-        if isinstance(lvalType, PointerNode):
-            if isinstance(lvalType.type, list):
-                lvalType = lvalType.type[len(lvalType.type) - 1].value
-            else:
-                lvalType = lvalType.type.value
+        def check_type_and_lookup(type_value):
+            while type_value not in ['char', 'int', 'float']:
+                if isinstance(type_value, TypeNode):
+                    type_value = type_value.value
+                elif isinstance(type_value, PointerNode):
+                    type_value = type_value.type[-1].value if isinstance(type_value.type,
+                                                                         list) else type_value.type.value
+                elif isinstance(type_value, list):
+                    type_value = type_value[-1].value
+                if self.scope.lookup(type_value) is not None and self.scope.lookup(type_value).symbol_type == 'typeDef':
+                    type_value = self.scope.lookup(type_value).type
+            return type_value
+
+        lvalType = check_type_and_lookup(lvalType)
         rvalType = self.get_highest_type(rval)
-        while lvalType != 'char' and lvalType != 'int' and lvalType != 'float':
-            if isinstance(lvalType, TypeNode):
-                lvalType = lvalType.value
-            if self.scope.lookup(lvalType) is not None and self.scope.lookup(lvalType).symbol_type == 'typeDef':
-                lvalType = self.scope.lookup(lvalType).type
-        while rvalType != 'char' and rvalType != 'int' and rvalType != 'float':
-            if isinstance(rvalType, PointerNode):
-                if isinstance(rvalType.type, list):
-                    rvalType = rvalType.type[len(rvalType.type) - 1].value
-                else:
-                    rvalType = rvalType.type.value
-            elif isinstance(rvalType, list):
-                rvalType = rvalType[len(rvalType) - 1].value
-            elif isinstance(rvalType, TypeNode):
-                rvalType = rvalType.value
-            if self.scope.lookup(rvalType) is not None and self.scope.lookup(rvalType).symbol_type == 'typeDef':
-                rvalType = self.scope.lookup(rvalType).type
+        rvalType = check_type_and_lookup(rvalType)
+
         if lvalType == 'int' and rvalType == 'float':
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from float to int!")
         elif lvalType == 'char' and rvalType == 'float':
@@ -215,14 +193,12 @@ class ASTGenerator(Visitor):
     def contains_node(self, node, node_type):
         if isinstance(node, node_type):
             return True
-        if isinstance(node, IfStatementNode):
-            for child in node.body:
-                if self.contains_node(child, node_type):
-                    return True
-        else:
-            for child in node.children:
-                if self.contains_node(child, node_type):
-                    return True
+
+        children = node.body if isinstance(node, IfStatementNode) else node.children
+        for child in children:
+            if self.contains_node(child, node_type):
+                return True
+
         return False
 
     def set_valid(self, node, node_type):
@@ -819,7 +795,7 @@ class ASTGenerator(Visitor):
             elif isinstance(child, ElseIfStatementNode):
                 original = f"(! {condition.original})"
                 new_condition = LogicalNotNode(line=child.line, column=child.column, original=original, children=[condition])
-                original = f"({condition.original} && {child.original})"
+                original = f"({new_condition.original} && {child.original})"
                 new_condition = LogicalAndNode(line=child.line, column=child.column, original=original, children=[new_condition, child.condition])
                 original = f"({condition.original} || {child.condition.original})"
                 condition = LogicalOrNode(line=child.line, column=child.column, original=original, children=[condition, child.condition])
@@ -879,7 +855,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[:-2]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"{identifier}--"
         node = PostFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
         return node
@@ -888,7 +863,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[:-2]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"{identifier}++"
         node = PostFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
         return node
@@ -897,7 +871,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"--{identifier}"
         node = PreFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
         return node
@@ -906,7 +879,6 @@ class ASTGenerator(Visitor):
         identifier = ctx.getText()[2:]
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
-            return None
         original = f"++{identifier}"
         node = PreFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
         return node
@@ -965,33 +937,51 @@ class ASTGenerator(Visitor):
                 node.original = f"({node.original})"
                 return node
             original = f"{lines[0].getText()} {lines[1].getText()} {lines[2].getText()}"
+            child0 = self.visit(lines[0])
+            child2 = self.visit(lines[2])
+            if isinstance(child0, IdentifierNode):
+                if self.scope.lookup(child0.value) is None:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return node
+                if self.scope.lookup(child0.value).symbol_type != 'variable':
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return node
+            if isinstance(child2, IdentifierNode):
+                if self.scope.lookup(child2.value) is None:
+                    self.errors.append(
+                        f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
+                    return node
+                if self.scope.lookup(child2.value).symbol_type != 'variable':
+                    self.errors.append(
+                        f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
+                    return node
             match str(lines[1]):
                 case "/":
                     if not isinstance(self.visit(lines[2]).value, str) and int(self.visit(lines[2]).value) == 0:
                         raise Exception("Division by zero!")
-                    node = DivNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = DivNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "%":
-                    node = ModNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = ModNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "*":
-                    node = MultNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = MultNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "-":
-                    node = MinusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = MinusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "+":
-                    node = PlusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = PlusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "<<":
-                    node = SLNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = SLNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case ">>":
-                    node = SRNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = SRNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "&":
-                    node = BitwiseAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "|":
-                    node = BitwiseOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "^":
-                    node = BitwiseXorNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = BitwiseXorNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "&&":
-                    node = LogicalAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "||":
-                    node = LogicalOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[0]), self.visit(lines[2])])
+                    node = LogicalOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
             if isinstance(node.children[0], IdentifierNode):
                 identifier = node.children[0].value
                 if self.scope.lookup(identifier) is None:
@@ -1019,10 +1009,18 @@ class ASTGenerator(Visitor):
             return node
         if len(lines) == 2:
             original = f"{lines[0].getText()} {lines[1].getText()}"
+            child0 = self.visit(lines[0])
+            if isinstance(child0, IdentifierNode):
+                if self.scope.lookup(child0.value) is None:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return None
+                if self.scope.lookup(child0.value).symbol_type != 'variable':
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
+                    return None
             if str(lines[0]) == "!":
-                node = LogicalNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[1])])
+                node = LogicalNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0])
             elif str(lines[0]) == "~":
-                node = BitwiseNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[self.visit(lines[1])])
+                node = BitwiseNotNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0])
             else:
                 node = self.visit(lines[1])
                 original = f"{lines[0].getText()} {node.original}"
@@ -1041,6 +1039,8 @@ class ASTGenerator(Visitor):
                     return node
             return node
         node = self.visitChildren(ctx)
+        if node is None:
+            pass
         if len(lines) == 1:
             negatives = 0
             original = ""
@@ -1442,6 +1442,5 @@ class ASTGenerator(Visitor):
         enum_value_index = self.scope.get_all_enum_values().index(enum_value)
 
         rvalue = IntNode(value=enum_value_index, line=ctx.start.line, column=ctx.start.column, original=enum_value)
-
 
         return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type, lvalue=lvalue, rvalue=rvalue)

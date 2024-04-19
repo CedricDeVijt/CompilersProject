@@ -1,9 +1,6 @@
-enum week {MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY};
+enum week{Mon, Tue, Wed};
 
-int main() {
-  enum week today = MONDAY;
-  today = WEDNESDAY;
-
-  enum week tomorrow;
-  tomorrow = today + 1;
+int main () {
+    int a = Wed + Wed;
+    int b = a;
 }
