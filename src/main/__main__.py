@@ -101,7 +101,26 @@ def pre_process_include_guards(lines):
 
 
 def pre_process_define(lines):
-    # TODO: Implement define preprocessor
+    macros = {}
+    for line in lines:
+        if line.startswith("#define"):
+            # Split in words.
+            words = line.split()
+            if len(words) == 1:
+                raise Exception("#define expects MACRO or MACRO VALUE!")
+            if len(words) == 2:
+                macros[words[1]] = ''
+            else:
+                macros[words[1]] = ' '.join(words[2:])
+        else:
+            for macro in macros:
+                if macro in line:
+                    line = line.replace(macro, macros[macro])
+
+    for line in lines:
+        if line.startswith("#define"):
+            lines.remove(line)
+
     return lines
 
 
