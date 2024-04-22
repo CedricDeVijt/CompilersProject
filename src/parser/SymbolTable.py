@@ -17,7 +17,7 @@ class SymbolTable:
     def add_symbol(self, symbol):
         for existing_symbol in self.symbols:
             if symbol.name == existing_symbol.name:
-                if existing_symbol.symbol_type == 'function' and symbol.symbol_type == 'function' and existing_symbol.defined:
+                if existing_symbol.symbol_type == 'function' and symbol.symbol_type == 'function':
                     self.symbols.append(symbol)
                     return None
                 raise Exception("Variable already exists")
@@ -64,28 +64,28 @@ class SymbolTableTree:
     def __init__(self):
         self.root = TreeNode(SymbolTable())
         self.current_node = self.root
-        self.locked_scopes = False
-        self.locked_stack = -1
+        self.locked_open = 0
+        self.locked_close = 0
 
-    def open_scope(self):
-        if self.locked_stack != -1:
-            self.locked_stack += 1
+    def open_scope(self, ignore=False):
+        if self.locked_open != 0 and not ignore:
+            self.locked_open -= 1
+            return
         new_node = TreeNode(SymbolTable(), self.current_node)
         self.current_node.children.append(new_node)
         self.current_node = new_node
 
-    def close_scope(self):
-        if self.locked_stack != 0:
-            if self.current_node == self.root:
-                raise Exception("Cannot close root scope")
-            self.current_node = self.current_node.parent
-            if self.locked_stack != -1:
-                self.locked_stack -= 1
-        else:
-            self.locked_stack = -1
+    def close_scope(self, ignore=True):
+        if self.locked_close != 0 and not ignore:
+            self.locked_close -= 1
+            return
+        if self.current_node == self.root:
+            raise Exception("Cannot close root scope")
+        self.current_node = self.current_node.parent
 
     def lock_scope(self):
-        self.locked_stack = 0
+        self.locked_open += 1
+        self.locked_close += 1
 
     def is_global(self):
         return self.current_node == self.root
