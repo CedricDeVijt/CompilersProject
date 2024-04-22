@@ -51,7 +51,7 @@ process_directory() {
     local path="$1"
     if [ -d "$path" ]; then
         for file in "$path"/*; do
-            if [ -f "$file" ]; then
+            if [ -f "$file" ] && [[ "$file" == *.c ]]; then
                 process_file "$file"
             elif [ -d "$file" ]; then
                 process_directory "$file"
