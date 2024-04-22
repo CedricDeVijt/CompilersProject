@@ -289,6 +289,7 @@ def generateLLVMfunction(module, function, node, builder):
         # Define the if-then block
         builder.position_at_start(ifThenBlock)
 
+        # Perform statement content
         for child in node.body:
             generateLLVMfunction(module, function, child, builder)
 
@@ -298,6 +299,38 @@ def generateLLVMfunction(module, function, node, builder):
         # Define the if-end block
         builder.position_at_start(ifEndBlock)
 
+    elif isinstance(node, AST.WhileLoopNode):
+        # while loop
+        builder.comment(node.original)
+
+        # Define conditional branches
+        loopBlock = function.append_basic_block(name="loop")
+        exitBlock = function.append_basic_block(name="exit")
+
+        # Branch to the loop block
+        builder.branch(loopBlock)
+
+        # Set the builder to the loop block
+        builder.position_at_end(loopBlock)
+
+        # Perform statement content
+        for child in node.body:
+            if isinstance(child, AST.BreakNode):
+                builder.branch(exitBlock)
+                break
+            elif isinstance(child, AST.ContinueNode):
+                builder.branch(loopBlock)
+                break
+            generateLLVMfunction(module, function, child, builder)
+
+        # perform comparison
+        comparisonResult = operationRecursive(node.condition, builder, "int", 0)
+
+        # Conditional branch based on the comparison result
+        builder.cbranch(comparisonResult, loopBlock, exitBlock)
+
+        # Set the builder to the exit block
+        builder.position_at_end(exitBlock)
 
 
 def operation(node, builder, defOrAssigment):
