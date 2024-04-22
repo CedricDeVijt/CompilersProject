@@ -45,14 +45,11 @@ forLoop: 'for' LPAREN forCondition RPAREN scope;
 
 forCondition: variable? SEMICOLON rvalue? SEMICOLON rvalue?;
 
-printfStatement: 'printf' '(' formatSpecifier ',' (identifier | literal) ')';
+printfStatement: 'printf' '(' formatSpecifier (','( rvalue | string))* ')';
 
-formatSpecifier: '"%s"'
-               | '"%d"'
-               | '"%x"'
-               | '"%f"'
-               | '"%c"';
+formatSpecifier: STRING;
 
+string: STRING;
 
 variable: lvalue '=' rvalue
          | lvalue
@@ -185,7 +182,7 @@ COMMA: ',';
 INT:  '0' | [1-9][0-9]*;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
 CHAR : '\'' '\\'? [a-zA-Z0-9] '\'' ;
-
+STRING: '"' (~["\r\n\t])* '"';
 WHITESPACE: [ \t\n\r]+ -> skip;
 
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
