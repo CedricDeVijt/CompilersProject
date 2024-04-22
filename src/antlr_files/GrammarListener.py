@@ -170,6 +170,15 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#string.
+    def enterString(self, ctx:GrammarParser.StringContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#string.
+    def exitString(self, ctx:GrammarParser.StringContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#variable.
     def enterVariable(self, ctx:GrammarParser.VariableContext):
         pass
