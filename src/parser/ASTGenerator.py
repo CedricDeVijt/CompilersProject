@@ -268,7 +268,7 @@ class ASTGenerator(Visitor):
             if isinstance(child, DeclarationNode) or isinstance(child, DefinitionNode):
                 # find symbol in scope
                 symbol = self.scope.lookup(child.lvalue.value, remove_unused=True)
-                if not symbol.used:
+                if symbol is not None and not symbol.used:
                     unused_children.append(child)
         for child in unused_children:
             children.remove(child)
@@ -1202,8 +1202,14 @@ class ASTGenerator(Visitor):
         self.set_valid(node, BreakNode)
         self.set_valid(node, ContinueNode)
         if children[2] is not None:
-            self.place_node_before_type(node, children[2], BreakNode)
-            self.place_node_before_type(node, children[2], ContinueNode)
+            for child in node.body:
+                self.place_node_before_type(child, children[2], BreakNode)
+                self.place_node_before_type(child, children[2], ReturnNode)
+                self.place_node_before_type(child, children[2], ContinueNode)
+            if not isinstance(node.body[len(node.body) - 1], BreakNode) and not isinstance(node.body[len(node.body) - 1], ReturnNode) and not isinstance(node.body[len(node.body) - 1], ContinueNode):
+                node.body.append(children[2])
+            else:
+                node.body.insert(len(node.body) - 1, children[2])
         self.scope.close_scope()
         return node if children[0] is None else [children[0], node]
 

@@ -4,6 +4,7 @@ import sys
 import antlr4
 from antlr4.error.ErrorListener import ErrorListener
 
+from src.llvm_target.LLVMGenerator import LLVMGenerator
 from src.llvm_target.toLLVM import generateLLVMcodePython
 from src.llvm_target.toLLVM import generateLLVMcodeLite
 from src.antlr_files.GrammarLexer import GrammarLexer as Lexer
@@ -178,6 +179,8 @@ def compile_llvm(input_file, visitor, output_file, run_code):
     # Open a file to write LLVM code
     path = f'src/llvm_target/{output_file}'
     with open(path, 'w') as llvm_file:
+
+        generator = LLVMGenerator(path, ast)
         # Write LLVM header
         llvm_file.write(f"; ModuleID = '{output_file}'\n")
         llvm_file.write(f"source_filename = \"{output_file}\"\n")
