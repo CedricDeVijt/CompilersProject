@@ -124,7 +124,7 @@ def pre_process_define(lines):
     return lines
 
 
-def generate_ast(path, visitor):
+def generate_ast(path, visitor, constant_fold=True):
     # Preprocessor
     new_code = pre_processing(path)
     # Save new code to file
@@ -155,7 +155,8 @@ def generate_ast(path, visitor):
     # Print Warnings
     for warning in warnings:
         print(f"Warning: {warning}")
-    ast.constantFold(errors=errors, warnings=warnings)
+    if constant_fold:
+        ast.constant_fold(errors=errors, warnings=warnings)
     # Print Errors
     err_str = ''
     if not genAST.has_main:
