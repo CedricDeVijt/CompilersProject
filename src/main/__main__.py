@@ -169,14 +169,15 @@ def generate_ast(path, visitor, constant_fold=True):
     return ast, symbolTable
 
 
-def compile_llvm(input_file, visitor, output_file):
+def compile_llvm(input_file, visitor, output_file, run_code):
     ast, symbol_table = generate_ast(input_file, visitor)
     if ast is None:
         print("Failed to generate AST.")
         return
 
     # Open a file to write LLVM code
-    with open('src/llvm_target/output.ll', 'w') as llvm_file:
+    path = f'src/llvm_target/{output_file}'
+    with open(path, 'w') as llvm_file:
         # Write LLVM header
         llvm_file.write(f"; ModuleID = '{output_file}'\n")
         llvm_file.write(f"source_filename = \"{output_file}\"\n")
@@ -184,8 +185,11 @@ def compile_llvm(input_file, visitor, output_file):
 
         generateLLVMcodeLite(ast, llvm_file)
 
+        if run_code:
+            os.system(f'lli {path}')
 
-def compile_mips(input_file, visitor, output_file):
+
+def compile_mips(input_file, visitor, output_file, run_code):
     # Implement MIPS compilation
     pass
 
@@ -217,17 +221,17 @@ def render_symbol_table_png(input_file, output_file):
 def run(args):
     if args.input:
         if args.render_ast:
-            render_ast(args.input, args.render_ast)
+            render_ast(input_file=args.input, output_file=args.render_ast)
         elif args.render_ast_png:
-            render_ast_png(args.input, args.render_ast_png)
+            render_ast_png(input_file=args.input, output_file=args.render_ast_png)
         elif args.render_symb:
-            render_symbol_table(args.input, args.render_symb)
+            render_symbol_table(input_file=args.input, output_file=args.render_symb)
         elif args.render_symb_png:
-            render_symbol_table_png(args.input, args.render_symb_png)
+            render_symbol_table_png(input_file=args.input, output_file=args.render_symb_png)
         elif args.target_llvm:
-            compile_llvm(args.input, Generator(), args.target_llvm)
+            compile_llvm(input_file=args.input, visitor=Generator(), output_file=args.target_llvm, run_code=True)
         elif args.target_mips:
-            compile_mips(args.input, Generator(), args.target_mips)
+            compile_mips(input_file=args.input, visitor=Generator(), output_file=args.target_mips, run_code=True)
     else:
         print("No input file provided.")
 
