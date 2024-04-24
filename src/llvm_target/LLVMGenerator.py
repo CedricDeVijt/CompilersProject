@@ -37,34 +37,53 @@ class LLVMVisitor:
             self.visit(child)
 
     def visit_FunctionNode(self, node):
-        function_type = ir.FunctionType(ir.VoidType(), [])
+        # Arguments.
+        args = []
+        for param in node.params:
+            if isinstance(param, list):
+                param_type = param[len(param) - 2]
+                if isinstance(param_type, TypeNode):
+                    if param_type.value == 'char':
+                        args.append(ir.IntType(8))
+                    elif param_type.value == 'int':
+                        args.append(ir.IntType(32))
+                    elif param_type.value == 'float':
+                        args.append(ir.FloatType())
+                    elif param_type.value == 'void':
+                        args.append(ir.VoidType())
+                elif isinstance(param_type, PointerNode):
+                    ...
+        # Function type.
+        function_type = ir.FunctionType(ir.VoidType(), args)
         func_type = node.type
         if isinstance(func_type, list):
             func_type = func_type[len(func_type) - 1]
         if isinstance(func_type, TypeNode):
             if func_type.value == 'char':
-                function_type = ir.FunctionType(ir.IntType(8), [])
+                function_type = ir.FunctionType(ir.IntType(8), args)
             elif func_type.value == 'int':
-                function_type = ir.FunctionType(ir.IntType(32), [])
+                function_type = ir.FunctionType(ir.IntType(32), args)
             elif func_type.value == 'float':
-                function_type = ir.FunctionType(ir.FloatType(), [])
+                function_type = ir.FunctionType(ir.FloatType(), args)
             elif func_type.value == 'void':
-                function_type = ir.FunctionType(ir.VoidType(), [])
+                function_type = ir.FunctionType(ir.VoidType(), args)
         elif isinstance(func_type, PointerNode):
             ...
         function = ir.Function(self.module, function_type, name=node.value)
 
+
         entry_block = function.append_basic_block(name="entry")
         self.builder = ir.IRBuilder(entry_block)
-
-        # Allocate space for function parameters
-        for param in node.params:
-            alloca = self.create_entry_block_alloca(function, param.lvalue.value)
-            self.symbol_table[param.lvalue.value] = alloca
 
         # Visit function body
         for statement in node.body:
             self.visit(statement)
+
+    def visit_FunctionCallNode(self, node):
+        args = []
+        for arg in node.arguments:
+            args.append(self.visit(arg))
+        return self.builder.call(self.module.get_global(node.value), args)
 
     def visit_IdentifierNode(self, node):
         return self.symbol_table.get(node.value)
@@ -75,6 +94,7 @@ class LLVMVisitor:
         value = self.visit(node.rvalue)
 
         self.builder.store(value, var_ptr)
+
 
     def visit_ReturnNode(self, node):
         if node.return_value is not None:
@@ -88,23 +108,20 @@ class LLVMVisitor:
         right = self.visit(node.children[1])
         return self.builder.add(left, right, name="tmp")
 
+    def visit_CharNode(self, node):
+        return ir.Constant(ir.IntType(8), ord(node.value))
+
+    def visit_IntNode(self, node):
+        return ir.Constant(ir.IntType(32), int(node.value))
+
+    def visit_FloatNode(self, node):
+        return ir.Constant(ir.FloatType(), float(node.value))
+
     def visit_MinusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
         return self.builder.sub(left, right, name="tmp")
 
-    @staticmethod
-    def visit_IntNode(node):
-        return ir.Constant(ir.IntType(32), int(node.value))
-
-    @staticmethod
-    def visit_CharNode(node):
-        return ir.Constant(ir.IntType(8), ord(node.value))
-
-    @staticmethod
-    def visit_FloatNode(node):
-        # Convert the node's value to a float and then to an LLVM float constant
-        return ir.Constant(ir.FloatType(), float(node.value))
 
     def visit_DeclarationNode(self, node):
         # Get the type of the variable being declared

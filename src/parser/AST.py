@@ -321,7 +321,7 @@ class FunctionNode(Node):
         self.body = body
 
 
-class FunctionCall(Node):
+class FunctionCallNode(Node):
     def __init__(self, value: str, line: int, column: int, original: str | None, arguments, children=None):
         super().__init__(value=value, line=line, column=column, original_code=original, children=children)
         self.arguments = arguments
