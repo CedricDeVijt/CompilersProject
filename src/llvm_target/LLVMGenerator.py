@@ -88,7 +88,6 @@ class LLVMVisitor:
 
         self.builder.store(value, var_ptr)
 
-
     def visit_ReturnNode(self, node):
         if node.return_value is not None:
             value = self.visit(node.return_value)
@@ -114,7 +113,6 @@ class LLVMVisitor:
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
         return self.builder.sub(left, right, name="tmp")
-
 
     def visit_DeclarationNode(self, node):
         # Get the type of the variable being declared

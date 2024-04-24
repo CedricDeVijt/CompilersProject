@@ -508,6 +508,11 @@ class FloatNode(Node):
         super().__init__(value, line, column, original, children=children)
 
 
+class StringNode(Node):
+    def __init__(self, value, line: int, column: int, original: str | None, children=None):
+        super().__init__(value, line, column, original, children=children)
+
+
 class ExplicitConversionNode(Node):
     def __init__(self, line: int, column: int, original: str | None, type: str, rval, children=None):
         super().__init__(value="ExplicitConversion", line=line, column=column, original_code=original, children=children)
@@ -516,10 +521,9 @@ class ExplicitConversionNode(Node):
 
 
 class PrintfNode(Node):
-    def __init__(self, line: int, column: int, original: str | None, specifier, node, children=None):
+    def __init__(self, line: int, column: int, original: str | None, specifier, children=None):
         super().__init__(value="Printf", line=line, column=column, original_code=original, children=children)
         self.specifier = specifier
-        self.node = node
 
 
 class FormatSpecifierNode(Node):
