@@ -1,17 +1,12 @@
 #include <stdio.h>
 
-int main() {
-    int a = 10;
-    int b = 0;
-    switch (a)
-    {
-    case 1:
-        b = 1;
-        break;
-    case 3:
-        b = 3;
-    case 10:
-        b = 10;
-    }
+int test(int a) {
+    return a+a;
+}
+
+int main()
+{
+    float a = 1+test(5);
+    printf("string: %s, float: %f", "test", a);
     return 0;
 }
