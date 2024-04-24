@@ -327,11 +327,6 @@ class FunctionCall(Node):
         self.arguments = arguments
 
 
-class StatementNode(Node):
-    def __init__(self, line: int, column: int, original: str | None, children=None):
-        super().__init__(value="Statement", line=line, column=column, original_code=original, children=children)
-
-
 class IdentifierNode(Node):
     def __init__(self, value, line: int, column: int, original: str | None, children=None):
         super().__init__(value, line, column, original, children=children)
