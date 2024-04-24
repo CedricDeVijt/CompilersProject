@@ -88,7 +88,6 @@ class LLVMVisitor:
 
         self.builder.store(value, var_ptr)
 
-
     def visit_ReturnNode(self, node):
         if node.return_value is not None:
             value = self.visit(node.return_value)
@@ -110,13 +109,9 @@ class LLVMVisitor:
     def visit_IntNode(node):
         return ir.Constant(ir.IntType(32), int(node.value))
 
-    def visit_CharNode(self, node):
-        a = ir.Constant(ir.IntType(8), ord(node.value))
-        return a
-
-    def visit_IntNode(self, node):
-        a = ir.Constant(ir.IntType(32), int(node.value))
-        return a
+    @staticmethod
+    def visit_CharNode(node):
+        return ir.Constant(ir.IntType(8), ord(node.value))
 
     @staticmethod
     def visit_FloatNode(node):
