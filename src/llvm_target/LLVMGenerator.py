@@ -13,8 +13,6 @@ class LLVMVisitor:
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
 
     def visit(self, node):
-        # if type(node) is int:
-        #     return ir.Constant(ir.IntType(32), node)
         method_name = "visit_" + node.__class__.__name__
         _visitor = getattr(self, method_name, self.generic_visit)
         return _visitor(node)
@@ -60,38 +58,17 @@ class LLVMVisitor:
         # Visit function body
         for statement in node.body:
             self.visit(statement)
-    #
-    # def visit_IdentifierNode(self, node):
-    #     return self.symbol_table.get(node.value)
-    #
-    # def visit_AssignmentNode(self, node):
-    #     var_name = node.lvalue.value
-    #     var_ptr = self.symbol_table.get(var_name)
-    #     value = self.visit(node.rvalue)
-    #
-    #     self.builder.store(value, var_ptr)
-    #
-    # def visit_BinOpNode(self, node):
-    #     left = self.visit(node.left)
-    #     right = self.visit(node.right)
-    #
-    #     if node.value == '+':
-    #         return self.builder.add(left, right, name="addtmp")
-    #     elif node.value == '-':
-    #         return self.builder.sub(left, right, name="subtmp")
-    #     elif node.value == '*':
-    #         return self.builder.mul(left, right, name="multmp")
-    #     elif node.value == '/':
-    #         return self.builder.sdiv(left, right, name="divtmp")
-    #
-    # def visit_PrintNode(self, node):
-    #     value = self.visit(node.expr)
-    #     printf_arg = ir.Constant(ir.ArrayType(ir.IntType(8), len("%d\n")), bytearray(b"%d\0"))
-    #     printf_format = self.builder.bitcast(printf_arg, ir.IntType(8).as_pointer())
-    #
-    #     self.builder.call(
-    #         self.module.get_or_insert_function("printf", ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()])),
-    #         [printf_format, value])
+
+    def visit_IdentifierNode(self, node):
+        return self.symbol_table.get(node.value)
+
+    def visit_AssignmentNode(self, node):
+        var_name = node.lvalue.value
+        var_ptr = self.symbol_table.get(var_name)
+        value = self.visit(node.rvalue)
+
+        self.builder.store(value, var_ptr)
+
 
     def visit_ReturnNode(self, node):
         if node.return_value is not None:
@@ -103,7 +80,16 @@ class LLVMVisitor:
     def visit_PlusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
-        return self.builder.add(left, right, name="")
+        return self.builder.add(left, right, name="tmp")
+
+    def visit_MinusNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.sub(left, right, name="tmp")
+
+    @staticmethod
+    def visit_IntNode(node):
+        return ir.Constant(ir.IntType(32), int(node.value))
 
     def visit_CharNode(self, node):
         a = ir.Constant(ir.IntType(8), ord(node.value))
@@ -113,6 +99,20 @@ class LLVMVisitor:
         a = ir.Constant(ir.IntType(32), int(node.value))
         return a
 
-    def visit_FloatNode(self, node):
-        a = ir.Constant(ir.FloatType(), float(node.value))
-        return a
+    @staticmethod
+    def visit_FloatNode(node):
+        # Convert the node's value to a float and then to an LLVM float constant
+        return ir.Constant(ir.FloatType(), float(node.value))
+
+    def visit_DeclarationNode(self, node):
+        # Get the type of the variable being declared
+        var_type = self.visit(node.type)
+
+        # Create an alloca instruction in the entry block of the function
+        # This will reserve space for the declared variable
+        alloca = self.create_entry_block_allocation(self.builder.function, node.lvalue.value)
+
+        # Associate the variable name with its alloca instruction for future lookups
+        self.symbol_table[node.lvalue.value] = alloca
+
+        return alloca
