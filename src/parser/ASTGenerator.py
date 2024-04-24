@@ -143,7 +143,7 @@ class ASTGenerator(Visitor):
             return rval.type
         if isinstance(rval, (PreFixNode, PostFixNode)):
             return self.lookup_and_get_type(rval.value)
-        if isinstance(rval, FunctionCall):
+        if isinstance(rval, FunctionCallNode):
             return self.handle_function_call(rval)
         if isinstance(rval, TypeNode):
             return rval.value
@@ -462,7 +462,7 @@ class ASTGenerator(Visitor):
                 found = True
         if not found:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} function call to function that doesn't exist!")
-        return FunctionCall(value=name, line=ctx.start.line, column=ctx.start.column, original=original, arguments=args)
+        return FunctionCallNode(value=name, line=ctx.start.line, column=ctx.start.column, original=original, arguments=args)
 
     def visitCallParams(self, ctx):
         children = []
