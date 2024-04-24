@@ -109,6 +109,7 @@ class ASTGenerator(Visitor):
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
             CharNode: lambda rval: 'char',
+            TypeNode: lambda rval: rval.value,
             Node: self.handle_node_type
         }
 
@@ -328,7 +329,6 @@ class ASTGenerator(Visitor):
                 if isinstance(right, list):
                     param_name = right[1]
                     param_type = right[0]
-                    params = left
                 else:
                     param_name = right
                     param_type = left
@@ -1248,6 +1248,8 @@ class ASTGenerator(Visitor):
                     original += f" {expandExpression(ret_val)}"
                 node = ReturnNode(line=ctx.start.line, column=ctx.start.column, original=original, ret_val=ret_val)
                 node.return_type = self.get_highest_type(node.return_value)
+                if node.return_value is None:
+                    node.return_type = 'void'
                 return node
 
     def visitSwitchStatement(self, ctx):

@@ -1,3 +1,5 @@
+import platform
+
 from llvmlite import ir
 
 from src.parser.AST import *
@@ -8,6 +10,7 @@ class LLVMVisitor:
         self.builder = None
         self.symbol_table = {}
         self.module = ir.Module()
+        self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
 
     def visit(self, node):
         # if type(node) is int:
@@ -30,6 +33,20 @@ class LLVMVisitor:
 
     def visit_FunctionNode(self, node):
         function_type = ir.FunctionType(ir.VoidType(), [])
+        func_type = node.type
+        if isinstance(func_type, list):
+            func_type = func_type[len(func_type) - 1]
+        if isinstance(func_type, TypeNode):
+            if func_type.value == 'char':
+                function_type = ir.FunctionType(ir.IntType(8), [])
+            elif func_type.value == 'int':
+                function_type = ir.FunctionType(ir.IntType(32), [])
+            elif func_type.value == 'float':
+                function_type = ir.FunctionType(ir.FloatType(), [])
+            elif func_type.value == 'void':
+                function_type = ir.FunctionType(ir.VoidType(), [])
+        elif isinstance(func_type, PointerNode):
+            ...
         function = ir.Function(self.module, function_type, name=node.value)
 
         entry_block = function.append_basic_block(name="entry")
@@ -77,8 +94,11 @@ class LLVMVisitor:
     #         [printf_format, value])
 
     def visit_ReturnNode(self, node):
-        value = self.visit(node.return_value)
-        self.builder.ret(value)
+        if node.return_value is not None:
+            value = self.visit(node.return_value)
+            self.builder.ret(value)
+        else:
+            self.builder.ret_void()
 
     def visit_PlusNode(self, node):
         left = self.visit(node.children[0])
@@ -89,19 +109,3 @@ class LLVMVisitor:
     def visit_IntNode(node):
         a = ir.Constant(ir.IntType(32), int(node.value))
         return a
-
-
-intNode = IntNode(line=0, column=0, original=None, value=1)
-op = PlusNode(line=0, column=0, original=None, children=[intNode, intNode])
-return_node = ReturnNode(line=0, column=0, original=None, ret_val=intNode)
-
-# Visiting the AST
-visitor = LLVMVisitor()
-# Create a FunctionNode
-function_node = FunctionNode(line=0, column=0, original=None, return_type=None, value="main", params=[],
-                             body=[op, return_node])
-
-# Visit the FunctionNode
-visitor.visit(function_node)
-
-print(visitor.module)

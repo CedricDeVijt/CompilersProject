@@ -185,8 +185,8 @@ def compile_llvm(input_file, visitor, output_file, run_code):
 
         llvm_file.write(str(llvm_code))
 
-        if run_code:
-            os.system(f'lli {path}')
+    if run_code:
+        os.system(f'lli {path}')
 
 
 def compile_mips(input_file, visitor, output_file, run_code):
