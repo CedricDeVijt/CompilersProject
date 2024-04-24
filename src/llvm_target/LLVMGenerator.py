@@ -88,6 +88,7 @@ class LLVMVisitor:
 
         self.builder.store(value, var_ptr)
 
+
     def visit_ReturnNode(self, node):
         if node.return_value is not None:
             value = self.visit(node.return_value)
@@ -100,23 +101,20 @@ class LLVMVisitor:
         right = self.visit(node.children[1])
         return self.builder.add(left, right, name="tmp")
 
+    def visit_CharNode(self, node):
+        return ir.Constant(ir.IntType(8), ord(node.value))
+
+    def visit_IntNode(self, node):
+        return ir.Constant(ir.IntType(32), int(node.value))
+
+    def visit_FloatNode(self, node):
+        return ir.Constant(ir.FloatType(), float(node.value))
+
     def visit_MinusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
         return self.builder.sub(left, right, name="tmp")
 
-    @staticmethod
-    def visit_IntNode(node):
-        return ir.Constant(ir.IntType(32), int(node.value))
-
-    @staticmethod
-    def visit_CharNode(node):
-        return ir.Constant(ir.IntType(8), ord(node.value))
-
-    @staticmethod
-    def visit_FloatNode(node):
-        # Convert the node's value to a float and then to an LLVM float constant
-        return ir.Constant(ir.FloatType(), float(node.value))
 
     def visit_DeclarationNode(self, node):
         # Get the type of the variable being declared
