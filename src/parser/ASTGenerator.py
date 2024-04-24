@@ -268,26 +268,22 @@ class ASTGenerator(Visitor):
             if isinstance(child, DeclarationNode) or isinstance(child, DefinitionNode):
                 # find symbol in scope
                 symbol = self.scope.lookup(child.lvalue.value, remove_unused=True)
-                if not symbol.used:
+                if symbol is not None and not symbol.used:
                     unused_children.append(child)
         for child in unused_children:
             children.remove(child)
 
-    def check_returns(self, node, type):
+    def check_returns(self, node, func_type):
         if node is None:
             return
         if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode):
             for child in node.body:
-                self.check_returns(child, type)
+                self.check_returns(child, func_type)
         for child in node.children:
-            self.check_returns(child, type)
+            self.check_returns(child, func_type)
         if isinstance(node, ReturnNode):
-            if node.return_value is None:
-                ret_type = 'void'
-            else:
-                ret_type = self.get_highest_type(node.return_value)
-            if ret_type != type:
-                self.errors.append(f"line {node.line}:{node.column} return type is not same as function return type!")
+            if node.return_type != func_type:
+                self.errors.append(f"line {node.line}:{node.column} Return type does not match function type!")
 
     def visitProgram(self, ctx):
         children = []
@@ -300,7 +296,6 @@ class ASTGenerator(Visitor):
                     children.append(node)
 
         self.remove_unused_children(children)
-
 
         self.node = ProgramNode(line=ctx.start.line, column=ctx.start.column, original=None, children=children)
         self.check_validity(self.node)
@@ -403,7 +398,8 @@ class ASTGenerator(Visitor):
         for child in body:
             self.check_returns(child, return_type.value)
         # Close scope after function body.
-        self.scope.close_scope()
+        if ctx.getChild(ctx.getChildCount() - 1).getText() != ";":
+            self.scope.close_scope(ignore=False)
         return node
 
     def visitFunctionParams(self, ctx):
@@ -1206,8 +1202,14 @@ class ASTGenerator(Visitor):
         self.set_valid(node, BreakNode)
         self.set_valid(node, ContinueNode)
         if children[2] is not None:
-            self.place_node_before_type(node, children[2], BreakNode)
-            self.place_node_before_type(node, children[2], ContinueNode)
+            for child in node.body:
+                self.place_node_before_type(child, children[2], BreakNode)
+                self.place_node_before_type(child, children[2], ReturnNode)
+                self.place_node_before_type(child, children[2], ContinueNode)
+            if not isinstance(node.body[len(node.body) - 1], BreakNode) and not isinstance(node.body[len(node.body) - 1], ReturnNode) and not isinstance(node.body[len(node.body) - 1], ContinueNode):
+                node.body.append(children[2])
+            else:
+                node.body.insert(len(node.body) - 1, children[2])
         self.scope.close_scope()
         return node if children[0] is None else [children[0], node]
 
@@ -1244,7 +1246,9 @@ class ASTGenerator(Visitor):
                 if ctx.getChildCount() == 2:
                     ret_val = self.visit(ctx.getChild(1))
                     original += f" {expandExpression(ret_val)}"
-                return ReturnNode(line=ctx.start.line, column=ctx.start.column, original=original, ret_val=ret_val)
+                node = ReturnNode(line=ctx.start.line, column=ctx.start.column, original=original, ret_val=ret_val)
+                node.return_type = self.get_highest_type(node.return_value)
+                return node
 
     def visitSwitchStatement(self, ctx):
         children = []

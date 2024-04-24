@@ -289,6 +289,7 @@ def generateLLVMfunction(module, function, node, builder):
         # Define the if-then block
         builder.position_at_start(ifThenBlock)
 
+        # Perform statement content
         for child in node.body:
             generateLLVMfunction(module, function, child, builder)
 
@@ -298,6 +299,38 @@ def generateLLVMfunction(module, function, node, builder):
         # Define the if-end block
         builder.position_at_start(ifEndBlock)
 
+    elif isinstance(node, AST.WhileLoopNode):
+        # while loop
+        builder.comment(node.original)
+
+        # Define conditional branches
+        loopBlock = function.append_basic_block(name="loop")
+        exitBlock = function.append_basic_block(name="exit")
+
+        # Branch to the loop block
+        builder.branch(loopBlock)
+
+        # Set the builder to the loop block
+        builder.position_at_end(loopBlock)
+
+        # Perform statement content
+        for child in node.body:
+            if isinstance(child, AST.BreakNode):
+                builder.branch(exitBlock)
+                break
+            elif isinstance(child, AST.ContinueNode):
+                builder.branch(loopBlock)
+                break
+            generateLLVMfunction(module, function, child, builder)
+
+        # perform comparison
+        comparisonResult = operationRecursive(node.condition, builder, "int", 0)
+
+        # Conditional branch based on the comparison result
+        builder.cbranch(comparisonResult, loopBlock, exitBlock)
+
+        # Set the builder to the exit block
+        builder.position_at_end(exitBlock)
 
 
 def operation(node, builder, defOrAssigment):
@@ -345,7 +378,6 @@ def definition(node, builder, cType, lValue, varLit):
         elif isinstance(node.rvalue, AST.DerefNode):
             # dereference pointer: *a, **a
             ptr = builder.load(definitions[node.rvalue.identifier.value])
-            d = definitions
             while ptr.type != definitions[node.lvalue.value].type:
                 ptr = builder.load(ptr)
             return builder.load(ptr)
@@ -363,7 +395,7 @@ def definition(node, builder, cType, lValue, varLit):
         elif isinstance(node, AST.DerefNode):
             # dereference pointer
             ptr = builder.load(definitions[node.identifier.value])
-            while ptr.type != definitions[lValue].type:
+            while ptr.type != ir.PointerType(ir.IntType(32)):
                 ptr = builder.load(ptr)
             return builder.load(ptr)
 
@@ -372,11 +404,13 @@ def operationRecursive(node, builder, cType, lValue):
     # apply operation and update copy of AST
     if len(node.children) == 2:
         # if left node operation node -> recursive
-        if node.children[0].value in ops:
-            node.children[0] = operationRecursive(node.children[0], builder, cType, lValue)
+        if not isinstance(node.children[0], ir.Instruction):
+            if node.children[0].value in ops:
+                node.children[0] = operationRecursive(node.children[0], builder, cType, lValue)
         # if right node operation node -> recursive
-        if node.children[1].value in ops:
-            node.children[1] = operationRecursive(node.children[1], builder, cType, lValue)
+        if not isinstance(node.children[1], ir.Instruction):
+            if node.children[1].value in ops:
+                node.children[1] = operationRecursive(node.children[1], builder, cType, lValue)
 
         # apply all single operand operations first
         if not isinstance(node.children[0], ir.Instruction):

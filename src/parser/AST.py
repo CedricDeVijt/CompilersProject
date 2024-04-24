@@ -1,5 +1,7 @@
 from graphviz import Source
 
+from src.parser.SymbolTable import Symbol
+
 
 class Node:
     def __init__(self, value: str, line: int, column: int, original_code: str | None, children=None):
@@ -9,9 +11,9 @@ class Node:
         self.original = original_code
         self.children = children if children is not None else []
 
-    def constantFold(self, errors=None, warnings=None, parent=None):
+    def constant_fold(self, errors=None, warnings=None, parent=None):
         if isinstance(self, IfStatementNode) or isinstance(self, WhileLoopNode):
-            self.condition.constantFold()
+            self.condition.constant_fold()
             # Remove conditionals that are never true
             if isinstance(self.condition, CharNode) or isinstance(self.condition, IntNode) or isinstance(self.condition, FloatNode):
                 if float(self.condition.value) == 0:
@@ -20,10 +22,10 @@ class Node:
             delete = []
             for node in self.body:
                 if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
-                    node.rvalue.constantFold(errors, warnings, self)
+                    node.rvalue.constant_fold(errors, warnings, self)
                 elif not isinstance(node, str) and not isinstance(node, list):
                     if node is not None:
-                        result = node.constantFold(errors, warnings, self)
+                        result = node.constant_fold(errors, warnings, self)
                         if result:
                             delete.append(node)
             for node in delete:
@@ -32,10 +34,10 @@ class Node:
             delete = []
             for node in self.children:
                 if isinstance(node, DefinitionNode) or isinstance(node, AssignmentNode):
-                    node.rvalue.constantFold(errors, warnings, self)
+                    node.rvalue.constant_fold(errors, warnings, self)
                 elif not isinstance(node, str) and not isinstance(node, list):
                     if node is not None:
-                        result = node.constantFold(errors, warnings, self)
+                        result = node.constant_fold(errors, warnings, self)
                         if result:
                             delete.append(node)
             for node in delete:

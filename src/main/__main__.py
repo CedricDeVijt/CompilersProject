@@ -4,6 +4,7 @@ import sys
 import antlr4
 from antlr4.error.ErrorListener import ErrorListener
 
+from src.llvm_target.LLVMGenerator import LLVMGenerator
 from src.llvm_target.toLLVM import generateLLVMcodePython
 from src.llvm_target.toLLVM import generateLLVMcodeLite
 from src.antlr_files.GrammarLexer import GrammarLexer as Lexer
@@ -124,7 +125,7 @@ def pre_process_define(lines):
     return lines
 
 
-def generate_ast(path, visitor):
+def generate_ast(path, visitor, constant_fold=True):
     # Preprocessor
     new_code = pre_processing(path)
     # Save new code to file
@@ -155,7 +156,8 @@ def generate_ast(path, visitor):
     # Print Warnings
     for warning in warnings:
         print(f"Warning: {warning}")
-    ast.constantFold(errors=errors, warnings=warnings)
+    if constant_fold:
+        ast.constant_fold(errors=errors, warnings=warnings)
     # Print Errors
     err_str = ''
     if not genAST.has_main:
@@ -168,14 +170,17 @@ def generate_ast(path, visitor):
     return ast, symbolTable
 
 
-def compile_llvm(input_file, visitor, output_file):
+def compile_llvm(input_file, visitor, output_file, run_code):
     ast, symbol_table = generate_ast(input_file, visitor)
     if ast is None:
         print("Failed to generate AST.")
         return
 
     # Open a file to write LLVM code
-    with open('src/llvm_target/output.ll', 'w') as llvm_file:
+    path = f'src/llvm_target/{output_file}'
+    with open(path, 'w') as llvm_file:
+
+        generator = LLVMGenerator(path, ast)
         # Write LLVM header
         llvm_file.write(f"; ModuleID = '{output_file}'\n")
         llvm_file.write(f"source_filename = \"{output_file}\"\n")
@@ -183,8 +188,11 @@ def compile_llvm(input_file, visitor, output_file):
 
         generateLLVMcodeLite(ast, llvm_file)
 
+        if run_code:
+            os.system(f'lli {path}')
 
-def compile_mips(input_file, visitor, output_file):
+
+def compile_mips(input_file, visitor, output_file, run_code):
     # Implement MIPS compilation
     pass
 
@@ -216,17 +224,17 @@ def render_symbol_table_png(input_file, output_file):
 def run(args):
     if args.input:
         if args.render_ast:
-            render_ast(args.input, args.render_ast)
+            render_ast(input_file=args.input, output_file=args.render_ast)
         elif args.render_ast_png:
-            render_ast_png(args.input, args.render_ast_png)
+            render_ast_png(input_file=args.input, output_file=args.render_ast_png)
         elif args.render_symb:
-            render_symbol_table(args.input, args.render_symb)
+            render_symbol_table(input_file=args.input, output_file=args.render_symb)
         elif args.render_symb_png:
-            render_symbol_table_png(args.input, args.render_symb_png)
+            render_symbol_table_png(input_file=args.input, output_file=args.render_symb_png)
         elif args.target_llvm:
-            compile_llvm(args.input, Generator(), args.target_llvm)
+            compile_llvm(input_file=args.input, visitor=Generator(), output_file=args.target_llvm, run_code=True)
         elif args.target_mips:
-            compile_mips(args.input, Generator(), args.target_mips)
+            compile_mips(input_file=args.input, visitor=Generator(), output_file=args.target_mips, run_code=True)
     else:
         print("No input file provided.")
 
