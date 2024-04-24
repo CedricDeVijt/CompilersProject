@@ -103,9 +103,16 @@ class LLVMVisitor:
     def visit_PlusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
-        return self.builder.add(left, right, name="addtmp")
+        return self.builder.add(left, right, name="")
 
-    @staticmethod
-    def visit_IntNode(node):
+    def visit_CharNode(self, node):
+        a = ir.Constant(ir.IntType(8), ord(node.value))
+        return a
+
+    def visit_IntNode(self, node):
         a = ir.Constant(ir.IntType(32), int(node.value))
+        return a
+
+    def visit_FloatNode(self, node):
+        a = ir.Constant(ir.FloatType(), float(node.value))
         return a

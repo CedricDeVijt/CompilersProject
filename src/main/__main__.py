@@ -65,7 +65,7 @@ def generate_ast(path, visitor, constant_fold=True):
 
 
 def compile_llvm(input_file, visitor, output_file, run_code):
-    ast, symbol_table = generate_ast(input_file, visitor)
+    ast, symbol_table = generate_ast(input_file, visitor, False)
     if ast is None:
         print("Failed to generate AST.")
         return
