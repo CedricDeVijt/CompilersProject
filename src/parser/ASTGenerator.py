@@ -1329,9 +1329,6 @@ class ASTGenerator(Visitor):
                     if case1.condition != 'Default' and case2.condition != 'Default':
                         if case1.condition.value == case2.condition.value:
                             self.errors.append(f"line {case1.line}:{case1.column} Duplicate cases in switch statement!")
-        # Remove breaks
-        for case in cases:
-            self.remove_type(case, BreakNode)
         # Make if statements
         if len(cases) == 0:
             return None
@@ -1370,6 +1367,10 @@ class ASTGenerator(Visitor):
                             not_default_condition = LogicalAndNode(line=case.line, column=case.column, original=original, children=[not_default_condition, condition_since_break])
                         condition_since_break = None
                         break
+
+        # Remove breaks
+        for case in cases:
+            self.remove_type(case, BreakNode)
         return ifNodes
 
     def visitSwitchCase(self, ctx):
