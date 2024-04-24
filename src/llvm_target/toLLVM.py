@@ -17,6 +17,8 @@ typedefs = {'int': 'int', 'float': 'float', 'char': 'char'}
 printfNumber = 0
 # literal nodes
 literalNodes = [AST.IntNode, AST.FloatNode, AST.CharNode]
+# enumerations
+enums = {}
 
 
 def generateLLVMcodeLite(node, llvm_file):    # generate LLVM code using LLVM lite
@@ -47,11 +49,14 @@ def generateLLVMcodeLiteBlock(node, module):
         for child in node.body:
             generateLLVMfunction(module, function, child, builder)
         builder.ret(ir.Constant(ir.IntType(32), 0))
+
     elif isinstance(node, AST.CommentNode):  # add comment outside of function if possible
         # add comment to the ir module
         module.add_named_metadata("llvm.module.flags", [ir.MetaDataString(module, node.value)])
+
     elif isinstance(node, AST.TypedefNode):
         typedefs[node.identifier] = node.type
+
 
 
 def generateLLVMfunction(module, function, node, builder):
@@ -170,10 +175,10 @@ def generateLLVMfunction(module, function, node, builder):
         for child in node.body:
             if isinstance(child, AST.BreakNode):
                 builder.branch(exitBlock)
-                break
+                continue
             elif isinstance(child, AST.ContinueNode):
                 builder.branch(loopBlock)
-                break
+                continue
             generateLLVMfunction(module, function, child, builder)
 
         # perform comparison
