@@ -178,14 +178,14 @@ def compile_llvm(input_file, visitor, output_file, run_code):
     # Open a file to write LLVM code
     path = f'src/llvm_target/{output_file}'
     with open(path, 'w') as llvm_file:
-        #visitor = LLVMVisitor()
+        visitor = LLVMVisitor()
 
         # Write LLVM header
         llvm_file.write(f"; ModuleID = '{output_file}'\n")
         llvm_file.write(f"source_filename = \"{output_file}\"\n")
         llvm_file.write("\n")
 
-        #llvm_file.write(str(llvm_code))
+        llvm_file.write(str(llvm_code))
 
     if run_code:
         os.system(f'lli {path}')
