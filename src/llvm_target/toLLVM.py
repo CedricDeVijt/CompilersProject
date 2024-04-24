@@ -36,7 +36,7 @@ def generateLLVMcodeLite(node, llvm_file):    # generate LLVM code using LLVM li
 
     # Write to output file
     output = str(module)
-    llvm_file.write(output.replace('"', ''))
+    llvm_file.write(str(module))
 
 
 def generateLLVMcodeLiteBlock(node, module):
@@ -111,7 +111,6 @@ def generateLLVMfunction(module, function, node, builder):
         builder.comment(node.original)
         printf_ty = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
         printf_func = ir.Function(module, printf_ty, name="printf" + str(printfNumber))
-        printfNumber += 1
         if node.specifier[2] == 'd':
             cType = "int"
         elif node.specifier[2] == 'f':
@@ -124,6 +123,7 @@ def generateLLVMfunction(module, function, node, builder):
             a = getLiteral(cType, node.node.value)
         builder.call(printf_func, [ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), len(node.specifier)), name=".str" + str(printfNumber)).gep(
             (ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), 0))), a])
+        printfNumber += 1
 
     elif isinstance(node, AST.IfStatementNode):
         # if else statement

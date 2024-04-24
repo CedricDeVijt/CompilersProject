@@ -4,6 +4,7 @@ import sys
 import antlr4
 from antlr4.error.ErrorListener import ErrorListener
 
+from src.llvm_target.toLLVM import generateLLVMcodeLite
 from src.antlr_files.GrammarLexer import GrammarLexer as Lexer
 from src.antlr_files.GrammarParser import GrammarParser as Parser
 from src.llvm_target.LLVMGenerator import LLVMVisitor
@@ -71,12 +72,14 @@ def compile_llvm(input_file, visitor, output_file, run_code):
     # Open a file to write LLVM code
     path = f'src/llvm_target/{output_file}'
     with open(path, 'w') as llvm_file:
-        visitor = LLVMVisitor()
+        #visitor = LLVMVisitor(symbol_table)
 
-        visitor.visit(ast)
-        llvm_code = visitor.module
+        #visitor.visit(ast)
+        #llvm_code = visitor.module
 
-        llvm_file.write(str(llvm_code))
+        #llvm_file.write(str(llvm_code))
+
+        generateLLVMcodeLite(ast, llvm_file)
 
     if run_code:
         os.system(f'lli {path}')

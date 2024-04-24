@@ -2,15 +2,22 @@ import platform
 
 from llvmlite import ir
 
+from src.llvm_target.toLLVM import definitions
 from src.parser.AST import *
 
 
 class LLVMVisitor:
-    def __init__(self):
+    def __init__(self, symbol_table):
         self.builder = None
-        self.symbol_table = {}
+        self.symbol_table = symbol_table
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
+        self.ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd",
+                    "LogicalOr", "SL", "SR", "LT", "GT", "LTEQ", "GTEQ", "EQ", "NEQ"]
+        self.singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
+        self.literalNodes = [IntNode, FloatNode, CharNode]
+
+
 
     def visit(self, node):
         method_name = "visit_" + node.__class__.__name__
@@ -126,3 +133,10 @@ class LLVMVisitor:
         self.symbol_table[node.lvalue.value] = alloca
 
         return alloca
+
+    def visit_IdentifierNode(self, node):
+        # Retrieve the LLVM value associated with the variable from the symbol table
+        var_value = definitions.get(node.value)
+        if var_value is None:
+            raise Exception(f"Undefined variable '{node.value}' used before assignment")
+        return var_value
