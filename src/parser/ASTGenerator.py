@@ -1,6 +1,6 @@
 import copy
 
-from src.antlr_files.GrammarParser import GrammarParser as Parser
+from src.antlr_files.GrammarParser import GrammarParser as Parser, GrammarParser
 from src.antlr_files.GrammarVisitor import GrammarVisitor as Visitor
 
 from src.parser.AST import *
@@ -106,9 +106,10 @@ class ASTGenerator(Visitor):
         type_check_dict = {
             DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier.value),
             IdentifierNode: lambda rval: self.lookup_and_get_type(rval.value),
+            CharNode: lambda rval: 'char',
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
-            CharNode: lambda rval: 'char',
+            StringNode: lambda rval: 'string',
             TypeNode: lambda rval: rval.value,
             Node: self.handle_node_type
         }
@@ -1092,6 +1093,10 @@ class ASTGenerator(Visitor):
             node = IntNode(value=ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
         return node
 
+    def visitString(self, ctx):
+        node = StringNode(value=ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
+        return node
+
     def visitExplicitConversion(self, ctx):
         children = []
         for line in ctx.getChildren():
@@ -1110,8 +1115,46 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        original = f"printf({children[0].original}, {children[1].original})"
-        node = PrintfNode(line=ctx.start.line, column=ctx.start.column, original=original, specifier=children[0].specifier, node=children[1])
+        original = f"printf({children[0].original}"
+        for i in range(1, len(children)):
+            original += f", {children[i].original}"
+        original += ")"
+        # Count amount of specifiers
+        specifiers = 0
+        copy_specifier = children[0].specifier
+        i = 0
+        while i < len(copy_specifier) - 1:
+            if i == len(copy_specifier):
+                continue
+            if copy_specifier[i] == '%':
+                char = copy_specifier[i + 1]
+                if char == 'd' or char == 'x' or char == 's' or char == 'f' or char == 'c' or char == '%':
+                    specifiers += 1
+                    if specifiers > len(children) - 1:
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too few arguments for format string!")
+                        return None
+                    format_type = self.get_highest_type(children[specifiers])
+                    if (char == 'd' or char == 'x') and format_type != 'int':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
+                        return None
+                    elif char == 's' and format_type != 'string':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %s but got {format_type}")
+                        return None
+                    elif char == 'f' and format_type != 'float':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %f but got {format_type}")
+                        return None
+                    elif char == 'c' and format_type != 'char':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %c but got {format_type}")
+                        return None
+                    copy_specifier = copy_specifier[:i] + copy_specifier[i + 2:]
+                    i -= 2
+                    continue
+            i += 1
+        if specifiers < len(children) - 1:
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too many arguments for format string!")
+            return None
+
+        node = PrintfNode(line=ctx.start.line, column=ctx.start.column, original=original, specifier=children[0].specifier, children=children[:1])
         if isinstance(children[1], IdentifierNode) or isinstance(children[1], DerefNode):
             identifier = ''
             if isinstance(children[1], IdentifierNode):
