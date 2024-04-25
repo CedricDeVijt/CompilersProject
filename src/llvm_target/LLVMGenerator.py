@@ -137,6 +137,7 @@ class LLVMVisitor:
 
         # Visit function body
         for statement in node.body:
+            self.builder.comment(statement.original)
             self.visit(statement)
 
         # Close scope.
@@ -318,4 +319,5 @@ class LLVMVisitor:
         return alloca
 
     def visit_IdentifierNode(self, node):
-        return self.scope.get_symbol(name=node.value).alloca
+        # Load the value from the alloca
+        return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
