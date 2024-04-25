@@ -1007,7 +1007,7 @@ class ASTGenerator(Visitor):
             return node
         if len(lines) == 2:
             original = f"{lines[0].getText()} {lines[1].getText()}"
-            child0 = self.visit(lines[0])
+            child0 = self.visit(lines[1])
             if isinstance(child0, IdentifierNode):
                 if self.scope.lookup(child0.value) is None:
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")

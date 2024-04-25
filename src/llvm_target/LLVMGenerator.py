@@ -180,11 +180,6 @@ class LLVMVisitor:
         else:
             self.builder.ret_void()
 
-    def visit_PlusNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
-        return self.builder.add(left, right)
-
     def visit_CharNode(self, node):
         return ir.Constant(ir.IntType(8), ord(node.value))
 
@@ -193,6 +188,18 @@ class LLVMVisitor:
 
     def visit_FloatNode(self, node):
         return ir.Constant(ir.FloatType(), float(node.value))
+
+    def visit_LogicalNotNode(self, node):
+        # TODO FIX LOGICAL NOT INSTEAD OF BITWISE NOT - fuck llvm
+        return self.builder.not_(self.visit(node.children[0]))
+
+    def visit_BitwiseNotNode(self, node):
+        return self.builder.not_(self.visit(node.children[0]))
+
+    def visit_PlusNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.add(left, right)
 
     def visit_MinusNode(self, node):
         left = self.visit(node.children[0])
