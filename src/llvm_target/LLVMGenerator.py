@@ -5,6 +5,16 @@ from llvmlite import ir
 from src.parser.AST import *
 from src.parser.SymbolTable import *
 
+unary_ops = {'LogicalNotNode', 'BitwiseNotNode'}
+binary_ops = {'DivNode', 'ModNode', 'MultNode', 'MinusNode', 'PlusNode', 'GTNode', 'LTNode', 'GTEQNode', 'LTEQNode', 'EQNode', 'NEQNode', 'SLNode', 'SRNode', 'BitwiseAndNode', 'BitwiseOrNode', 'BitwiseXorNode', 'LogicalAndNode', 'LogicalOrNode'}
+
+def get_highest_type(node1, node2):
+    if node1.type == ir.FloatType() or node2.type == ir.FloatType():
+        return ir.FloatType()
+    if node1.type == ir.IntType(32) or node2.type == ir.IntType(32):
+        return ir.IntType(32)
+    if node1.type == ir.IntType(8) or node2.type == ir.IntType(8):
+        return ir.IntType(8)
 
 class LLVMVisitor:
     def __init__(self, stdio=False):
@@ -21,6 +31,10 @@ class LLVMVisitor:
             self.builder = function
 
     def visit(self, node):
+        if node.__class__.__name__ in unary_ops:
+            return self.visit_UnaryOp(node)
+        if node.__class__.__name__ in binary_ops:
+            return self.visit_BinaryOp(node, f"visit_{node.__class__.__name__}")
         method_name = "visit_" + node.__class__.__name__
         _visitor = getattr(self, method_name, self.generic_visit)
         return _visitor(node)
@@ -199,109 +213,111 @@ class LLVMVisitor:
         self.printf_string += 1
         return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
 
-    def visit_LogicalNotNode(self, node):
-        # TODO FIX LOGICAL NOT INSTEAD OF BITWISE NOT - fuck llvm
-        return self.builder.not_(self.visit(node.children[0]))
+    def visit_UnaryOp(self, node):
+        if isinstance(node, BitwiseNotNode):
+            return self.builder.not_(self.visit(node.children[0]))
+        # TODO: FIX
+        return self.builder.neg(self.visit(node.children[0]))
 
-    def visit_BitwiseNotNode(self, node):
-        return self.builder.not_(self.visit(node.children[0]))
+    def visit_BinaryOp(self, node, method):
+        child1 = self.visit(node.children[0])
+        child2 = self.visit(node.children[1])
+        if child1.type != child2.type:
+            child1.type = get_highest_type(child1, child2)
+            child2.type = get_highest_type(child1, child2)
+        _visitor = getattr(self, method, self.generic_visit)
+        return _visitor(node, [child1, child2])
 
-    def visit_PlusNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_PlusNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.add(left, right)
 
-    def visit_MinusNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_MinusNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.sub(left, right, name="tmp")
 
-    def visit_MultNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_MultNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.mul(left, right)
 
-    def visit_DivNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_DivNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
+        if children[0].type == ir.FloatType():
+            return self.builder.fdiv(left, right)
         return self.builder.sdiv(left, right)
 
-    def visit_ModNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_ModNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.srem(left, right)
 
-    def visit_BitwiseAndNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_BitwiseAndNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.and_(left, right)
 
-    def visit_BitwiseOrNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_BitwiseOrNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.or_(left, right)
 
-    def visit_BitwiseNotNode(self, node):
-        value = self.visit(node.children[0])
-        return self.builder.not_(value)
-
-    def visit_BitwiseXorNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_BitwiseNotNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.xor(left, right)
 
-    def visit_LogicalAndNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_LogicalAndNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.and_(left, right)
 
-    def visit_LogicalOrNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_LogicalOrNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.or_(left, right)
 
-    def visit_LogicalNotNode(self, node):
-        value = self.visit(node.children[0])
-        return self.builder.not_(value)
-
-    def visit_SLNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_LogicalNotNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.shl(left, right)
 
-    def visit_SRNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_SRNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.ashr(left, right)
 
-    def visit_LTNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_LTNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.zext(self.builder.icmp_signed("<", left, right), ir.IntType(32))
 
-    def visit_GTNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_GTNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.zext(self.builder.icmp_signed(">", left, right), ir.IntType(32))
 
-    def visit_LTEQNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_LTEQNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.zext(self.builder.icmp_signed("<=", left, right), ir.IntType(32))
 
-    def visit_GTEQNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_GTEQNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.zext(self.builder.icmp_signed(">=", left, right), ir.IntType(32))
 
-    def visit_EQNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_EQNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.zext(self.builder.icmp_signed("==", left, right), ir.IntType(32))
 
-    def visit_NEQNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
+    def visit_NEQNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
         return self.builder.zext(self.builder.icmp_signed("!=", left, right), ir.IntType(32))
 
     def visit_DeclarationNode(self, node):
