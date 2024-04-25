@@ -20,7 +20,8 @@ class ThrowingErrorListener(ErrorListener):
 
 def generate_ast(path, visitor, constant_fold=True):
     # Preprocessor
-    new_code = pre_processing(path)
+    stdio_found = [False]
+    new_code = pre_processing(path, stdio_found)
     # Save new code to file
     new_path = 'temp.c'
     i = 2
@@ -60,11 +61,11 @@ def generate_ast(path, visitor, constant_fold=True):
     if err_str != '':
         print(err_str)
         return None, None
-    return ast, symbolTable
+    return ast, symbolTable, stdio_found
 
 
 def compile_llvm(input_file, visitor, output_file, run_code):
-    ast, symbol_table = generate_ast(input_file, visitor, constant_fold=False)
+    ast, symbol_table, stdio_found = generate_ast(input_file, visitor, constant_fold=False)
     if ast is None:
         print("Failed to generate AST.")
         return
@@ -72,14 +73,14 @@ def compile_llvm(input_file, visitor, output_file, run_code):
     # Open a file to write LLVM code
     path = f'src/llvm_target/{output_file}'
     with open(path, 'w') as llvm_file:
-        #visitor = LLVMVisitor(symbol_table)
+        visitor = LLVMVisitor(symbol_table, stdio=stdio_found)
 
-        #visitor.visit(ast)
-        #llvm_code = visitor.module
+        visitor.visit(ast)
+        llvm_code = visitor.module
 
-        #llvm_file.write(str(llvm_code))
+        llvm_file.write(str(llvm_code))
 
-        generateLLVMcodeLite(ast, llvm_file)
+        # generateLLVMcodeLite(ast, llvm_file)
 
     if run_code:
         os.system(f'lli {path}')

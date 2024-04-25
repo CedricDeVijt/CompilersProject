@@ -1121,6 +1121,7 @@ class ASTGenerator(Visitor):
         original += ")"
         # Count amount of specifiers
         specifiers = 0
+        children[0].specifier = children[0].specifier.replace('\"', '')
         copy_specifier = children[0].specifier
         i = 0
         while i < len(copy_specifier) - 1:
@@ -1153,8 +1154,9 @@ class ASTGenerator(Visitor):
         if specifiers < len(children) - 1:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too many arguments for format string!")
             return None
-
-        node = PrintfNode(line=ctx.start.line, column=ctx.start.column, original=original, specifier=children[0].specifier, children=children[:1])
+        node = PrintfNode(line=ctx.start.line, column=ctx.start.column, original=original, specifier=children[0].specifier, children=children[1:])
+        if len(children) == 1:
+            return node
         if isinstance(children[1], IdentifierNode) or isinstance(children[1], DerefNode):
             identifier = ''
             if isinstance(children[1], IdentifierNode):

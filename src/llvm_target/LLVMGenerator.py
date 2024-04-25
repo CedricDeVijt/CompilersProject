@@ -2,22 +2,22 @@ import platform
 
 from llvmlite import ir
 
-from src.llvm_target.toLLVM import definitions
 from src.parser.AST import *
 
 
 class LLVMVisitor:
-    def __init__(self, symbol_table):
+    def __init__(self, symbol_table, stdio=False):
         self.builder = None
         self.symbol_table = symbol_table
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
-        self.ops = ["Plus", "Minus", "Mul", "Div", "Mod", "BitwiseAnd", "BitwiseOr", "BitwiseXor", "LogicalAnd",
-                    "LogicalOr", "SL", "SR", "LT", "GT", "LTEQ", "GTEQ", "EQ", "NEQ"]
-        self.singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
-        self.literalNodes = [IntNode, FloatNode, CharNode]
+        self.printf_string = 0
+        # Add printf and scanf function
+        if stdio:
+            function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
+            function = ir.Function(self.module, function_type, name='printf')
 
-
+            self.builder = function
 
     def visit(self, node):
         method_name = "visit_" + node.__class__.__name__
@@ -35,6 +35,104 @@ class LLVMVisitor:
     def visit_ProgramNode(self, node):
         for child in node.children:
             self.visit(child)
+
+    def visit_PrintfNode(self, node):
+        # specifiers = [node.specifier]
+        # # Split symbols for %d, %x, %s, %f, %c.
+        # i = 0
+        # while i < len(specifiers):
+        #     j = 0
+        #     while j < len(specifiers[i]) - 1:
+        #         if specifiers[i][j] == '%':
+        #             form = specifiers[i][j + 1]
+        #             if form == 'd' or form == 'x' or form == 's' or form == 'f' or form == 'c':
+        #                 if len(specifiers[i]) > j + 2:
+        #                     if specifiers[i][j + 2] != '':
+        #                         specifiers.append(specifiers[i][j + 2:])
+        #                 specifiers[i] = specifiers[i][:j]
+        #                 # Add null terminated character.
+        #                 specifiers[i] += '\00'
+        #                 continue
+        #         j += 1
+        #     i += 1
+        # if len(specifiers) == 1:
+        #     specifiers[0] += '\00'
+        # # Special symbols starting with '\'
+        # i = 0
+        # while i < len(specifiers):
+        #     j = 0
+        #     while j < len(specifiers[i]) - 1:
+        #         if specifiers[i][j] == '\\':
+        #             next_symbol = specifiers[i][j + 1]
+        #             if next_symbol == '\\':
+        #                 specifiers[i] = specifiers[i][:j] + '\\' + specifiers[i][j + 2:]
+        #             elif next_symbol == 'n':
+        #                 specifiers[i] = specifiers[i][:j] + '\n' + specifiers[i][j + 2:]
+        #             elif next_symbol == 't':
+        #                 specifiers[i] = specifiers[i][:j] + '\t' + specifiers[i][j + 2:]
+        #             elif next_symbol == '\'':
+        #                 specifiers[i] = specifiers[i][:j] + '\'' + specifiers[i][j + 2:]
+        #             elif next_symbol == '\"':
+        #                 specifiers[i] = specifiers[i][:j] + '\"' + specifiers[i][j + 2:]
+        #         j += 1
+        #     i += 1
+        # # Create Global Variable For Format String And Call Function.
+        # i = 0
+        # while i < len(specifiers):
+        #     # Create Global Variable For Format String.
+        #     c_string_type = ir.ArrayType(ir.IntType(8), len(specifiers[i]))
+        #     format_string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
+        #     format_string_global.global_constant = True
+        #     format_string_global.initializer = ir.Constant(c_string_type, bytearray(specifiers[i], 'utf8'))
+        #
+        #     # Call Printf Function.
+        #     format_string_pointer = self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))
+        #     self.builder.call(self.module.get_global('printf'), [format_string_pointer])
+        #     self.printf_string += 1
+        #     i += 1
+
+        specifier = node.specifier
+        specifier += '\00'
+        j = 0
+        while j < len(specifier) - 1:
+            if specifier[j] == '\\':
+                next_symbol = specifier[j + 1]
+                if next_symbol == '\\':
+                    specifier = specifier[:j] + '\\' + specifier[j + 2:]
+                elif next_symbol == 'n':
+                    specifier = specifier[:j] + '\n' + specifier[j + 2:]
+                elif next_symbol == 't':
+                    specifier = specifier[:j] + '\t' + specifier[j + 2:]
+                elif next_symbol == '\'':
+                    specifier = specifier[:j] + '\'' + specifier[j + 2:]
+                elif next_symbol == '\"':
+                    specifier = specifier[:j] + '\"' + specifier[j + 2:]
+            j += 1
+        # Create Global Variable For Format String.
+        c_string_type = ir.ArrayType(ir.IntType(8), len(specifier))
+        format_string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
+        format_string_global.global_constant = True
+        format_string_global.initializer = ir.Constant(c_string_type, bytearray(specifier, 'utf8'))
+        self.printf_string += 1
+
+        # Call Printf Function.
+        args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
+        for arg in node.children:
+            if isinstance(arg, CharNode):
+                args.append(ir.Constant(ir.IntType(8), ord(arg.value)))
+            elif isinstance(arg, IntNode):
+                args.append(ir.Constant(ir.IntType(32), int(arg.value)))
+            elif isinstance(arg, FloatNode):
+                args.append(ir.Constant(ir.FloatType(), float(arg.value)))
+            elif isinstance(arg, StringNode):
+                c_string_type = ir.ArrayType(ir.IntType(8), len(arg.value) + 1)
+                string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
+                string_global.global_constant = True
+                string_global.initializer = ir.Constant(c_string_type, bytearray(arg.value + '\00', 'utf8'))
+                args.append(self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8))))
+                self.printf_string += 1
+        self.builder.call(self.module.get_global('printf'), args)
+        self.printf_string += 1
 
     def visit_FunctionNode(self, node):
         # Arguments.
@@ -85,9 +183,6 @@ class LLVMVisitor:
             args.append(self.visit(arg))
         return self.builder.call(self.module.get_global(node.value), args)
 
-    def visit_IdentifierNode(self, node):
-        return self.symbol_table.get(node.value)
-
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue.value
         var_ptr = self.symbol_table.get(var_name)
@@ -105,7 +200,7 @@ class LLVMVisitor:
     def visit_PlusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
-        return self.builder.add(left, right, name="tmp")
+        return self.builder.add(left, right)
 
     def visit_CharNode(self, node):
         return ir.Constant(ir.IntType(8), ord(node.value))
@@ -133,10 +228,3 @@ class LLVMVisitor:
         self.symbol_table[node.lvalue.value] = alloca
 
         return alloca
-
-    def visit_IdentifierNode(self, node):
-        # Retrieve the LLVM value associated with the variable from the symbol table
-        var_value = definitions.get(node.value)
-        if var_value is None:
-            raise Exception(f"Undefined variable '{node.value}' used before assignment")
-        return var_value
