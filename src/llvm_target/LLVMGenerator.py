@@ -165,7 +165,6 @@ class LLVMVisitor:
         var_ptr = self.builder.alloca(value.type, name=var_name)
         self.builder.store(value, var_ptr)
 
-
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue.value
         var_type = self.scope.get_symbol(name=var_name)
@@ -194,6 +193,14 @@ class LLVMVisitor:
     def visit_FloatNode(self, node):
         return ir.Constant(ir.FloatType(), float(node.value))
 
+    def visit_StringNode(self, node):
+        c_string_type = ir.ArrayType(ir.IntType(8), len(node.value))
+        string_global = ir.GlobalVariable(self.module, c_string_type, name=f'string_{self.printf_string}')
+        string_global.global_constant = True
+        string_global.initializer = ir.Constant(c_string_type, bytearray(node.value, 'utf8'))
+        self.printf_string += 1
+        return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
+
     def visit_MinusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
@@ -211,3 +218,6 @@ class LLVMVisitor:
         self.symbol_table[node.lvalue.value] = alloca
 
         return alloca
+
+    def visit_IdentifierNode(self, node):
+        return self.symbol_table[node.value]
