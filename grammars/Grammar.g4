@@ -13,13 +13,15 @@ statement: rvalue SEMICOLON+
          | whileLoop
          | forLoop
          | enumStatement SEMICOLON+
-         | arrayStatement SEMICOLON+
          | jumpStatement SEMICOLON+
          | function
-         | switchStatement;
+         | switchStatement
+         | arrayStatement SEMICOLON+
+         ;
 
 function: (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN scope
-        | (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN SEMICOLON;
+        | (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN SEMICOLON
+        ;
 
 functionParams: (pointer | type) (addr | identifier)
       | functionParams COMMA functionParams;
@@ -54,13 +56,13 @@ string: STRING;
 variable: lvalue '=' rvalue
          | lvalue
          | typedef
-         | arrayDeclaration;
+         ;
 
 lvalue: identifier
       | type identifier
       | pointer identifier
       | deref
-      | arrayElement;
+      ;
 
 rvalue: unaryExpression
       | identifier
@@ -90,26 +92,30 @@ rvalue: unaryExpression
       | functionCall
       | jumpStatement
       | arrayElement
-      | arrayInitializer;
+      ;
 
 conditionalExpression: GREATER_THAN rvalue
                      | LESS_THAN rvalue
                      | GREATER_EQUAL rvalue
                      | LESS_EQUAL rvalue
                      | EQUALS rvalue
-                     | NOT_EQUAL rvalue;
+                     | NOT_EQUAL rvalue
+                     ;
 
 jumpStatement: 'break'
              | 'continue'
-             | 'return' rvalue?;
+             | 'return' rvalue?
+             ;
 
 unaryExpression: (PLUS | MINUS)? (literal | identifier | deref)
                | (PLUS MINUS)+ (PLUS)? (literal | identifier | deref)
-               | (MINUS PLUS)+ (MINUS)? (literal | identifier | deref);
+               | (MINUS PLUS)+ (MINUS)? (literal | identifier | deref)
+               ;
 
 literal: INT
        | FLOAT
-       | CHAR;
+       | CHAR
+       ;
 
 explicitConversion: '(' + type + ')' rvalue;
 
@@ -122,7 +128,8 @@ addr: '&'+ identifier;
 enumDeclaration: 'enum'  IDENTIFIER '{' IDENTIFIER (','  IDENTIFIER )*'}';
 
 enumStatement: enumVariableDefinition
-             | enumVariableDeclaration;
+             | enumVariableDeclaration
+             ;
 
 enumVariableDefinition: 'enum' IDENTIFIER IDENTIFIER '=' IDENTIFIER;
 enumVariableDeclaration: 'enum' IDENTIFIER IDENTIFIER;
@@ -133,22 +140,28 @@ postFixDecrement: lvalue DECREMENT;
 preFixIncrement: INCREMENT lvalue;
 preFixDecrement: DECREMENT lvalue;
 
+arrayStatement: arrayDeclaration
+              | arrayAssignment
+              | arrayDefinition
+              ;
+
+arrayDeclaration: type identifier ('[' INT ']')+;
+arrayAssignment: identifier ('[' INT ']')+ '=' (rvalue | array)
+               | identifier '=' array
+               ;
+arrayDefinition: type identifier ('[' INT ']')+ '=' array;
+
+array: LBRACE (rvalue | array) (',' (rvalue | array))* RBRACE;
+
+// New rule for array element
+arrayElement: identifier ('[' rvalue ']')+;
+
 typedef: 'typedef' type IDENTIFIER;
 
 type: 'const'* ('int' | 'float' | 'char' | 'void' | IDENTIFIER);
 
 identifier: IDENTIFIER;
 comment: COMMENT;
-
-arrayStatement: arrayDeclaration
-              | arrayDefinition '=' rvalue;
-
-arrayDeclaration: type IDENTIFIER ('[' INT ']')+;
-arrayDefinition: type IDENTIFIER ('[' INT ']')+ '=' (arrayInitializer | identifier);
-
-arrayInitializer: '{' (rvalue (',' rvalue)*)? '}';
-
-arrayElement: identifier ('[' (rvalue | identifier) ']')+;
 
 // lexer rules
 LPAREN: '(';
