@@ -65,18 +65,8 @@ class LLVMVisitor:
         # Call Printf Function.
         args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
         for arg in node.children:
-            if isinstance(arg, CharNode):
-                args.append(ir.Constant(ir.IntType(8), ord(arg.value)))
-            elif isinstance(arg, IntNode):
-                args.append(ir.Constant(ir.IntType(32), int(arg.value)))
-            elif isinstance(arg, FloatNode):
-                args.append(ir.Constant(ir.FloatType(), float(arg.value)))
-            elif isinstance(arg, StringNode):
-                c_string_type = ir.ArrayType(ir.IntType(8), len(arg.value) + 1)
-                string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
-                string_global.global_constant = True
-                string_global.initializer = ir.Constant(c_string_type, bytearray(arg.value + '\00', 'utf8'))
-                args.append(self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8))))
+            args.append(self.visit(arg))
+            if isinstance(arg, StringNode):
                 self.printf_string += 1
         self.builder.call(self.module.get_global('printf'), args)
         self.printf_string += 1
