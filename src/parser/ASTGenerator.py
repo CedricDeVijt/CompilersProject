@@ -161,10 +161,12 @@ class ASTGenerator(Visitor):
         if isinstance(symbols, Symbol):
             symbols = [symbols]
             for symbol in symbols:
-                similar = all(self.get_highest_type(param) == self.get_highest_type(arg) for param, arg in
-                              zip(symbol.params, rval.arguments))
+                if len(symbol.params) != len(rval.arguments):
+                    continue
+
+                similar = all(self.get_highest_type(param[0]) == self.get_highest_type(arg) for param, arg in zip(symbol.params, rval.arguments))
                 if similar:
-                    return symbol.type
+                    return self.get_highest_type(symbol.type)
         return 'char'
 
     def implicit_type_conversion(self, lvalType, rval):
@@ -439,7 +441,6 @@ class ASTGenerator(Visitor):
             similar = True
             params = symbol.params
             if len(args) != len(params):
-                similar = False
                 continue
             for i in range(0, len(params)):
                 type1 = self.get_highest_type(params[i][0])

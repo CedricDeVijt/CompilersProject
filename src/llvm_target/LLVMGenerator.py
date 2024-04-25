@@ -3,12 +3,13 @@ import platform
 from llvmlite import ir
 
 from src.parser.AST import *
+from src.parser.SymbolTable import *
 
 
 class LLVMVisitor:
-    def __init__(self, symbol_table, stdio=False):
+    def __init__(self, stdio=False):
         self.builder = None
-        self.symbol_table = symbol_table
+        self.symbol_table = SymbolTable()
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0

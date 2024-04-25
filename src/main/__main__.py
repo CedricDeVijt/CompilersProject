@@ -60,7 +60,7 @@ def generate_ast(path, visitor, constant_fold=True):
         err_str += f"\nError at {error}"
     if err_str != '':
         print(err_str)
-        return None, None
+        return None, None, None
     return ast, symbolTable, stdio_found
 
 
@@ -73,7 +73,7 @@ def compile_llvm(input_file, visitor, output_file, run_code):
     # Open a file to write LLVM code
     path = f'src/llvm_target/{output_file}'
     with open(path, 'w') as llvm_file:
-        visitor = LLVMVisitor(symbol_table, stdio=stdio_found)
+        visitor = LLVMVisitor(stdio=stdio_found)
 
         visitor.visit(ast)
         llvm_code = visitor.module
