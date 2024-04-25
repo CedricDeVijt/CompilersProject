@@ -92,25 +92,25 @@ def compile_mips(input_file, visitor, output_file, run_code):
 
 
 def render_ast(input_file, output_file):
-    ast, _ = generate_ast(input_file, Generator())
+    ast, _, _ = generate_ast(input_file, Generator())
     if ast is not None:
         DotGenerator.generateASTDot(AST_tree=ast, output_filename=output_file)
 
 
 def render_ast_png(input_file, output_file):
-    ast, _ = generate_ast(input_file, Generator())
+    ast, _, _ = generate_ast(input_file, Generator())
     if ast is not None:
         DotGenerator.generateASTDot(AST_tree=ast, output_filename=output_file, format='png')
 
 
 def render_symbol_table(input_file, output_file):
-    _, symbol_table = generate_ast(input_file, Generator())
+    _, symbol_table, _ = generate_ast(input_file, Generator())
     if symbol_table is not None:
         DotGenerator.generateSymbolTableDot(symbol_table, output_file, format='dot')
 
 
 def render_symbol_table_png(input_file, output_file):
-    _, symbol_table = generate_ast(input_file, Generator())
+    _, symbol_table, _ = generate_ast(input_file, Generator())
     if symbol_table is not None:
         DotGenerator.generateSymbolTableDot(symbol_table, output_file, format='png')
 

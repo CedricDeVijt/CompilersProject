@@ -18,10 +18,10 @@ class DotGenerator:
         if output_filename.endswith(".dot") or output_filename.endswith(".png"):
             output_filename = output_filename[:-4]
 
-        dot.render(f'output/{output_filename}', view=True, format=format)
+        dot.render(f'{output_filename}', view=True, format=format)
 
         # remove the temporary file created by the render method
-        os.remove(f'output/{output_filename}')
+        os.remove(f'{output_filename}')
 
     @staticmethod
     def _generateASTDot(dot, node):
@@ -50,9 +50,9 @@ class DotGenerator:
         if output_filename.endswith(".dot") or output_filename.endswith(".png"):
             output_filename = output_filename[:-4]
 
-        dot.render(f'output/{output_filename}', view=True, format=file_format)
+        dot.render(f'{output_filename}', view=True, format=file_format)
         # remove the temporary file created by the render method
-        os.remove(f'output/{output_filename}')
+        os.remove(f'{output_filename}')
 
     @staticmethod
     def _generateSymbolTableDot(dot, node):
