@@ -109,6 +109,7 @@ class LLVMVisitor:
             symbol = Symbol(name=param_name, var_type=param_type, const=const, symbol_type='variable', defined=True,
                             params=None)
             #symbol.alloca =
+            symbol = Symbol(name=param_name, var_type=param_type, const=const, symbol_type='variable', defined=True, params=None)
             symbols = self.scope.get_symbol(name=param_name)
             if not symbols:
                 self.scope.add_symbol(symbol)
