@@ -6,6 +6,7 @@ from src.parser.AST import *
 from src.parser.SymbolTable import *
 
 
+
 class LLVMVisitor:
     def __init__(self, stdio=False):
         self.builder = None
@@ -13,6 +14,7 @@ class LLVMVisitor:
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0
+        self.literalNodes = [IntNode, FloatNode, CharNode, StringNode]
         # Add printf and scanf function
         if stdio:
             function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
@@ -65,18 +67,8 @@ class LLVMVisitor:
         # Call Printf Function.
         args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
         for arg in node.children:
-            if isinstance(arg, CharNode):
-                args.append(ir.Constant(ir.IntType(8), ord(arg.value)))
-            elif isinstance(arg, IntNode):
-                args.append(ir.Constant(ir.IntType(32), int(arg.value)))
-            elif isinstance(arg, FloatNode):
-                args.append(ir.Constant(ir.FloatType(), float(arg.value)))
-            elif isinstance(arg, StringNode):
-                c_string_type = ir.ArrayType(ir.IntType(8), len(arg.value) + 1)
-                string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
-                string_global.global_constant = True
-                string_global.initializer = ir.Constant(c_string_type, bytearray(arg.value + '\00', 'utf8'))
-                args.append(self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8))))
+            args.append(self.visit(arg))
+            if isinstance(arg, StringNode):
                 self.printf_string += 1
         self.builder.call(self.module.get_global('printf'), args)
         self.printf_string += 1
@@ -158,12 +150,24 @@ class LLVMVisitor:
             args.append(self.visit(arg))
         return self.builder.call(self.module.get_global(node.value), args)
 
-    def visit_AssignmentNode(self, node):
+    def visit_DefinitionNode(self, node):
+        # get type and value
+        var_type = node.type[0].value
         var_name = node.lvalue.value
-        var_ptr = self.symbol_table.get(var_name)
+        # place type in symbol table
+        symbol = Symbol(name=var_name, var_type=var_type)
+        if self.scope.get_symbol(name=var_name) is None:
+            self.scope.add_symbol(symbol)
+        #print(self.scope.lookup(name=var_name).type)
+        var = self.visit(node.lvalue)
         value = self.visit(node.rvalue)
 
-        self.builder.store(value, var_ptr)
+        #self.builder.store(value, var_ptr)
+
+    def visit_AssignmentNode(self, node):
+        var_type = node.type[0].value
+        var_name = node.lvalue.value
+
 
     def visit_ReturnNode(self, node):
         if node.return_value is not None:
@@ -186,6 +190,13 @@ class LLVMVisitor:
     def visit_FloatNode(self, node):
         return ir.Constant(ir.FloatType(), float(node.value))
 
+    def visit_StringNode(self, node):
+        c_string_type = ir.ArrayType(ir.IntType(8), len(node.value) + 1)
+        string_global = ir.GlobalVariable(self.module, c_string_type, name=f'string_{self.printf_string}')
+        string_global.global_constant = True
+        string_global.initializer = ir.Constant(c_string_type, bytearray(node.value + '\00', 'utf8'))
+        return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
+
     def visit_MinusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
@@ -203,3 +214,6 @@ class LLVMVisitor:
         self.symbol_table[node.lvalue.value] = alloca
 
         return alloca
+
+    def visit_IdentifierNode(self, node):
+        ...

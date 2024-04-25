@@ -14,11 +14,12 @@ singleOps = ["PreFix", "BitwiseNot", "LogicalNot", "Deref"]
 # typedefs
 typedefs = {'int': 'int', 'float': 'float', 'char': 'char'}
 # printf number
-printfNumber = 0
+printf_string = 0
 # literal nodes
 literalNodes = [AST.IntNode, AST.FloatNode, AST.CharNode]
 # enumerations
 enums = {}
+
 
 
 def generateLLVMcodeLite(node, llvm_file):    # generate LLVM code using LLVM lite
@@ -112,6 +113,8 @@ def generateLLVMfunction(module, function, node, builder):
             builder.comment(comment)
 
     elif isinstance(node, AST.PrintfNode):
+        global printf_string
+        """
         # printf
         builder.comment(node.original)
         printf_ty = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
@@ -129,6 +132,50 @@ def generateLLVMfunction(module, function, node, builder):
         builder.call(printf_func, [ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), len(node.specifier)), name=".str" + str(printfNumber)).gep(
             (ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), 0))), a])
         printfNumber += 1
+        """
+        specifier = node.specifier
+        specifier += '\00'
+        j = 0
+        while j < len(specifier) - 1:
+            if specifier[j] == '\\':
+                next_symbol = specifier[j + 1]
+                if next_symbol == '\\':
+                    specifier = specifier[:j] + '\\' + specifier[j + 2:]
+                elif next_symbol == 'n':
+                    specifier = specifier[:j] + '\n' + specifier[j + 2:]
+                elif next_symbol == 't':
+                    specifier = specifier[:j] + '\t' + specifier[j + 2:]
+                elif next_symbol == '\'':
+                    specifier = specifier[:j] + '\'' + specifier[j + 2:]
+                elif next_symbol == '\"':
+                    specifier = specifier[:j] + '\"' + specifier[j + 2:]
+            j += 1
+        # Create Global Variable For Format String.
+        c_string_type = ir.ArrayType(ir.IntType(8), len(specifier))
+        format_string_global = ir.GlobalVariable(module, c_string_type, name=f'printf_string_{printf_string}')
+        format_string_global.global_constant = True
+        format_string_global.initializer = ir.Constant(c_string_type, bytearray(specifier, 'utf8'))
+        printf_string += 1
+
+        # Call Printf Function.
+        args = [builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
+        for arg in node.children:
+            if isinstance(arg, AST.CharNode):
+                args.append(ir.Constant(ir.IntType(8), ord(arg.value)))
+            elif isinstance(arg, AST.IntNode):
+                args.append(ir.Constant(ir.IntType(32), int(arg.value)))
+            elif isinstance(arg, AST.FloatNode):
+                args.append(ir.Constant(ir.FloatType(), float(arg.value)))
+            elif isinstance(arg, AST.StringNode):
+                c_string_type = ir.ArrayType(ir.IntType(8), len(arg.value) + 1)
+                string_global = ir.GlobalVariable(module, c_string_type,
+                                                  name=f'printf_string_{printf_string}')
+                string_global.global_constant = True
+                string_global.initializer = ir.Constant(c_string_type, bytearray(arg.value + '\00', 'utf8'))
+                args.append(builder.bitcast(string_global, ir.PointerType(ir.IntType(8))))
+                printf_string += 1
+        builder.call(module.get_global('printf'), args)
+        printf_string += 1
 
     elif isinstance(node, AST.IfStatementNode):
         # if else statement
@@ -198,6 +245,9 @@ def operation(node, builder, defOrAssigment):
     # create LLVM variable
     if defOrAssigment:
         # create var for definition
+        #todo: hier verder
+        if isinstance(node.typue, list):
+            node.type = ["int"]
         if node.type[0].value.isnumeric():
             var = builder.alloca(getLLVMtype(typedefs[types[node.rvalue.value.value][0]], int(node.type[0].value)), name=node.lvalue.value)
             types[node.lvalue.value] = [typedefs[types[node.rvalue.value.value][0]], node.type[0].value]
