@@ -9,7 +9,7 @@ from src.parser.SymbolTable import *
 class LLVMVisitor:
     def __init__(self, stdio=False):
         self.builder = None
-        self.symbol_table = SymbolTable()
+        self.scope = SymbolTableTree()
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0
@@ -82,6 +82,31 @@ class LLVMVisitor:
         self.printf_string += 1
 
     def visit_FunctionNode(self, node):
+        # Open new scope.
+        self.scope.open_scope()
+        # Add arguments to scope.
+        # Add params
+        for param in node.params:
+            param_type = param[0]
+            param_name = param[1]
+            const = False
+            # Get name
+            if isinstance(param_name, IdentifierNode):
+                param_name = param_name.value
+            elif isinstance(param_name, AddrNode):
+                param_name = param_name.value.value
+            # Get type
+            if isinstance(param_type, PointerNode):
+                param_type = param_type.type
+            if isinstance(param_type, list):
+                const = True
+                param_type = param_type[len(param_type) - 1]
+            param_type = param_type.value
+            symbol = Symbol(name=param_name, var_type=param_type, const=const, symbol_type='variable', defined=True,
+                            params=None)
+            symbols = self.scope.get_symbol(name=param_name)
+            if not symbols:
+                self.scope.add_symbol(symbol)
         # Arguments.
         args = []
         for param in node.params:
@@ -123,6 +148,9 @@ class LLVMVisitor:
         # Visit function body
         for statement in node.body:
             self.visit(statement)
+
+        # Close scope.
+        self.scope.close_scope()
 
     def visit_FunctionCallNode(self, node):
         args = []
