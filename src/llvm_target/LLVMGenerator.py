@@ -37,60 +37,6 @@ class LLVMVisitor:
             self.visit(child)
 
     def visit_PrintfNode(self, node):
-        # specifiers = [node.specifier]
-        # # Split symbols for %d, %x, %s, %f, %c.
-        # i = 0
-        # while i < len(specifiers):
-        #     j = 0
-        #     while j < len(specifiers[i]) - 1:
-        #         if specifiers[i][j] == '%':
-        #             form = specifiers[i][j + 1]
-        #             if form == 'd' or form == 'x' or form == 's' or form == 'f' or form == 'c':
-        #                 if len(specifiers[i]) > j + 2:
-        #                     if specifiers[i][j + 2] != '':
-        #                         specifiers.append(specifiers[i][j + 2:])
-        #                 specifiers[i] = specifiers[i][:j]
-        #                 # Add null terminated character.
-        #                 specifiers[i] += '\00'
-        #                 continue
-        #         j += 1
-        #     i += 1
-        # if len(specifiers) == 1:
-        #     specifiers[0] += '\00'
-        # # Special symbols starting with '\'
-        # i = 0
-        # while i < len(specifiers):
-        #     j = 0
-        #     while j < len(specifiers[i]) - 1:
-        #         if specifiers[i][j] == '\\':
-        #             next_symbol = specifiers[i][j + 1]
-        #             if next_symbol == '\\':
-        #                 specifiers[i] = specifiers[i][:j] + '\\' + specifiers[i][j + 2:]
-        #             elif next_symbol == 'n':
-        #                 specifiers[i] = specifiers[i][:j] + '\n' + specifiers[i][j + 2:]
-        #             elif next_symbol == 't':
-        #                 specifiers[i] = specifiers[i][:j] + '\t' + specifiers[i][j + 2:]
-        #             elif next_symbol == '\'':
-        #                 specifiers[i] = specifiers[i][:j] + '\'' + specifiers[i][j + 2:]
-        #             elif next_symbol == '\"':
-        #                 specifiers[i] = specifiers[i][:j] + '\"' + specifiers[i][j + 2:]
-        #         j += 1
-        #     i += 1
-        # # Create Global Variable For Format String And Call Function.
-        # i = 0
-        # while i < len(specifiers):
-        #     # Create Global Variable For Format String.
-        #     c_string_type = ir.ArrayType(ir.IntType(8), len(specifiers[i]))
-        #     format_string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
-        #     format_string_global.global_constant = True
-        #     format_string_global.initializer = ir.Constant(c_string_type, bytearray(specifiers[i], 'utf8'))
-        #
-        #     # Call Printf Function.
-        #     format_string_pointer = self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))
-        #     self.builder.call(self.module.get_global('printf'), [format_string_pointer])
-        #     self.printf_string += 1
-        #     i += 1
-
         specifier = node.specifier
         specifier += '\00'
         j = 0
