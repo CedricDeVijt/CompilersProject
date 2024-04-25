@@ -156,15 +156,17 @@ class LLVMVisitor:
         self.scope.close_scope()
 
     def visit_DefinitionNode(self, node):
+        # definition vars
         var_name = node.lvalue.value
         var_type = node.type[0].value
-        symbol = Symbol(name=var_name, var_type=var_type)
-        if self.scope.get_symbol(name=var_name) is None:
-            self.scope.add_symbol(symbol)
         value = self.visit(node.rvalue)
         var_ptr = self.builder.alloca(value.type, name=var_name)
+        # add to symbol table
+        symbol = Symbol(name=var_name, var_type=var_type)
+        symbol.alloca = var_ptr
+        if self.scope.get_symbol(name=var_name) is None:
+            self.scope.add_symbol(symbol)
         self.builder.store(value, var_ptr)
-
 
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue.value
@@ -179,11 +181,6 @@ class LLVMVisitor:
             self.builder.ret(value)
         else:
             self.builder.ret_void()
-
-    def visit_PlusNode(self, node):
-        left = self.visit(node.children[0])
-        right = self.visit(node.children[1])
-        return self.builder.add(left, right)
 
     def visit_CharNode(self, node):
         return ir.Constant(ir.IntType(8), ord(node.value))
@@ -209,10 +206,103 @@ class LLVMVisitor:
     def visit_BitwiseNotNode(self, node):
         return self.builder.not_(self.visit(node.children[0]))
 
+    def visit_PlusNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.add(left, right)
+
     def visit_MinusNode(self, node):
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
         return self.builder.sub(left, right, name="tmp")
+
+    def visit_MultNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.mul(left, right)
+
+    def visit_DivNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.sdiv(left, right)
+
+    def visit_ModNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.srem(left, right)
+
+    def visit_BitwiseAndNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.and_(left, right)
+
+    def visit_BitwiseOrNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.or_(left, right)
+
+    def visit_BitwiseNotNode(self, node):
+        value = self.visit(node.children[0])
+        return self.builder.not_(value)
+
+    def visit_BitwiseXorNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.xor(left, right)
+
+    def visit_LogicalAndNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.and_(left, right)
+
+    def visit_LogicalOrNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.or_(left, right)
+
+    def visit_LogicalNotNode(self, node):
+        value = self.visit(node.children[0])
+        return self.builder.not_(value)
+
+    def visit_SLNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.shl(left, right)
+
+    def visit_SRNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.ashr(left, right)
+
+    def visit_LTNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.zext(self.builder.icmp_signed("<", left, right), ir.IntType(32))
+
+    def visit_GTNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.zext(self.builder.icmp_signed(">", left, right), ir.IntType(32))
+
+    def visit_LTEQNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.zext(self.builder.icmp_signed("<=", left, right), ir.IntType(32))
+
+    def visit_GTEQNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.zext(self.builder.icmp_signed(">=", left, right), ir.IntType(32))
+
+    def visit_EQNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.zext(self.builder.icmp_signed("==", left, right), ir.IntType(32))
+
+    def visit_NEQNode(self, node):
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+        return self.builder.zext(self.builder.icmp_signed("!=", left, right), ir.IntType(32))
 
     def visit_DeclarationNode(self, node):
         # Get the type of the variable being declared
@@ -228,4 +318,4 @@ class LLVMVisitor:
         return alloca
 
     def visit_IdentifierNode(self, node):
-        return self.symbol_table[node.value]
+        return self.scope.get_symbol(name=node.value).alloca
