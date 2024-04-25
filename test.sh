@@ -71,6 +71,12 @@ while getopts i: flag; do
     esac
 done
 
+# remove the output directory if it exists with files in
+if [ -d "$OUTPUT_DIR" ]; then
+    rm -r "$OUTPUT_DIR"
+fi
+
+
 # Start processing from the input directory
 process_directory "$INPUT_DIR"
 

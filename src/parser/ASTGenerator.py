@@ -133,7 +133,9 @@ class ASTGenerator(Visitor):
         if symbols:
             if isinstance(symbols.type, str):
                 return symbols.type
-            return symbols.type.type.value
+            if isinstance(symbols.type, PointerNode):
+                return symbols.type.type[len(symbols.type.type) - 1].value
+            return symbols.type.value
 
     def handle_node_type(self, rval):
         if isinstance(rval, PointerNode):
@@ -946,12 +948,10 @@ class ASTGenerator(Visitor):
                     return node
             if isinstance(child2, IdentifierNode):
                 if self.scope.lookup(child2.value) is None:
-                    self.errors.append(
-                        f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
                     return node
-                if self.scope.lookup(child2.value).symbol_type != 'variable':
-                    self.errors.append(
-                        f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
+                if self.scope.lookup(child2.value).symbol_type != 'variable' and self.scope.lookup(child2.value).symbol_type != 'enum':
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child2.value + "\' not declared yet!")
                     return node
             match str(lines[1]):
                 case "/":
@@ -1150,6 +1150,8 @@ class ASTGenerator(Visitor):
                         return None
                     copy_specifier = copy_specifier[:i] + copy_specifier[i + 2:]
                     i -= 2
+                    if i < 0:
+                        i = 0
                     continue
             i += 1
         if specifiers < len(children) - 1:

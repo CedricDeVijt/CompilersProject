@@ -1,3 +1,6 @@
+import os
+
+
 def pre_processing(path, stdio_found=None):
     lines = []
     if stdio_found is None:
