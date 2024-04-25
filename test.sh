@@ -95,7 +95,7 @@ echo $SUCCESS_STRING
 
 # Print summary
 echo ""
-echo " $(printf '=%.0s' $(seq 1 $((TERMINAL_WIDTH/2 - ${#SUCCESSFUL_TESTS} - ${#UNSUCCESSFUL_TESTS} - 11)))) $SUCCESSFUL_TESTS passed, $UNSUCCESSFUL_TESTS failed $(printf '=%.0s' $(seq 1 $((TERMINAL_WIDTH/2 - ${#SUCCESSFUL_TESTS} - ${#UNSUCCESSFUL_TESTS} - 11))))"
+echo " $(printf '=%.0s' $(seq 1 $((TERMINAL_WIDTH/2 - ${#SUCCESSFUL_TESTS} - ${#UNSUCCESSFUL_TESTS} - 8)))) $SUCCESSFUL_TESTS passed, $UNSUCCESSFUL_TESTS failed $(printf '=%.0s' $(seq 1 $((TERMINAL_WIDTH/2 - ${#SUCCESSFUL_TESTS} - ${#UNSUCCESSFUL_TESTS} - 8))))"
 echo ""
 
 # Print paths of failed tests
