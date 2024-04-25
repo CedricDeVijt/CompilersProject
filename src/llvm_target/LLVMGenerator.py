@@ -189,6 +189,13 @@ class LLVMVisitor:
     def visit_FloatNode(self, node):
         return ir.Constant(ir.FloatType(), float(node.value))
 
+    def visit_StringNode(self, node):
+        c_string_type = ir.ArrayType(ir.IntType(8), len(node.value) + 1)
+        string_global = ir.GlobalVariable(self.module, c_string_type, name=f'string_{self.printf_string}')
+        string_global.global_constant = True
+        string_global.initializer = ir.Constant(c_string_type, bytearray(node.value + '\00', 'utf8'))
+        return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
+
     def visit_LogicalNotNode(self, node):
         # TODO FIX LOGICAL NOT INSTEAD OF BITWISE NOT - fuck llvm
         return self.builder.not_(self.visit(node.children[0]))
