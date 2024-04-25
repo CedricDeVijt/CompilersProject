@@ -158,6 +158,15 @@ class LLVMVisitor:
             args.append(self.visit(arg))
         return self.builder.call(self.module.get_global(node.value), args)
 
+    def visit_IfStatementNode(self, node):
+        # Open scope.
+        self.scope.open_scope()
+
+        #
+
+        # Close scope.
+        self.scope.close_scope()
+
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue.value
         var_ptr = self.symbol_table.get(var_name)

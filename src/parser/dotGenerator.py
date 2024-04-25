@@ -27,7 +27,7 @@ class DotGenerator:
     def _generateASTDot(dot, node):
         if isinstance(node, str):
             return
-        if node.children:
+        if node.children and node.children[0] is not None:
             dot.node(str(id(node)), str(expandExpression(node)))
             for child in node.children:
                 DotGenerator._generateASTDot(dot, child)
