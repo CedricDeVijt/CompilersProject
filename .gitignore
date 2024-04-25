@@ -162,5 +162,7 @@ cython_debug/
 
 /.idea
 .DS_Store
-/tests/example1.c
 output
+!/tests/example1.c
+/tests/example1.c
+tests/example1.c
