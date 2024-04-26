@@ -189,7 +189,7 @@ class LLVMVisitor:
         var_name = node.lvalue.value
         var_type = self.scope.get_symbol(name=var_name)
         value = self.visit(node.rvalue)
-        var_ptr = self.builder.alloca(value.type, name=var_name)
+        var_ptr = self.scope.get_symbol(name=var_name).alloca
         self.builder.store(value, var_ptr)
 
     def visit_ReturnNode(self, node):
