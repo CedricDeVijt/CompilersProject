@@ -228,7 +228,7 @@ class LLVMVisitor:
         return ir.Constant(ir.IntType(32), int(node.value))
 
     def visit_CharNode(self, node):
-        return ir.Constant(ir.IntType(8), ord(node.value))
+        return ir.Constant(ir.IntType(8), ord(int(node.value)))
 
     def visit_FloatNode(self, node):
         return ir.Constant(ir.FloatType(), float(node.value))
