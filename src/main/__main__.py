@@ -106,13 +106,13 @@ def render_ast_png(input_file, output_file):
 def render_symbol_table(input_file, output_file):
     _, symbol_table, _ = generate_ast(input_file, Generator())
     if symbol_table is not None:
-        DotGenerator.generateSymbolTableDot(symbol_table, output_file, format='dot')
+        DotGenerator.generateSymbolTableDot(symbol_table, output_file, file_format='dot')
 
 
 def render_symbol_table_png(input_file, output_file):
     _, symbol_table, _ = generate_ast(input_file, Generator())
     if symbol_table is not None:
-        DotGenerator.generateSymbolTableDot(symbol_table, output_file, format='png')
+        DotGenerator.generateSymbolTableDot(symbol_table, output_file, file_format='png')
 
 
 def run(args):
