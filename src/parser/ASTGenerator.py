@@ -110,7 +110,7 @@ class ASTGenerator(Visitor):
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
             StringNode: lambda rval: 'string',
-            TypeNode: lambda rval: rval.value,
+            TypeNode: lambda rval: self.handle_node_type(rval),
             Node: self.handle_node_type
         }
 
