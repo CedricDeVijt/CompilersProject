@@ -8,13 +8,6 @@ from src.parser.SymbolTable import *
 unary_ops = {'LogicalNotNode', 'BitwiseNotNode'}
 binary_ops = {'DivNode', 'ModNode', 'MultNode', 'MinusNode', 'PlusNode', 'GTNode', 'LTNode', 'GTEQNode', 'LTEQNode', 'EQNode', 'NEQNode', 'SLNode', 'SRNode', 'BitwiseAndNode', 'BitwiseOrNode', 'BitwiseXorNode', 'LogicalAndNode', 'LogicalOrNode'}
 
-def get_highest_type(node1, node2):
-    if node1.type == ir.FloatType() or node2.type == ir.FloatType():
-        return ir.FloatType()
-    if node1.type == ir.IntType(32) or node2.type == ir.IntType(32):
-        return ir.IntType(32)
-    if node1.type == ir.IntType(8) or node2.type == ir.IntType(8):
-        return ir.IntType(8)
 
 class LLVMVisitor:
     def __init__(self, stdio=False):
@@ -29,6 +22,76 @@ class LLVMVisitor:
             function = ir.Function(self.module, function_type, name='printf')
 
             self.builder = function
+
+    def get_highest_type(self, rval):
+        type_check_dict = {
+            DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier.value),
+            IdentifierNode: lambda rval: self.lookup_and_get_type(rval.value),
+            CharNode: lambda rval: 'char',
+            IntNode: lambda rval: 'int',
+            FloatNode: lambda rval: 'float',
+            StringNode: lambda rval: 'string',
+            TypeNode: lambda rval: rval.value,
+            Node: self.handle_node_type
+        }
+
+        if isinstance(rval, str):
+            while True:
+                if rval in ['char', 'int', 'float']:
+                    return rval
+                symbols = self.scope.lookup(rval)
+                if symbols and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
+                    rval = symbols.type
+
+        for key, value in type_check_dict.items():
+            if isinstance(rval, key):
+                return value(rval)
+
+        return 'char'
+
+    def lookup_and_get_type(self, identifier):
+        symbols = self.scope.lookup(identifier)
+        if symbols:
+            if isinstance(symbols.type, str):
+                return symbols.type
+            if isinstance(symbols.type, PointerNode):
+                return symbols.type.type[len(symbols.type.type) - 1].value
+            return symbols.type.value
+
+    def handle_node_type(self, rval):
+        if isinstance(rval, PointerNode):
+            return self.get_highest_type(rval.type)
+        if isinstance(rval, AddrNode):
+            return self.lookup_and_get_type(rval.value.value)
+        if isinstance(rval, ExplicitConversionNode):
+            return rval.type
+        if isinstance(rval, (PreFixNode, PostFixNode)):
+            return self.lookup_and_get_type(rval.value)
+        if isinstance(rval, FunctionCallNode):
+            return self.handle_function_call(rval)
+        if isinstance(rval, TypeNode):
+            return rval.value
+        type1 = self.get_highest_type(rval.children[0])
+        type2 = self.get_highest_type(rval.children[-1])
+        if 'float' in [type1, type2]:
+            return 'float'
+        elif 'int' in [type1, type2]:
+            return 'int'
+        return 'char'
+
+    def handle_function_call(self, rval):
+        symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
+        if isinstance(symbols, Symbol):
+            symbols = [symbols]
+            for symbol in symbols:
+                if len(symbol.params) != len(rval.arguments):
+                    continue
+
+                similar = all(self.get_highest_type(param[0]) == self.get_highest_type(arg) for param, arg in
+                              zip(symbol.params, rval.arguments))
+                if similar:
+                    return self.get_highest_type(symbol.type)
+        return 'char'
 
     def visit(self, node):
         if node.__class__.__name__ in unary_ops:
