@@ -478,7 +478,7 @@ def checkDataType(x):
     elif is_char(x):
         return 'char'
     else:
-        return 'unknown'
+        return 'string'
 
 # --target_llvm
 # --render_ast_png
