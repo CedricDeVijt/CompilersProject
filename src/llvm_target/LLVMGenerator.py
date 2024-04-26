@@ -238,7 +238,7 @@ class LLVMVisitor:
     def visit_DefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
-        var_type = self.get_highest_type(node.type)
+        var_type = self.get_highest_type(node.type[len(node.type) - 1])
         print(var_type)
         value = self.visit(node.rvalue)
         var_ptr = self.builder.alloca(value.type, name=var_name)
