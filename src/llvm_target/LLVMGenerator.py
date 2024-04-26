@@ -142,9 +142,13 @@ class LLVMVisitor:
         # Call Printf Function.
         args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
         for arg in node.children:
-            args.append(self.visit(arg))
             if isinstance(arg, StringNode):
                 self.printf_string += 1
+            arg = self.visit(arg)
+            if arg.type == ir.FloatType():
+                # Convert to double
+                arg = self.builder.fpext(arg, ir.DoubleType())
+            args.append(arg)
         self.builder.call(self.module.get_global('printf'), args)
         self.printf_string += 1
 
@@ -257,28 +261,27 @@ class LLVMVisitor:
 
     def convert(self, var_type, node):    # var_type = cType in string: 'int'    value = value: 10)
         if var_type == "int":
-            if isinstance(node.rvalue, IntNode):
-                return ir.Constant(ir.IntType(32), node.rvalue.value)
-            elif isinstance(node.rvalue, FloatNode):
-                return ir.Constant(ir.IntType(32), int(float(node.rvalue.value)))
-            elif isinstance(node.rvalue, CharNode):
-                return ir.Constant(ir.IntType(32), node.rvalue.value)
+            if isinstance(node, IntNode):
+                return ir.Constant(ir.IntType(32), node.value)
+            elif isinstance(node, FloatNode):
+                return ir.Constant(ir.IntType(32), int(float(node.value)))
+            elif isinstance(node, CharNode):
+                return ir.Constant(ir.IntType(32), node.value)
         elif var_type == "float":
-            if isinstance(node.rvalue, IntNode):
-                return ir.Constant(ir.FloatType(), float(node.rvalue.value))
-            elif isinstance(node.rvalue, FloatNode):
-                print(node.rvalue.value)
-                return ir.Constant(ir.FloatType(), float(node.rvalue.value))
-            elif isinstance(node.rvalue, CharNode):
-                return ir.Constant(ir.FloatType(), float(ord(node.rvalue.value)))
+            if isinstance(node, IntNode):
+                return ir.Constant(ir.FloatType(), float(node.value))
+            elif isinstance(node, FloatNode):
+                return ir.Constant(ir.FloatType(), float(node.value))
+            elif isinstance(node, CharNode):
+                return ir.Constant(ir.FloatType(), float(ord(node.value)))
         elif var_type == "char":
-            if isinstance(node.rvalue, IntNode):
-                return ir.Constant(ir.IntType(8), node.rvalue.value)
-            elif isinstance(node.rvalue, FloatNode):
-                return ir.Constant(ir.IntType(8), int(node.rvalue.value))
-            elif isinstance(node.rvalue, CharNode):
-                return ir.Constant(ir.IntType(8), node.rvalue.value)
-        return self.visit(node.rvalue)
+            if isinstance(node, IntNode):
+                return ir.Constant(ir.IntType(8), node.value)
+            elif isinstance(node, FloatNode):
+                return ir.Constant(ir.IntType(8), float(node.value))
+            elif isinstance(node, CharNode):
+                return ir.Constant(ir.IntType(8), node.value)
+        return self.visit(node)
 
     def convertLLVMtype(self, cType, value):
         if cType == "int":
@@ -336,7 +339,13 @@ class LLVMVisitor:
         return self.builder.neg(self.visit(node.children[0]))
 
     def visit_BinaryOp(self, node, method):
-        var_type = self.get_highest_type(self.visit(node.children[0]), self.visit(node.children[1]))
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+        var_type = 'char'
+        if 'float' in [type1, type2]:
+            var_type = 'float'
+        elif 'int' in [type1, type2]:
+            var_type = 'int'
         child1 = self.convert(var_type, node.children[0])
         child2 = self.convert(var_type, node.children[1])
         _visitor = getattr(self, method, self.generic_visit)
@@ -345,6 +354,8 @@ class LLVMVisitor:
     def visit_PlusNode(self, node, children=[]):
         left = children[0]
         right = children[1]
+        if left.type == ir.FloatType():
+            return self.builder.fadd(left, right)
         return self.builder.add(left, right)
 
     def visit_MinusNode(self, node, children=[]):
