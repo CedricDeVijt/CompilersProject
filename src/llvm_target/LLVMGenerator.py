@@ -200,7 +200,7 @@ class LLVMVisitor:
             self.builder.ret_void()
 
     def visit_CharNode(self, node):
-        return ir.Constant(ir.IntType(8), ord(node.value))
+        return ir.Constant(ir.IntType(8), chr(int(node.value)))
 
     def visit_IntNode(self, node):
         return ir.Constant(ir.IntType(32), int(node.value))

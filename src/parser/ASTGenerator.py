@@ -1086,7 +1086,7 @@ class ASTGenerator(Visitor):
             # TODO: fix things like '\n' as character.
             for i in literal:
                 if i.isalnum():
-                    node = CharNode(value=str(ord(i)), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
+                    node = CharNode(value=str(ord(i)), line=ctx.start.line, column=ctx.start.column, original=i)
                     return node
         elif '.' in literal:
             node = FloatNode(value=ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
