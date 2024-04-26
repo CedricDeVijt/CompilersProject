@@ -176,7 +176,7 @@ class LLVMVisitor:
         # definition vars
         var_name = node.lvalue.value
         var_type = node.type[0].value
-        value = self.visit(node.rvalue)
+        value = self.convert(var_type, node)
         var_ptr = self.builder.alloca(value.type, name=var_name)
         # add to symbol table
         symbol = Symbol(name=var_name, var_type=var_type)
@@ -187,10 +187,34 @@ class LLVMVisitor:
 
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue.value
-        var_type = self.scope.get_symbol(name=var_name)
-        value = self.visit(node.rvalue)
+        var_type = self.scope.get_symbol(name=var_name).type
+        value = self.convert(var_type, node)
         var_ptr = self.scope.get_symbol(name=var_name).alloca
         self.builder.store(value, var_ptr)
+
+    def convert(self, var_type, node):    # var_type = cType in string: 'int'    value = value: 10)
+        if var_type == "int":
+            if isinstance(node.rvalue, IntNode):
+                return ir.Constant(ir.IntType(32), node.rvalue.value)
+            elif isinstance(node.rvalue, FloatNode):
+                return ir.Constant(ir.IntType(32), int(float(node.rvalue.value)))
+            elif isinstance(node.rvalue, CharNode):
+                return ir.Constant(ir.IntType(32), node.rvalue.value)
+        elif var_type == "float":
+            if isinstance(node.rvalue, IntNode):
+                return ir.Constant(ir.FloatType(), float(node.rvalue.value))
+            elif isinstance(node.rvalue, FloatNode):
+                print(node.rvalue.value)
+                return ir.Constant(ir.FloatType(), float(node.rvalue.value))
+            elif isinstance(node.rvalue, CharNode):
+                return ir.Constant(ir.FloatType(), float(ord(node.rvalue.value)))
+        elif var_type == "char":
+            if isinstance(node.rvalue, IntNode):
+                return ir.Constant(ir.IntType(8), node.rvalue.value)
+            elif isinstance(node.rvalue, FloatNode):
+                return ir.Constant(ir.IntType(8), int(node.rvalue.value))
+            elif isinstance(node.rvalue, CharNode):
+                return ir.Constant(ir.IntType(8), node.rvalue.value)
 
     def visit_ReturnNode(self, node):
         if node.return_value is not None:
@@ -199,11 +223,12 @@ class LLVMVisitor:
         else:
             self.builder.ret_void()
 
-    def visit_CharNode(self, node):
-        return ir.Constant(ir.IntType(8), ord(node.value))
-
+    # literals
     def visit_IntNode(self, node):
         return ir.Constant(ir.IntType(32), int(node.value))
+
+    def visit_CharNode(self, node):
+        return ir.Constant(ir.IntType(8), ord(node.value))
 
     def visit_FloatNode(self, node):
         return ir.Constant(ir.FloatType(), float(node.value))
@@ -216,6 +241,7 @@ class LLVMVisitor:
         self.printf_string += 1
         return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
 
+    # operations
     def visit_UnaryOp(self, node):
         if isinstance(node, BitwiseNotNode):
             return self.builder.not_(self.visit(node.children[0]))
