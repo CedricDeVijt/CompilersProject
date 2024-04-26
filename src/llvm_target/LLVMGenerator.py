@@ -337,7 +337,7 @@ class LLVMVisitor:
         return self.builder.neg(self.visit(node.children[0]))
 
     def visit_BinaryOp(self, node, method):
-        var_type = get_highest_type(self.visit(node.children[0]), self.visit(node.children[1]))
+        var_type = self.get_highest_type(self.visit(node.children[0]), self.visit(node.children[1]))
         child1 = self.convert(var_type, node.children[0])
         child2 = self.convert(var_type, node.children[1])
         _visitor = getattr(self, method, self.generic_visit)
