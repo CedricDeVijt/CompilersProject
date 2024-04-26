@@ -268,6 +268,7 @@ class ASTGenerator(Visitor):
                 self.errors.append(f"line {node.line}:{node.column} {node.value} is not in it's respective while/switch statement or in a function.")
 
     def remove_unused_children(self, children: list):
+        return
         # check in current scope which variables are not used. (remove them)
         unused_children = []
         for child in children:

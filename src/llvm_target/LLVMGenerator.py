@@ -238,9 +238,9 @@ class LLVMVisitor:
     def visit_DefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
-        var_type = node.type[0].value
-        value = self.convert(var_type, node)
-        #value = self.visit(node.rvalue)
+        var_type = self.get_highest_type(node.type)
+        print(var_type)
+        value = self.visit(node.rvalue)
         var_ptr = self.builder.alloca(value.type, name=var_name)
         # add to symbol table
         symbol = Symbol(name=var_name, var_type=var_type)
