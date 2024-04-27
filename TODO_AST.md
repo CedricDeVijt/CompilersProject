@@ -76,17 +76,17 @@
 # project 6
 
 - Functionality
-  - [ ] (**mandatory**) Arrays
-  - [ ] (**mandatory**) Multi-dimensional arrays
-  - [ ] (**mandatory**) Assignment of complete arrays or array rows
-  - [ ] (**mandatory**) Array initialization
+  - [x] (**mandatory**) Arrays
+  - [x] (**mandatory**) Multi-dimensional arrays
+  - [x] (**mandatory**) Assignment of complete arrays or array rows
+  - [x] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays
   - [ ] (**mandatory**) C-strings
   - [x] (**mandatory**) Including stdio.h
 - Semantical Analysis
-  - [ ] (**mandatory**) Type checking arrays
-  - [ ] (**mandatory**) Type of specified index is int when accessing arrays
-  - [ ] (**mandatory**) When assigning array initializers check that the length matches the array
+  - [x] (**mandatory**) Type checking arrays
+  - [x] (**mandatory**) Type of specified index is int when accessing arrays
+  - [x] (**mandatory**) When assigning array initializers check that the length matches the array
 
 # project 7
 
