@@ -1610,6 +1610,14 @@ class ASTGenerator(Visitor):
             return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type_node, lvalue=lvalue, rvalue=rvalue)
 
         elif isinstance(rvalue, StringNode):
+            # Check if type is char
+            if type_node.value != 'char':
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} String must be of type char!")
+                return None
+
+            # Remove quotes from string
+            rvalue.value = rvalue.value[1:-1]
+
             # Add symbol to scope
             if self.scope.get_symbol(identifier):
                 self.errors.append(
@@ -1620,7 +1628,8 @@ class ASTGenerator(Visitor):
 
             # Create definition node
             lvalue = IdentifierNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=identifier)
-            return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type_node, lvalue=lvalue, rvalue=rvalue)
+            original = f"{type_node.original} {identifier} [{len(rvalue.value)}] = {rvalue.original}"
+            return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type_node, lvalue=lvalue, rvalue=rvalue)
 
         else:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid array or string definition!")
