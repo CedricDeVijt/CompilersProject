@@ -1577,36 +1577,54 @@ class ASTGenerator(Visitor):
 
         type_node = self.visit(children[0])
         identifier = children[1].getText()
-        array_node = self.visit(children[-1])
+        rvalue = self.visit(children[-1])
 
-        # Get array sizes
-        array_sizes = []
-        for child in children[2:-2]:
-            if child.getText() == "[":
-                continue
-            if child.getText() == "]":
-                continue
-            array_sizes.append(int(child.getText()))
+        if isinstance(rvalue, ArrayNode):
+            # Get array sizes
+            array_sizes = []
+            for child in children[2:-2]:
+                if child.getText() == "[":
+                    continue
+                if child.getText() == "]":
+                    continue
+                array_sizes.append(int(child.getText()))
 
-        # Check if array is valid with the given sizes
-        if not self.checkArraySizes(array_node, array_sizes):
-            raise ValueError("The size of the array does not match the given sizes.")
+            # Check if array is valid with the given sizes
+            if not self.checkArraySizes(rvalue, array_sizes):
+                raise ValueError("The size of the array does not match the given sizes.")
 
-        # Check if elements of array are the same type as the type node
-        if not self.checkArrayTypes(array_node, type_node):
-            raise ValueError("The elements of the array are not the same type as the type node.")
+            # Check if elements of array are the same type as the type node
+            if not self.checkArrayTypes(rvalue, type_node):
+                raise ValueError("The elements of the array are not the same type as the type node.")
 
-        # Add symbol to scope
-        if self.scope.get_symbol(identifier):
-            self.errors.append(
-                f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+            # Add symbol to scope
+            if self.scope.get_symbol(identifier):
+                self.errors.append(
+                    f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+                return None
+            self.scope.add_symbol(
+                Symbol(name=identifier, var_type=type_node, symbol_type='array', arraySizes=array_sizes))
+
+            # Create definition node
+            lvalue = IdentifierNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=identifier)
+            return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type_node, lvalue=lvalue, rvalue=rvalue)
+
+        elif isinstance(rvalue, StringNode):
+            # Add symbol to scope
+            if self.scope.get_symbol(identifier):
+                self.errors.append(
+                    f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' already declared!")
+                return None
+            self.scope.add_symbol(
+                Symbol(name=identifier, var_type=type_node, symbol_type='array', arraySizes=[len(rvalue.value)]))
+
+            # Create definition node
+            lvalue = IdentifierNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=identifier)
+            return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type_node, lvalue=lvalue, rvalue=rvalue)
+
+        else:
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid array or string definition!")
             return None
-        self.scope.add_symbol(
-            Symbol(name=identifier, var_type=type_node, symbol_type='array', arraySizes=array_sizes))
-
-        # Create definition node
-        lvalue = IdentifierNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=identifier)
-        return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type_node, lvalue=lvalue, rvalue=array_node)
 
     def visitArrayAssignment(self, ctx):
         children = []

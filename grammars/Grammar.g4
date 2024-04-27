@@ -149,11 +149,10 @@ arrayDeclaration: type identifier ('[' INT ']')+;
 arrayAssignment: identifier ('[' INT ']')+ '=' (rvalue | array)
                | identifier '=' array
                ;
-arrayDefinition: type identifier ('[' INT ']')+ '=' array;
+arrayDefinition: type identifier ('[' INT ']')+ '=' (array | string);
 
 array: LBRACE (rvalue | array) (',' (rvalue | array))* RBRACE;
 
-// New rule for array element
 arrayElement: identifier ('[' rvalue ']')+;
 
 typedef: 'typedef' type IDENTIFIER;
