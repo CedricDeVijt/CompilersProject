@@ -1,11 +1,12 @@
 class Symbol:
-    def __init__(self, name, var_type, const=False, symbol_type='variable', defined=True, params=None):
+    def __init__(self, name, var_type, const=False, symbol_type='variable', defined=True, params=None, arraySizes=None):
         self.name = name
         self.const = const
         self.type = var_type
         self.symbol_type = symbol_type
         self.defined = defined
         self.params = params if params is not None else []
+        self.arraySizes = arraySizes
         self.used = False
 
 

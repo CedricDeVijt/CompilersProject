@@ -597,3 +597,14 @@ class EnumNode(Node):
         self.enum_name = enum_name
         self.enum_list = enum_list
 
+
+class ArrayNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, children=None, array=None):
+        super().__init__(value="Array", line=line, column=column, original_code=original, children=children)
+        self.array = array
+
+
+class ArrayIdentifierNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, identifier: Symbol, indices: list, children=None):
+        super().__init__(value=identifier.name, line=line, column=column, original_code=original, children=children)
+        self.indices = indices
