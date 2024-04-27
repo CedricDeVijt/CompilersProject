@@ -10,31 +10,7 @@
 
 This project is a compiler for a language called `C`. The compiler is written in python and generates MIPS assembly
 code. The compiler is able to parse the input code, generate an abstract syntax tree (AST), perform semantic analysis,
-generate intermediate code, and generate MIPS assembly code. The compiler is able to handle the following features:
-
-- Binary operations +, -, *, and /.
-- Binary operations >, <, and ==.
-- Unary operators + and -.
-- Parenthesis to overwrite the order of operations.
-- Logical operators &&, ||, and !.
-- Comparison operators >=, <=, and !=.
-- Binary operator %.
-- Shift operators <<, >>.
-- Bitwise operators &, |, ~, and ^.
-- Add an int main() { ... } function
-- Extra reserved keywords need to be supported: const, char, int, and float.
-- Literals are now no longer limited to integers: literals of any type (integer, floating point, character) can now be
-  part of expressions
-- Variables
-- Pointers
-- Constants
-- Explicit conversions
-- Implicit conversions of a richer to a poorer type should cause a compiler warning indicating possible loss of
-  information.
-- Single line comments
-- Multi line comments
-- Output printf
-- Typedef support
+generate intermediate code, and generate MIPS assembly code. 
 
 ## Project Structure
 
@@ -74,7 +50,7 @@ To run the tests, follow the steps below:
 
 1. Run the shell script by running `./test.sh`
 
-The shell script will run all the tests in the `tests/` directory and print the results to the console. The tests from
+The shell script will run all the tests in the `tests/extra_tests` directory and print the results to the console. The tests from
 project 1 are modified to be compatible with the compiler.
 
 ## Conclusion
