@@ -22,4 +22,4 @@ jobs:
 
       - name: Run all tests
         run: |
-          python -m pytest /tests/test_llvm.py
+          python -m pytest src/tests/test_llvm.py
