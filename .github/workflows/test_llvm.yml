@@ -20,6 +20,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Copy test input files
+        run: |
+          cp -r src/tests/test_input_files/* .
+
       - name: Run all tests
         run: |
           python -m pytest src/tests/test_llvm.py
