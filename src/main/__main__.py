@@ -71,7 +71,7 @@ def compile_llvm(input_file, visitor, output_file, run_code):
         return
 
     # Open a file to write LLVM code
-    path = f'src/llvm_target/{output_file}'
+    path = f'{output_file}'
     with open(path, 'w') as llvm_file:
         visitor = LLVMVisitor(stdio=stdio_found)
 
