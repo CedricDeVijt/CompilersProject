@@ -244,6 +244,21 @@ class LLVMVisitor:
         var_name = node.lvalue.value
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         value = self.visit(node.rvalue)
+        # Convert value if needed.
+        if value.type != ir.FloatType() and var_type == 'float':
+            if value.type == ir.IntType(8):
+                value = self.builder.fptosi(value, ir.IntType(32))
+            value = self.builder.sitofp(value, ir.FloatType())
+        elif value.type != ir.IntType(32) and var_type == 'int':
+            if value.type == ir.FloatType():
+                value = self.builder.fptosi(value, ir.IntType(32))
+            else:
+                value = self.builder.sext(value, ir.IntType(32))
+        else:
+            value = self.builder.sext(value, ir.IntType(32))
+            if var_type == 'float':
+                value = self.builder.sitofp(value, ir.FloatType())
+
         var_ptr = self.builder.alloca(value.type, name=var_name)
         # add to symbol table
         symbol = Symbol(name=var_name, var_type=var_type)
@@ -297,7 +312,7 @@ class LLVMVisitor:
             elif value.type == ir.FloatType():
                 return value
             elif value.type == ir.IntType(8):
-                return self.builder.uitofp(value, ir.FloatType())
+                return self.builder.sitofp(value, ir.FloatType())
         elif cType == "char":
             if value.type == ir.IntType(32):
                 return self.builder.trunc(value, ir.IntType(8))
