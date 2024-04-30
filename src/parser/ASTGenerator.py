@@ -585,6 +585,9 @@ class ASTGenerator(Visitor):
                         if isinstance(item, TypeNode):
                             if item.value != 'const':
                                 item.value = self.get_highest_type(item)
+                                if item.value not in ['int', 'char', 'float']:
+                                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Type \'{item.value}\' not declared yet!")
+                                    return None
                         children.append(item)
                         original += f"{item.original} "
                 else:
@@ -723,6 +726,15 @@ class ASTGenerator(Visitor):
                 # "=" is not second character -> definition.
                 identifier = children[children.index('=') - 1].value
                 var_type = children[children.index('=') - 2].value
+
+                if isinstance(var_type, str):
+                    symbols = self.scope.lookup(var_type)
+                    if symbols is not None and symbols.symbol_type == 'typeDef':
+                        var_type = symbols.type
+                    else:
+                        self.errors.append(
+                            f"line {ctx.start.line}:{ctx.start.column} Type \'{var_type}\' not declared yet!")
+                        return None
 
                 if isinstance(children[children.index('=') - 2], PointerNode):
                     if isinstance(children[children.index('=') - 2].type, list):
