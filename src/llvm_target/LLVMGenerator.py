@@ -267,6 +267,25 @@ class LLVMVisitor:
             self.scope.add_symbol(symbol)
         self.builder.store(value, var_ptr)
 
+    def visit_DeclarationNode(self, node):
+        # Get the type and name of the variable being declared
+        var_name = node.lvalue.value
+        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+        if var_type == 'float':
+            value = ir.Constant(ir.FloatType(), 0)
+        elif var_type == 'int':
+            value = ir.Constant(ir.IntType(32), 0)
+        elif var_type == 'char':
+            value = ir.Constant(ir.IntType(8), 0)
+        var_ptr = self.builder.alloca(value.type)
+        self.builder.store(value, var_ptr)
+        # Add to symbol table
+        symbol = Symbol(name=var_name, var_type=var_type)
+        symbol.alloca = var_ptr
+        if self.scope.get_symbol(name=var_name) is None:
+            self.scope.add_symbol(symbol)
+        return var_ptr
+
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue.value
         var_type = self.get_highest_type(self.scope.get_symbol(name=var_name).type)
@@ -613,19 +632,6 @@ class LLVMVisitor:
             return self.builder.zext(result, ir.IntType(8))
         else:
             return self.builder.zext(result, ir.IntType(32))
-
-    def visit_DeclarationNode(self, node):
-        # Get the type of the variable being declared
-        var_type = self.visit(node.type)
-
-        # Create an alloca instruction in the entry block of the function
-        # This will reserve space for the declared variable
-        alloca = self.create_entry_block_allocation(self.builder.function, node.lvalue.value)
-
-        # Associate the variable name with its alloca instruction for future lookups
-        self.symbol_table[node.lvalue.value] = alloca
-
-        return alloca
 
     def visit_IdentifierNode(self, node):
         # Load the value from the alloca
