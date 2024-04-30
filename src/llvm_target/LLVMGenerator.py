@@ -683,3 +683,6 @@ class LLVMVisitor:
 
     def visit_CommentNode(self, node):
         pass
+
+    def visit_TypedefNode(self, node):
+        pass
