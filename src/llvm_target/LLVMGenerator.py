@@ -405,10 +405,21 @@ class LLVMVisitor:
 
     # operations
     def visit_UnaryOp(self, node):
+        child = self.visit(node.children[0])
         if isinstance(node, BitwiseNotNode):
-            return self.builder.not_(self.visit(node.children[0]))
-        # TODO: FIX
-        return self.builder.neg(self.visit(node.children[0]))
+            return self.builder.not_(child)
+
+        if child.type == ir.FloatType():
+            result = self.builder.fcmp_ordered("==", child, ir.Constant(child.type, 0))
+        else:
+            result = self.builder.icmp_signed("==", child, ir.Constant(child.type, 0))
+        if child.type == ir.FloatType():
+            result = self.builder.zext(child, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
+        elif child.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            return self.builder.zext(result, ir.IntType(32))
 
     def visit_BinaryOp(self, node, method):
         type1 = self.get_highest_type(node.children[0])
@@ -418,8 +429,10 @@ class LLVMVisitor:
             var_type = 'float'
         elif 'int' in [type1, type2]:
             var_type = 'int'
-        child1 = self.convert(var_type, node.children[0])
-        child2 = self.convert(var_type, node.children[1])
+        child1 = self.visit(node.children[0])
+        child2 = self.visit(node.children[1])
+        child1 = self.convertLLVMtype(var_type, child1)
+        child2 = self.convertLLVMtype(var_type, child2)
         _visitor = getattr(self, method, self.generic_visit)
         return _visitor(node, [child1, child2])
 
@@ -433,17 +446,21 @@ class LLVMVisitor:
     def visit_MinusNode(self, node, children=[]):
         left = children[0]
         right = children[1]
+        if left.type == ir.FloatType():
+            return self.builder.fsub(left, right)
         return self.builder.sub(left, right, name="tmp")
 
     def visit_MultNode(self, node, children=[]):
         left = children[0]
         right = children[1]
+        if left.type == ir.FloatType():
+            return self.builder.fmul(left, right)
         return self.builder.mul(left, right)
 
     def visit_DivNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        if children[0].type == ir.FloatType():
+        if left.type == ir.FloatType():
             return self.builder.fdiv(left, right)
         return self.builder.sdiv(left, right)
 
@@ -462,60 +479,139 @@ class LLVMVisitor:
         right = children[1]
         return self.builder.or_(left, right)
 
-    def visit_BitwiseNotNode(self, node, children=[]):
-        left = children[0]
-        right = children[1]
-        return self.builder.xor(left, right)
-
     def visit_LogicalAndNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.and_(left, right)
+        if left.type == ir.FloatType():
+            left = self.builder.fcmp_ordered("!=", left, ir.Constant(left.type, 0))
+        else:
+            left = self.builder.icmp_signed("!=", left, ir.Constant(left.type, 0))
+        if right.type == ir.FloatType():
+            right = self.builder.fcmp_ordered("!=", right, ir.Constant(right.type, 0))
+        else:
+            right = self.builder.icmp_signed("!=", right, ir.Constant(right.type, 0))
+        result = self.builder.icmp_unsigned("==", left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            result = self.builder.zext(result, ir.IntType(32))
+            if left.type == ir.FloatType():
+                return self.builder.sitofp(result, ir.FloatType())
+            return result
 
     def visit_LogicalOrNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.or_(left, right)
-
-    def visit_LogicalNotNode(self, node, children=[]):
-        left = children[0]
-        right = children[1]
-        return self.builder.shl(left, right)
+        if left.type == ir.FloatType():
+            left = self.builder.fcmp_ordered("!=", left, ir.Constant(left.type, 0))
+        else:
+            left = self.builder.icmp_signed("!=", left, ir.Constant(left.type, 0))
+        if right.type == ir.FloatType():
+            right = self.builder.fcmp_ordered("!=", right, ir.Constant(right.type, 0))
+        else:
+            right = self.builder.icmp_signed("!=", right, ir.Constant(right.type, 0))
+        result = self.builder.or_(left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            result = self.builder.zext(result, ir.IntType(32))
+            if left.type == ir.FloatType():
+                return self.builder.sitofp(result, ir.FloatType())
+            return result
 
     def visit_SRNode(self, node, children=[]):
         left = children[0]
         right = children[1]
         return self.builder.ashr(left, right)
 
+    def visit_SLNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
+        return self.builder.shl(left, right)
+
     def visit_LTNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.zext(self.builder.icmp_signed("<", left, right), ir.IntType(32))
+        if left.type == ir.FloatType():
+            result = self.builder.fcmp_ordered("<", left, right)
+            result = self.builder.zext(result, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
+        else:
+            result = self.builder.icmp_signed("<", left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            return self.builder.zext(result, ir.IntType(32))
 
     def visit_GTNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.zext(self.builder.icmp_signed(">", left, right), ir.IntType(32))
+        if left.type == ir.FloatType():
+            result = self.builder.fcmp_ordered(">", left, right)
+            result = self.builder.zext(result, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
+        else:
+            result = self.builder.icmp_signed(">", left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            return self.builder.zext(result, ir.IntType(32))
 
     def visit_LTEQNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.zext(self.builder.icmp_signed("<=", left, right), ir.IntType(32))
+        if left.type == ir.FloatType():
+            result = self.builder.fcmp_ordered("<=", left, right)
+            result = self.builder.zext(result, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
+        else:
+            result = self.builder.icmp_signed("<=", left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            return self.builder.zext(result, ir.IntType(32))
 
     def visit_GTEQNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.zext(self.builder.icmp_signed(">=", left, right), ir.IntType(32))
+        if left.type == ir.FloatType():
+            result = self.builder.fcmp_ordered(">=", left, right)
+            result = self.builder.zext(result, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
+        else:
+            result = self.builder.icmp_signed(">=", left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            return self.builder.zext(result, ir.IntType(32))
 
     def visit_EQNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.zext(self.builder.icmp_signed("==", left, right), ir.IntType(32))
+        if left.type == ir.FloatType():
+            result = self.builder.fcmp_ordered("==", left, right)
+            result = self.builder.zext(result, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
+        else:
+            result = self.builder.icmp_signed("==", left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            return self.builder.zext(result, ir.IntType(32))
 
     def visit_NEQNode(self, node, children=[]):
         left = children[0]
         right = children[1]
-        return self.builder.zext(self.builder.icmp_signed("!=", left, right), ir.IntType(32))
+        if left.type == ir.FloatType():
+            result = self.builder.fcmp_ordered("!=", left, right)
+            result = self.builder.zext(result, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
+        else:
+            result = self.builder.icmp_signed("!=", left, right)
+        if left.type == ir.IntType(8):
+            return self.builder.zext(result, ir.IntType(8))
+        else:
+            return self.builder.zext(result, ir.IntType(32))
 
     def visit_DeclarationNode(self, node):
         # Get the type of the variable being declared
