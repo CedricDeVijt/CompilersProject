@@ -641,3 +641,18 @@ class LLVMVisitor:
     def visit_IdentifierNode(self, node):
         # Load the value from the alloca
         return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
+
+    def visit_ExplicitConversionNode(self, node):
+        value = self.visit(node.rvalue)
+        if node.type == 'int':
+            if value.type == ir.FloatType():
+                return self.builder.fptosi(value, ir.IntType(32))
+            return self.builder.sext(value, ir.IntType(32))
+        elif node.type == 'float':
+            if value.type == ir.IntType(32):
+                return self.builder.sitofp(value, ir.FloatType())
+            return self.builder.fptosi(value, ir.FloatType())
+        elif node.type == 'char':
+            if value.type == ir.FloatType():
+                return self.builder.fptosi(value, ir.IntType(8))
+            return self.builder.trunc(value, ir.IntType(8))
