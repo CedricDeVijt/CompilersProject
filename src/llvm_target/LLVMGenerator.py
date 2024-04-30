@@ -225,7 +225,7 @@ class LLVMVisitor:
 
         # Visit function body
         for statement in node.body:
-            self.builder.comment(statement.original)
+            self.builder.comment(statement.original.replace('\n', ''))
             self.visit(statement)
 
         # Close scope.
@@ -675,3 +675,6 @@ class LLVMVisitor:
             if value.type == ir.FloatType():
                 return self.builder.fptosi(value, ir.IntType(8))
             return self.builder.trunc(value, ir.IntType(8))
+
+    def visit_CommentNode(self, node):
+        pass
