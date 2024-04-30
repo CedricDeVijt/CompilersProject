@@ -254,12 +254,12 @@ class LLVMVisitor:
                 value = self.builder.fptosi(value, ir.IntType(32))
             else:
                 value = self.builder.sext(value, ir.IntType(32))
-        else:
-            value = self.builder.sext(value, ir.IntType(32))
-            if var_type == 'float':
-                value = self.builder.sitofp(value, ir.FloatType())
+        elif value.type != ir.IntType(8) and var_type == 'char':
+            if value.type == ir.FloatType():
+                value = self.builder.fptosi(value, ir.IntType(32))
+            value = self.builder.trunc(value, ir.IntType(8))
 
-        var_ptr = self.builder.alloca(value.type, name=var_name)
+        var_ptr = self.builder.alloca(value.type)
         # add to symbol table
         symbol = Symbol(name=var_name, var_type=var_type)
         symbol.alloca = var_ptr
@@ -269,9 +269,27 @@ class LLVMVisitor:
 
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue.value
-        var_type = self.scope.get_symbol(name=var_name).type
+        var_type = self.get_highest_type(self.scope.get_symbol(name=var_name).type)
         value = self.visit(node.rvalue)
-        var_ptr = self.scope.get_symbol(name=var_name).alloca
+        # Convert value if needed.
+        if value.type != ir.FloatType() and var_type == 'float':
+            if value.type == ir.IntType(8):
+                value = self.builder.fptosi(value, ir.IntType(32))
+            value = self.builder.sitofp(value, ir.FloatType())
+        elif value.type != ir.IntType(32) and var_type == 'int':
+            if value.type == ir.FloatType():
+                value = self.builder.fptosi(value, ir.IntType(32))
+            else:
+                value = self.builder.sext(value, ir.IntType(32))
+        elif value.type != ir.IntType(8) and var_type == 'char':
+            if value.type == ir.FloatType():
+                value = self.builder.fptosi(value, ir.IntType(32))
+            value = self.builder.trunc(value, ir.IntType(8))
+
+        var_ptr = self.builder.alloca(value.type)
+        symbol = self.scope.lookup(name=var_name)
+        if isinstance(symbol, Symbol):
+            symbol.alloca = var_ptr
         self.builder.store(value, var_ptr)
 
     def convert(self, var_type, node):    # var_type = cType in string: 'int'    value = value: 10)
