@@ -491,6 +491,7 @@ class LLVMVisitor:
         else:
             right = self.builder.icmp_signed("!=", right, ir.Constant(right.type, 0))
         result = self.builder.icmp_unsigned("==", left, right)
+        result = self.builder.icmp_unsigned("==", left, result)
         if left.type == ir.IntType(8):
             return self.builder.zext(result, ir.IntType(8))
         else:
