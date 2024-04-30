@@ -22,8 +22,8 @@ jobs:
 
       - name: Copy test input files
         run: |
-          cp -r src/tests/test_input_files/* .
+          cp -r src/tests/test_input_files/extra_tests_with_print* .
 
       - name: Run all tests
         run: |
-          python -m pytest src/tests/test_llvm.py
+          python -m pytest src/tests/LLVM_tests
