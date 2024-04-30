@@ -292,6 +292,45 @@ class LLVMVisitor:
             symbol.alloca = var_ptr
         self.builder.store(value, var_ptr)
 
+    def visit_PostFixNode(self, node):
+        symbol = self.scope.lookup(name=node.value)
+        if isinstance(symbol, Symbol):
+            original = symbol.alloca
+            var_type = self.get_highest_type(symbol.type)
+            # Do operation
+            value = 1
+            if node.op == 'dec':
+                value = -1
+            if var_type == 'float':
+                value = self.builder.fadd(self.builder.load(symbol.alloca), ir.Constant(ir.FloatType(), value))
+            elif var_type == 'int':
+                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(32), value))
+            else:
+                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(8), value))
+            var_ptr = self.builder.alloca(value.type)
+            symbol.alloca = var_ptr
+            self.builder.store(value, var_ptr)
+            return self.builder.load(original)
+
+    def visit_PreFixNode(self, node):
+        symbol = self.scope.lookup(name=node.value)
+        if isinstance(symbol, Symbol):
+            var_type = self.get_highest_type(symbol.type)
+            # Do operation
+            value = 1
+            if node.op == 'dec':
+                value = -1
+            if var_type == 'float':
+                value = self.builder.fadd(self.builder.load(symbol.alloca), ir.Constant(ir.FloatType(), value))
+            elif var_type == 'int':
+                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(32), value))
+            else:
+                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(8), value))
+            var_ptr = self.builder.alloca(value.type)
+            symbol.alloca = var_ptr
+            self.builder.store(value, var_ptr)
+            return self.builder.load(symbol.alloca)
+
     def convert(self, var_type, node):    # var_type = cType in string: 'int'    value = value: 10)
         if var_type == "int":
             if isinstance(node, IntNode):
@@ -316,22 +355,22 @@ class LLVMVisitor:
                 return ir.Constant(ir.IntType(8), node.value)
         return self.visit(node)
 
-    def convertLLVMtype(self, cType, value):
-        if cType == "int":
+    def convertLLVMtype(self, ast_type, value):
+        if ast_type == "int":
             if value.type == ir.IntType(32):
                 return value
             elif value.type == ir.FloatType():
                 return self.builder.fptosi(value, ir.IntType(32))
             elif value.type == ir.IntType(8):
                 return self.builder.zext(value, ir.IntType(32))
-        elif cType == "float":
+        elif ast_type == "float":
             if value.type == ir.IntType(32):
                 return self.builder.sitofp(value, ir.FloatType())
             elif value.type == ir.FloatType():
                 return value
             elif value.type == ir.IntType(8):
                 return self.builder.sitofp(value, ir.FloatType())
-        elif cType == "char":
+        elif ast_type == "char":
             if value.type == ir.IntType(32):
                 return self.builder.trunc(value, ir.IntType(8))
             elif value.type == ir.FloatType():
