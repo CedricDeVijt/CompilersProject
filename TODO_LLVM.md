@@ -17,7 +17,7 @@
 - [x] (**mandatory**) Literals are now no longer limited to integers: literals of any type (integer, floating point,
   character) can now be part of expressions
 - [x] (**mandatory**) Variables
-- [ ] (**mandatory**) Pointers
+- [x] (**mandatory**) Pointers
 - [ ] (**mandatory**) Constants
 - [ ] (**mandatory**) Implicit conversions warnings
 - [ ] (**mandatory**) Explicit conversions
