@@ -498,6 +498,11 @@ class LLVMVisitor:
         right = children[1]
         return self.builder.or_(left, right)
 
+    def visit_BitwiseXorNode(self, node, children=[]):
+        left = children[0]
+        right = children[1]
+        return self.builder.xor(left, right)
+
     def visit_LogicalAndNode(self, node, children=[]):
         left = children[0]
         right = children[1]
