@@ -991,9 +991,13 @@ class ASTGenerator(Visitor):
             match str(lines[1]):
                 case "/":
                     if not isinstance(self.visit(lines[2]).value, str) and int(self.visit(lines[2]).value) == 0:
-                        raise Exception("Division by zero!")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Division by zero!")
                     node = DivNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "%":
+                    type0 = self.get_highest_type(child0)
+                    type2 = self.get_highest_type(child2)
+                    if type0 == 'float' or type2 == 'float':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                     node = ModNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "*":
                     node = MultNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
@@ -1002,8 +1006,16 @@ class ASTGenerator(Visitor):
                 case "+":
                     node = PlusNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "<<":
+                    type0 = self.get_highest_type(child0)
+                    type2 = self.get_highest_type(child2)
+                    if type0 == 'float' or type2 == 'float':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                     node = SLNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case ">>":
+                    type0 = self.get_highest_type(child0)
+                    type2 = self.get_highest_type(child2)
+                    if type0 == 'float' or type2 == 'float':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                     node = SRNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "&":
                     node = BitwiseAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
