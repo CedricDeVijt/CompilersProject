@@ -110,7 +110,6 @@ class ASTGenerator(Visitor):
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
             StringNode: lambda rval: 'string',
-            TypeNode: lambda rval: self.handle_node_type(rval),
             Node: self.handle_node_type
         }
         for key, value in type_check_dict.items():
@@ -140,6 +139,12 @@ class ASTGenerator(Visitor):
             return symbols.type.value
 
     def handle_node_type(self, rval):
+        if isinstance(rval, TypeNode):
+            if rval.value in ['char', 'int', 'float']:
+                return rval.value
+            symbols = self.scope.lookup(rval.value)
+            if symbols is not None and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
+                return symbols.type
         if isinstance(rval, PointerNode):
             if isinstance(rval.type, list):
                 return rval.type[len(rval.type) - 1].value
