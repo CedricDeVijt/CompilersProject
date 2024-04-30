@@ -1,6 +1,6 @@
 # from src.tests.utils import test_llvm
 #
-# root = "src/tests/test_input_files/extra_tests/project_3/"
+# root = "src/tests/test_input_files/extra_tests_with_print/project_7/"
 #
 # class TestProject1:
 #     @staticmethod
