@@ -22,7 +22,7 @@
 - [ ] (**mandatory**) Implicit conversions warnings
 - [ ] (**mandatory**) Explicit conversions
 - [ ] (**mandatory**) Pointer arithmetic
-- [ ] (**mandatory**) Increment/Decrement Operations
+- [x] (**mandatory**) Increment/Decrement Operations
 - [ ] (**optional**) Const casting
 
 # project 3
