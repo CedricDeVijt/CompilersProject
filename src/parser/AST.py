@@ -514,10 +514,10 @@ class StringNode(Node):
 
 
 class ExplicitConversionNode(Node):
-    def __init__(self, line: int, column: int, original: str | None, type: str, rval, children=None):
+    def __init__(self, line: int, column: int, original: str | None, type: str, rvalue, children=None):
         super().__init__(value="ExplicitConversion", line=line, column=column, original_code=original, children=children)
         self.type = type
-        self.rval = rval
+        self.rvalue = rvalue
 
 
 class PrintfNode(Node):

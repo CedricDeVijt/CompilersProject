@@ -1171,7 +1171,7 @@ class ASTGenerator(Visitor):
             children.append(line)
         type = children[1].getText()
         original = f"({type}) {children[len(children) - 1].getText()}"
-        node = ExplicitConversionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type, rval=self.visit(children[len(children) - 1]))
+        node = ExplicitConversionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type, rvalue=self.visit(children[len(children) - 1]))
         return node
 
     def visitPrintfStatement(self, ctx):
