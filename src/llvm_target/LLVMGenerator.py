@@ -160,7 +160,6 @@ class LLVMVisitor:
     def visit_FunctionNode(self, node):
         # Open new scope.
         self.scope.open_scope()
-        # Add arguments to scope.
         # Add params
         for param in node.params:
             param_type = param[0]
@@ -251,6 +250,7 @@ class LLVMVisitor:
         value = self.visit(node.rvalue)
         symbol = Symbol(name=var_name, var_type=var_type)
         symbol.alloca = value
+        symbol.pointer = True
         # Convert value if needed.
         if value.type == ir.PointerType(ir.IntType(8)):
             if self.scope.get_symbol(name=var_name) is None:
@@ -280,6 +280,7 @@ class LLVMVisitor:
 
         var_ptr = self.builder.alloca(value.type)
         symbol.alloca = var_ptr
+        symbol.pointer = False
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         self.builder.store(value, var_ptr)
@@ -299,6 +300,10 @@ class LLVMVisitor:
         # Add to symbol table
         symbol = Symbol(name=var_name, var_type=var_type)
         symbol.alloca = var_ptr
+        symbol.pointer = False
+        if isinstance(node.type[len(node.type) - 1], PointerNode):
+            print('t')
+            symbol.pointer = True
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         return var_ptr
