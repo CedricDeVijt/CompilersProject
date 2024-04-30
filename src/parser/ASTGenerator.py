@@ -113,18 +113,18 @@ class ASTGenerator(Visitor):
             TypeNode: lambda rval: self.handle_node_type(rval),
             Node: self.handle_node_type
         }
-
-        if isinstance(rval, str):
-            while True:
-                if rval in ['char', 'int', 'float']:
-                    return rval
-                symbols = self.scope.lookup(rval)
-                if symbols and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
-                    rval = symbols.type
-
         for key, value in type_check_dict.items():
             if isinstance(rval, key):
                 return value(rval)
+
+        if rval in ['char', 'int', 'float']:
+            return rval
+        symbols = self.scope.lookup(rval)
+        if symbols and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
+            rval = symbols.type
+        else:
+            self.errors.append(f"line {rval.line}:{rval.column} Variable \'{rval}\' not declared yet!")
+            return 'char'
 
         return 'char'
 
@@ -134,11 +134,15 @@ class ASTGenerator(Visitor):
             if isinstance(symbols.type, str):
                 return symbols.type
             if isinstance(symbols.type, PointerNode):
-                return symbols.type.type[len(symbols.type.type) - 1].value
+                if isinstance(symbols.type.type, list):
+                    return symbols.type.type[len(symbols.type.type) - 1].value
+                return symbols.type.type.value
             return symbols.type.value
 
     def handle_node_type(self, rval):
         if isinstance(rval, PointerNode):
+            if isinstance(rval.type, list):
+                return rval.type[len(rval.type) - 1].value
             return self.get_highest_type(rval.type)
         if isinstance(rval, AddrNode):
             return self.lookup_and_get_type(rval.value.value)
@@ -575,7 +579,7 @@ class ASTGenerator(Visitor):
                     for item in child:
                         if isinstance(item, TypeNode):
                             if item.value != 'const':
-                                item.value = self.get_highest_type(item.value)
+                                item.value = self.get_highest_type(item)
                         children.append(item)
                         original += f"{item.original} "
                 else:
@@ -887,7 +891,11 @@ class ASTGenerator(Visitor):
         return node
 
     def visitPostFixDecrement(self, ctx):
-        identifier = ctx.getText()[:-2]
+        variable = self.visit(ctx.getChild(0))[0]
+        if isinstance(variable, IdentifierNode):
+            identifier = variable.value
+        elif isinstance(variable, DerefNode):
+            identifier = variable.identifier.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"{identifier}--"
@@ -895,7 +903,11 @@ class ASTGenerator(Visitor):
         return node
 
     def visitPostFixIncrement(self, ctx):
-        identifier = ctx.getText()[:-2]
+        variable = self.visit(ctx.getChild(0))[0]
+        if isinstance(variable, IdentifierNode):
+            identifier = variable.value
+        elif isinstance(variable, DerefNode):
+            identifier = variable.identifier.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"{identifier}++"
@@ -903,7 +915,11 @@ class ASTGenerator(Visitor):
         return node
 
     def visitPreFixDecrement(self, ctx):
-        identifier = ctx.getText()[2:]
+        variable = self.visit(ctx.getChild(1))[0]
+        if isinstance(variable, IdentifierNode):
+            identifier = variable.value
+        elif isinstance(variable, DerefNode):
+            identifier = variable.identifier.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"--{identifier}"
@@ -911,7 +927,11 @@ class ASTGenerator(Visitor):
         return node
 
     def visitPreFixIncrement(self, ctx):
-        identifier = ctx.getText()[2:]
+        variable = self.visit(ctx.getChild(1))[0]
+        if isinstance(variable, IdentifierNode):
+            identifier = variable.value
+        elif isinstance(variable, DerefNode):
+            identifier = variable.identifier.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"++{identifier}"
@@ -948,7 +968,7 @@ class ASTGenerator(Visitor):
             children.append(line)
         identifier = self.visit(children[len(children) - 1])
         if self.scope.lookup(identifier.value) is None:
-            raise Exception("Variable \'" + identifier.value + "\' not declared yet!")
+            self.errors.append("Variable \'" + identifier.value + "\' not declared yet!")
         original = "*" * (len(children) - 1)
         original += f"{identifier.original}"
         node = DerefNode(value=len(children) - 1, line=ctx.start.line, column=ctx.start.column, original=original, identifier=identifier)
