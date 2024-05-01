@@ -763,3 +763,32 @@ class LLVMVisitor:
 
         # Continue with the block after the if statement
         self.builder.position_at_start(after_if_block)
+
+
+    def visit_WhileLoopNode(self, node):
+        # Create blocks for the loop condition, loop body, and after the loop
+        condition_block = self.builder.function.append_basic_block(name='while.cond')
+        body_block = self.builder.function.append_basic_block(name='while.body')
+        after_loop_block = self.builder.function.append_basic_block(name='after.while')
+
+        # Generate code for the loop condition and set builder's position to the condition block
+        self.builder.branch(condition_block)
+        self.builder.position_at_start(condition_block)
+        condition = self.visit(node.condition)
+
+        if condition.type != ir.IntType(1):
+            condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
+
+        self.builder.cbranch(condition, body_block, after_loop_block)
+
+        # Generate code for the loop body and set builder's position to the body block
+        self.builder.position_at_start(body_block)
+        for statement in node.body:
+            self.visit(statement)
+        self.builder.branch(condition_block)
+
+        # Set builder's position to the block after the loop
+        self.builder.position_at_start(after_loop_block)
+
+    def visit_ContinueNode(self, node):
+        pass
