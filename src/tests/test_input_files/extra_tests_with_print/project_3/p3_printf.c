@@ -6,4 +6,5 @@ int main() {
     printf("%d", a);
     printf("%f", b);
     printf("%c", c);
+    return 0;
 }
