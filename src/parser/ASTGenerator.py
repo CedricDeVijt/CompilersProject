@@ -194,7 +194,9 @@ class ASTGenerator(Visitor):
         rvalType = self.get_highest_type(rval)
         rvalType = check_type_and_lookup(rvalType)
 
-        if lvalType == 'int' and rvalType == 'float':
+        if lvalType == rvalType:
+            return
+        elif lvalType == 'int' and rvalType == 'float':
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from float to int!")
         elif lvalType == 'char' and rvalType == 'float':
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from float to char!")
