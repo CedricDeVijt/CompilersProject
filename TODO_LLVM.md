@@ -21,19 +21,19 @@
 - [x] (**mandatory**) Constants
 - [x] (**mandatory**) Implicit conversions warnings
 - [x] (**mandatory**) Explicit conversions
-- [ ] (**mandatory**) Pointer arithmetic
+- [x] (**mandatory**) Pointer arithmetic
 - [x] (**mandatory**) Increment/Decrement Operations
-- [ ] (**optional**) Const casting
+- [x] (**optional**) Const casting
 
 # project 3
 
-- [ ] (**mandatory**) Single line comments
-- [ ] (**mandatory**) Multi line comments
-- [ ] (**mandatory**) Output printf
-- [ ] (**mandatory**) Typedef support
-- [ ] (**mandatory**) LLVM definitions
-- [ ] (**mandatory**) LLVM pointers
-- [ ] (**mandatory**) LLVM comments
+- [x] (**mandatory**) Single line comments
+- [x] (**mandatory**) Multi line comments
+- [x] (**mandatory**) Output printf
+- [x] (**mandatory**) Typedef support
+- [x] (**mandatory**) LLVM definitions
+- [x] (**mandatory**) LLVM pointers
+- [x] (**mandatory**) LLVM comments
 
 # project 4
 
