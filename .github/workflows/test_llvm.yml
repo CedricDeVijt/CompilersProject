@@ -20,6 +20,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install LLVM
+        run: sudo apt-get install -y llvm
+
       - name: Copy test input files
         run: |
           cp -r src/tests/test_input_files/extra_tests_with_print* .
