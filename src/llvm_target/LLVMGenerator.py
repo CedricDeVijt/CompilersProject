@@ -748,5 +748,70 @@ class LLVMVisitor:
     def visit_TypedefNode(self, node):
         pass
 
-    def visit_EnumNode(self, node):
-        self.enums[node.enum_name] = node.enum_list
+    def visit_IfStatementNode(self, node):
+        # Generate code for the condition
+        condition = self.visit(node.condition)
+
+        if condition.type != ir.IntType(1):
+            condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
+
+        # Create blocks for the if body and for after the if statement
+        if_body_block = self.builder.function.append_basic_block(name='if.body')
+        after_if_block = self.builder.function.append_basic_block(name='after.if')
+
+        # Insert a conditional branch instruction
+        self.builder.cbranch(condition, if_body_block, after_if_block)
+
+        # Generate code for the if body
+        self.builder.position_at_start(if_body_block)
+        # body is a list of statements
+        for statement in node.body:
+            self.visit(statement)
+
+        if not self.builder.block.is_terminated:
+            self.builder.branch(after_if_block)
+
+        # Continue with the block after the if statement
+        self.builder.position_at_start(after_if_block)
+
+    def visit_WhileLoopNode(self, node):
+        # Create blocks for the loop condition, loop body, and after the loop
+        condition_block = self.builder.function.append_basic_block(name='while.cond')
+        body_block = self.builder.function.append_basic_block(name='while.body')
+        after_loop_block = self.builder.function.append_basic_block(name='after.while')
+
+        # Push the after_loop_block to the break_blocks stack
+        self.break_blocks.append(after_loop_block)
+
+        # Generate code for the loop condition and set builder's position to the condition block
+        self.builder.branch(condition_block)
+        self.builder.position_at_start(condition_block)
+        condition = self.visit(node.condition)
+
+        if condition.type != ir.IntType(1):
+            condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
+
+        self.builder.cbranch(condition, body_block, after_loop_block)
+
+        # Generate code for the loop body and set builder's position to the body block
+        self.builder.position_at_start(body_block)
+        for statement in node.body:
+            self.visit(statement)
+        self.builder.branch(condition_block)
+
+        # Pop the after_loop_block from the break_blocks stack
+        self.break_blocks.pop()
+
+        # Set builder's position to the block after the loop
+        self.builder.position_at_start(after_loop_block)
+
+    def visit_BreakNode(self, node):
+        # Get the nearest loop end block from the break_blocks stack
+        if self.break_blocks:
+            break_block = self.break_blocks[-1]
+            self.builder.branch(break_block)
+        else:
+            raise Exception("Invalid break statement. It should be inside a loop.")
+
+    def visit_ContinueNode(self, node):
+        pass
