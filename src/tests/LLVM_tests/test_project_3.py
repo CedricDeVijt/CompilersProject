@@ -18,16 +18,16 @@ def test_p3_printf():
     llvm_output_compare(root, source_file)
 
 
-# def test_p3_typedef_1():
-#     source_file = "p3_typedef_1.c"
-#     llvm_output_compare(root, source_file)
-#
-#
-# def test_p3_typedef_2():
-#     source_file = "p3_typedef_2.c"
-#     llvm_output_compare(root, source_file)
-#
-#
-# def test_p3_typedef_3():
-#     source_file = "p3_typedef_3.c"
-#     llvm_output_compare(root, source_file)
+def test_p3_typedef_1():
+    source_file = "p3_typedef_1.c"
+    llvm_output_compare(root, source_file)
+
+
+def test_p3_typedef_2():
+    source_file = "p3_typedef_2.c"
+    llvm_output_compare(root, source_file)
+
+
+def test_p3_typedef_3():
+    source_file = "p3_typedef_3.c"
+    llvm_output_compare(root, source_file)
