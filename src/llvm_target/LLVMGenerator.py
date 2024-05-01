@@ -684,3 +684,28 @@ class LLVMVisitor:
 
     def visit_TypedefNode(self, node):
         pass
+
+    def visit_IfStatementNode(self, node):
+        # Generate code for the condition
+        condition = self.visit(node.condition)
+
+        if condition.type != ir.IntType(1):
+            condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
+
+        # Create blocks for the if body and for after the if statement
+        if_body_block = self.builder.function.append_basic_block(name='if.body')
+        after_if_block = self.builder.function.append_basic_block(name='after.if')
+
+        # Insert a conditional branch instruction
+        self.builder.cbranch(condition, if_body_block, after_if_block)
+
+        # Generate code for the if body
+        self.builder.position_at_start(if_body_block)
+        # body is a list of statements
+        for statement in node.body:
+            self.visit(statement)
+
+        self.builder.branch(after_if_block)
+
+        # Continue with the block after the if statement
+        self.builder.position_at_start(after_if_block)
