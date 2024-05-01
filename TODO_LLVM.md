@@ -21,7 +21,7 @@
 - [x] (**mandatory**) Constants
 - [x] (**mandatory**) Implicit conversions warnings
 - [x] (**mandatory**) Explicit conversions
-- [x] (**mandatory**) Pointer arithmetic
+- [ ] (**mandatory**) Pointer arithmetic
 - [x] (**mandatory**) Increment/Decrement Operations
 - [x] (**optional**) Const casting
 
@@ -37,10 +37,10 @@
 
 # project 4
 
-- [ ] (**mandatory**) Conditional statements
-- [ ] (**optional**) Else if statements
+- [x] (**mandatory**) Conditional statements
+- [x] (**optional**) Else if statements
 - [ ] (**mandatory**) Loops
-- [ ] (**mandatory**) Anonymous scopes
+- [x] (**mandatory**) Anonymous scopes
 - [ ] (**mandatory**) Switch statements
 - [ ] (**mandatory**) Enumerations
 

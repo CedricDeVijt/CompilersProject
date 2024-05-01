@@ -17,6 +17,8 @@ class LLVMVisitor:
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0
         self.enums = {}
+        self.break_blocks = []  # Stack to keep track of the nearest loop end block
+
         # Add printf and scanf function
         if stdio:
             function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
@@ -32,7 +34,6 @@ class LLVMVisitor:
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
             StringNode: lambda rval: 'string',
-            TypeNode: lambda rval: self.handle_node_type(rval),
             Node: self.handle_node_type
         }
         for key, value in type_check_dict.items():
@@ -41,12 +42,6 @@ class LLVMVisitor:
 
         if rval in ['char', 'int', 'float']:
             return rval
-        symbols = self.scope.lookup(rval)
-        if symbols and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
-            rval = symbols.type
-        else:
-            self.errors.append(f"line {rval.line}:{rval.column} Variable \'{rval}\' not declared yet!")
-            return 'char'
 
         return 'char'
 
@@ -75,7 +70,11 @@ class LLVMVisitor:
         if isinstance(rval, FunctionCallNode):
             return self.handle_function_call(rval)
         if isinstance(rval, TypeNode):
-            return rval.value
+            if rval.value in ['char', 'int', 'float']:
+                return rval.value
+            symbols = self.scope.lookup(rval.value)
+            if symbols is not None and isinstance(symbols, Symbol):
+                return self.get_highest_type(symbols.type)
         if isinstance(rval, ArrayIdentifierNode):
             return self.lookup_and_get_type(rval.value)
         type1 = self.get_highest_type(rval.children[0])
@@ -260,39 +259,54 @@ class LLVMVisitor:
                 self.scope.add_symbol(symbol)
                 return None
         if value.type == ir.PointerType(ir.IntType(32)):
+        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+        rvalue = self.visit(node.rvalue)
+        symbol = Symbol(name=var_name, var_type=node.type[len(node.type) - 1])
+        if isinstance(node.type[0], PointerNode):
+            if var_type == 'float':
+                rvalue = self.builder.inttoptr(rvalue, ir.PointerType(ir.FloatType))
+            elif var_type == 'int':
+                rvalue = self.builder.inttoptr(rvalue, ir.PointerType(ir.IntType(32)))
+            elif var_type == 'char':
+                rvalue = self.builder.inttoptr(rvalue, ir.PointerType(ir.IntType(8)))
+            var_ptr = self.builder.alloca(rvalue.type)
+            symbol.alloca = var_ptr
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
-                return None
-        if value.type == ir.PointerType(ir.FloatType()):
-            if self.scope.get_symbol(name=var_name) is None:
-                self.scope.add_symbol(symbol)
-                return None
-        if value.type != ir.FloatType() and var_type == 'float':
-            if value.type == ir.IntType(8):
-                value = self.builder.fptosi(value, ir.IntType(32))
-            value = self.builder.sitofp(value, ir.FloatType())
-        elif value.type != ir.IntType(32) and var_type == 'int':
-            if value.type == ir.FloatType():
-                value = self.builder.fptosi(value, ir.IntType(32))
+            return self.builder.store(rvalue, var_ptr)
+        # Not a Pointer
+        if rvalue.type != ir.FloatType() and var_type == 'float':
+            if rvalue.type == ir.IntType(8):
+                rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
+            rvalue = self.builder.sitofp(rvalue, ir.FloatType())
+        elif rvalue.type != ir.IntType(32) and var_type == 'int':
+            if rvalue.type == ir.FloatType():
+                rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
             else:
-                value = self.builder.sext(value, ir.IntType(32))
-        elif value.type != ir.IntType(8) and var_type == 'char':
-            if value.type == ir.FloatType():
-                value = self.builder.fptosi(value, ir.IntType(32))
-            value = self.builder.trunc(value, ir.IntType(8))
+                rvalue = self.builder.sext(rvalue, ir.IntType(32))
+        elif rvalue.type != ir.IntType(8) and var_type == 'char':
+            if rvalue.type == ir.FloatType():
+                rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
+            rvalue = self.builder.trunc(rvalue, ir.IntType(8))
 
-        var_ptr = self.builder.alloca(value.type)
+        var_ptr = self.builder.alloca(rvalue.type)
         symbol.alloca = var_ptr
-        symbol.pointer = False
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
-        self.builder.store(value, var_ptr)
+        return self.builder.store(rvalue, var_ptr)
 
     def visit_DeclarationNode(self, node):
         # Get the type and name of the variable being declared
         var_name = node.lvalue.value
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
-        if var_type == 'float':
+        if isinstance(node.type[0], PointerNode):
+            if var_type == 'float':
+                value = ir.Constant(ir.PointerType(ir.FloatType()), None)
+            elif var_type == 'int':
+                value = ir.Constant(ir.PointerType(ir.IntType(32)), None)
+            elif var_type == 'char':
+                value = ir.Constant(ir.PointerType(ir.IntType(8)), None)
+        elif var_type == 'float':
             value = ir.Constant(ir.FloatType(), 0)
         elif var_type == 'int':
             value = ir.Constant(ir.IntType(32), 0)
@@ -301,7 +315,7 @@ class LLVMVisitor:
         var_ptr = self.builder.alloca(value.type)
         self.builder.store(value, var_ptr)
         # Add to symbol table
-        symbol = Symbol(name=var_name, var_type=var_type)
+        symbol = Symbol(name=var_name, var_type=node.type[len(node.type) - 1])
         symbol.alloca = var_ptr
         symbol.pointer = False
         if isinstance(node.type[len(node.type) - 1], PointerNode):
@@ -316,8 +330,14 @@ class LLVMVisitor:
             var_name = var_name.value
         elif isinstance(var_name, DerefNode):
             var_name = var_name.identifier.value
-        var_type = self.get_highest_type(self.scope.get_symbol(name=var_name).type)
+        symbol = self.scope.lookup(name=var_name)
+        var_type = self.get_highest_type(symbol.type)
         value = self.visit(node.rvalue)
+        # Pointer
+        if isinstance(symbol.type, PointerNode):
+            pointer = self.builder.inttoptr(value, symbol.alloca.type)
+            loaded = self.builder.load(pointer)
+            return self.builder.store(loaded, symbol.alloca)
         # Convert value if needed.
         if value.type != ir.FloatType() and var_type == 'float':
             if value.type == ir.IntType(8):
@@ -338,35 +358,50 @@ class LLVMVisitor:
     def visit_PostFixNode(self, node):
         symbol = self.scope.lookup(name=node.value)
         if isinstance(symbol, Symbol):
-            original = symbol.alloca
-            var_type = self.get_highest_type(symbol.type)
-            # Do operation
             value = 1
             if node.op == 'dec':
                 value = -1
+            # Pointer
+            if isinstance(symbol.type, PointerNode):
+                index = ir.Constant(ir.IntType(64), value)
+                address = self.builder.ptrtoint(symbol.alloca, ir.IntType(64))
+                address = self.builder.add(address, index)
+                pointer = self.builder.inttoptr(address, symbol.alloca.type)
+                loaded = self.builder.load(pointer)
+                return self.builder.store(loaded, symbol.alloca)
+            # Do operation
+            var_type = self.get_highest_type(symbol.type)
+            original = self.builder.load(symbol.alloca)
             if var_type == 'float':
-                value = self.builder.fadd(self.builder.load(symbol.alloca), ir.Constant(ir.FloatType(), value))
+                value = self.builder.fadd(original, ir.Constant(ir.FloatType(), value))
             elif var_type == 'int':
-                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(32), value))
+                value = self.builder.add(original, ir.Constant(ir.IntType(32), value))
             else:
-                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(8), value))
+                value = self.builder.add(original, ir.Constant(ir.IntType(8), value))
             self.builder.store(value, symbol.alloca)
-            return self.builder.load(original)
+            return original
 
     def visit_PreFixNode(self, node):
         symbol = self.scope.lookup(name=node.value)
         if isinstance(symbol, Symbol):
-            var_type = self.get_highest_type(symbol.type)
-            # Do operation
             value = 1
             if node.op == 'dec':
                 value = -1
+            # Pointer
+            if isinstance(symbol.type, PointerNode):
+                index = ir.Constant(ir.IntType(8), value)
+                loaded = self.builder.load(symbol.alloca)
+                gep = self.builder.gep(loaded, [index])
+                return self.builder.store(gep, symbol.alloca)
+            # Do operation
+            var_type = self.get_highest_type(symbol.type)
+            original = self.builder.load(symbol.alloca)
             if var_type == 'float':
-                value = self.builder.fadd(self.builder.load(symbol.alloca), ir.Constant(ir.FloatType(), value))
+                value = self.builder.fadd(original, ir.Constant(ir.FloatType(), value))
             elif var_type == 'int':
-                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(32), value))
+                value = self.builder.add(original, ir.Constant(ir.IntType(32), value))
             else:
-                value = self.builder.add(self.builder.load(symbol.alloca), ir.Constant(ir.IntType(8), value))
+                value = self.builder.add(original, ir.Constant(ir.IntType(8), value))
             self.builder.store(value, symbol.alloca)
             return self.builder.load(symbol.alloca)
 
@@ -394,14 +429,30 @@ class LLVMVisitor:
                 return ir.Constant(ir.IntType(8), node.value)
         return self.visit(node)
 
-    def convertLLVMtype(self, ast_type, value):
+    def convertLLVMtype(self, ast_type, value, pointer=False):
+        if value.type == ir.IntType(64):
+            return value
+        if pointer:
+            if value.type == ir.FloatType():
+                val = self.builder.fptosi(value, ir.IntType(64))
+            else:
+                val = self.builder.sext(value, ir.IntType(64))
+            bytes_size = 0
+            if ast_type == 'float':
+                bytes_size = 8
+            elif ast_type == 'int':
+                bytes_size = 4
+            elif ast_type == 'char':
+                bytes_size = 1
+            val = self.builder.mul(val, ir.Constant(ir.IntType(64), bytes_size))
+            return val
         if ast_type == "int":
             if value.type == ir.IntType(32):
                 return value
             elif value.type == ir.FloatType():
                 return self.builder.fptosi(value, ir.IntType(32))
             elif value.type == ir.IntType(8):
-                return self.builder.zext(value, ir.IntType(32))
+                return self.builder.sext(value, ir.IntType(32))
         elif ast_type == "float":
             if value.type == ir.IntType(32):
                 return self.builder.sitofp(value, ir.FloatType())
@@ -424,7 +475,6 @@ class LLVMVisitor:
         else:
             self.builder.ret_void()
 
-    # literals
     def visit_IntNode(self, node):
         return ir.Constant(ir.IntType(32), int(node.value))
 
@@ -442,7 +492,6 @@ class LLVMVisitor:
         self.printf_string += 1
         return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
 
-    # operations
     def visit_UnaryOp(self, node):
         child = self.visit(node.children[0])
         if isinstance(node, BitwiseNotNode):
@@ -470,14 +519,28 @@ class LLVMVisitor:
             var_type = 'int'
         child1 = self.visit(node.children[0])
         child2 = self.visit(node.children[1])
-        child1 = self.convertLLVMtype(var_type, child1)
-        child2 = self.convertLLVMtype(var_type, child2)
+        pointer = False
+        if child1.type == ir.IntType(64):
+            pointer = True
+        if child1.type == ir.IntType(64):
+            pointer = True
+        if child1.type == ir.IntType(64):
+            pointer = True
+        if child2.type == ir.IntType(64):
+            pointer = True
+        if child2.type == ir.IntType(64):
+            pointer = True
+        if child2.type == ir.IntType(64):
+            pointer = True
+        child1 = self.convertLLVMtype(var_type, child1, pointer)
+        child2 = self.convertLLVMtype(var_type, child2, pointer)
         _visitor = getattr(self, method, self.generic_visit)
         return _visitor(node, [child1, child2])
 
     def visit_PlusNode(self, node, children=[]):
         left = children[0]
         right = children[1]
+
         if left.type == ir.FloatType():
             return self.builder.fadd(left, right)
         return self.builder.add(left, right)
@@ -663,10 +726,14 @@ class LLVMVisitor:
         return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
 
     def visit_AddrNode(self, node):
-        return self.scope.get_symbol(name=node.value.value).alloca
+        alloca = self.scope.get_symbol(name=node.value.value).alloca
+        ptr_int = self.builder.ptrtoint(alloca, ir.IntType(64))
+        return ptr_int
 
     def visit_DerefNode(self, node):
-        return self.builder.load(self.scope.get_symbol(name=node.identifier.value).alloca)
+        alloca = self.scope.get_symbol(name=node.identifier.value).alloca
+        loaded = self.builder.load(alloca)
+        return loaded
 
     def visit_ExplicitConversionNode(self, node):
         value = self.visit(node.rvalue)
@@ -689,5 +756,70 @@ class LLVMVisitor:
     def visit_TypedefNode(self, node):
         pass
 
-    def visit_EnumNode(self, node):
-        self.enums[node.enum_name] = node.enum_list
+    def visit_IfStatementNode(self, node):
+        # Generate code for the condition
+        condition = self.visit(node.condition)
+
+        if condition.type != ir.IntType(1):
+            condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
+
+        # Create blocks for the if body and for after the if statement
+        if_body_block = self.builder.function.append_basic_block(name='if.body')
+        after_if_block = self.builder.function.append_basic_block(name='after.if')
+
+        # Insert a conditional branch instruction
+        self.builder.cbranch(condition, if_body_block, after_if_block)
+
+        # Generate code for the if body
+        self.builder.position_at_start(if_body_block)
+        # body is a list of statements
+        for statement in node.body:
+            self.visit(statement)
+
+        if not self.builder.block.is_terminated:
+            self.builder.branch(after_if_block)
+
+        # Continue with the block after the if statement
+        self.builder.position_at_start(after_if_block)
+
+    def visit_WhileLoopNode(self, node):
+        # Create blocks for the loop condition, loop body, and after the loop
+        condition_block = self.builder.function.append_basic_block(name='while.cond')
+        body_block = self.builder.function.append_basic_block(name='while.body')
+        after_loop_block = self.builder.function.append_basic_block(name='after.while')
+
+        # Push the after_loop_block to the break_blocks stack
+        self.break_blocks.append(after_loop_block)
+
+        # Generate code for the loop condition and set builder's position to the condition block
+        self.builder.branch(condition_block)
+        self.builder.position_at_start(condition_block)
+        condition = self.visit(node.condition)
+
+        if condition.type != ir.IntType(1):
+            condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
+
+        self.builder.cbranch(condition, body_block, after_loop_block)
+
+        # Generate code for the loop body and set builder's position to the body block
+        self.builder.position_at_start(body_block)
+        for statement in node.body:
+            self.visit(statement)
+        self.builder.branch(condition_block)
+
+        # Pop the after_loop_block from the break_blocks stack
+        self.break_blocks.pop()
+
+        # Set builder's position to the block after the loop
+        self.builder.position_at_start(after_loop_block)
+
+    def visit_BreakNode(self, node):
+        # Get the nearest loop end block from the break_blocks stack
+        if self.break_blocks:
+            break_block = self.break_blocks[-1]
+            self.builder.branch(break_block)
+        else:
+            raise Exception("Invalid break statement. It should be inside a loop.")
+
+    def visit_ContinueNode(self, node):
+        pass
