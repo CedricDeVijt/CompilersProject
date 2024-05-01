@@ -16,6 +16,7 @@ class LLVMVisitor:
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0
+        self.enums = {}
         # Add printf and scanf function
         if stdio:
             function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
@@ -245,7 +246,10 @@ class LLVMVisitor:
     def visit_DefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
-        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+        if isinstance(node.type, list):
+            var_type = self.get_highest_type(node.type[len(node.type) - 1])
+        else:
+            var_type = 'int'
         value = self.visit(node.rvalue)
         symbol = Symbol(name=var_name, var_type=var_type)
         symbol.alloca = value
@@ -684,3 +688,6 @@ class LLVMVisitor:
 
     def visit_TypedefNode(self, node):
         pass
+
+    def visit_EnumNode(self, node):
+        self.enums[node.enum_name] = node.enum_list
