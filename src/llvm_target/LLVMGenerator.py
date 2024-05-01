@@ -239,7 +239,6 @@ class LLVMVisitor:
     def visit_ifStatementNode(self, node):
         # open scope
         self.scope.open_scope()
-
         # close scope
         self.scope.close_scope()
 
@@ -302,7 +301,6 @@ class LLVMVisitor:
         symbol.alloca = var_ptr
         symbol.pointer = False
         if isinstance(node.type[len(node.type) - 1], PointerNode):
-            print('t')
             symbol.pointer = True
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
@@ -427,7 +425,7 @@ class LLVMVisitor:
         return ir.Constant(ir.IntType(32), int(node.value))
 
     def visit_CharNode(self, node):
-        return ir.Constant(ir.IntType(8), chr(int(node.value)))
+        return ir.Constant(ir.IntType(8), node.value)
 
     def visit_FloatNode(self, node):
         return ir.Constant(ir.FloatType(), float(node.value))
