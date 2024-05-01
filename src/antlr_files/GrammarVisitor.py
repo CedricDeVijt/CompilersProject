@@ -24,6 +24,16 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GrammarParser#structDefinition.
+    def visitStructDefinition(self, ctx:GrammarParser.StructDefinitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GrammarParser#structMember.
+    def visitStructMember(self, ctx:GrammarParser.StructMemberContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by GrammarParser#function.
     def visitFunction(self, ctx:GrammarParser.FunctionContext):
         return self.visitChildren(ctx)

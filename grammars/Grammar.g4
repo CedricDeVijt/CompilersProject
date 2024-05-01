@@ -92,6 +92,7 @@ rvalue: unaryExpression
       | functionCall
       | jumpStatement
       | arrayElement
+      | string
       ;
 
 conditionalExpression: GREATER_THAN rvalue

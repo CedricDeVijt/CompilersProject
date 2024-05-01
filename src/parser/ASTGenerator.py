@@ -95,6 +95,8 @@ class ASTGenerator(Visitor):
             return []
         elif isinstance(node, EQNode) or isinstance(node, NEQNode) or isinstance(node, LTEQNode) or isinstance(node, GTEQNode):
             return []
+        elif isinstance(node, StringNode):
+            return [1]
         else:
             for child in node.children:
                 plist = self.get_pointer_size(child)
@@ -176,7 +178,7 @@ class ASTGenerator(Visitor):
 
     def implicit_type_conversion(self, lvalType, rval):
         def check_type_and_lookup(type_value):
-            while type_value not in ['char', 'int', 'float']:
+            while type_value not in ['char', 'int', 'float', 'string']:
                 if isinstance(type_value, TypeNode):
                     type_value = type_value.value
                 elif isinstance(type_value, PointerNode):
@@ -198,6 +200,10 @@ class ASTGenerator(Visitor):
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from float to char!")
         elif lvalType == 'char' and rvalType == 'int':
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from int to char!")
+        elif lvalType == 'char' and rvalType == 'string':
+            pass
+        else:
+            self.warnings.append(f"line {rval.line}:{rval.column} Unsupported type conversion from {rvalType} to {lvalType}!")
 
     def contains_node(self, node, node_type):
         if isinstance(node, node_type):
@@ -757,7 +763,14 @@ class ASTGenerator(Visitor):
                 rval = children[len(children) - 1]
                 # Give warnings for implicit conversions.
                 rval = node
-                if isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
+                if isinstance(rval, StringNode):
+                    if not isinstance(lval.type, PointerNode):
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot assign string to non-char-pointer type!")
+                        return None
+                    if lval.type.type.value != "char" or int(lval.type.value) != 1:
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Cannot assign string to non-char-pointer type!")
+                        return None
+                elif isinstance(rval, AddrNode) or isinstance(rval, IdentifierNode):
                     if isinstance(rval, AddrNode):
                         if not self.scope.lookup(rval.value.value):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value.value + "\' not declared yet!")
