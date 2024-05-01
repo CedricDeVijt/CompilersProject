@@ -167,3 +167,4 @@ output
 src/tests/example.c
 src/tests/example1.c
 src/llvm_target/output.ll
+!/src/tests/test_input_files/example.c
