@@ -815,3 +815,6 @@ class LLVMVisitor:
 
     def visit_ContinueNode(self, node):
         pass
+
+    def visit_EnumNode(self, node):
+        self.enums[node.enum_name] = node.enum_list
