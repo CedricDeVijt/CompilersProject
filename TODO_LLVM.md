@@ -18,9 +18,9 @@
   character) can now be part of expressions
 - [x] (**mandatory**) Variables
 - [x] (**mandatory**) Pointers
-- [ ] (**mandatory**) Constants
-- [ ] (**mandatory**) Implicit conversions warnings
-- [ ] (**mandatory**) Explicit conversions
+- [x] (**mandatory**) Constants
+- [x] (**mandatory**) Implicit conversions warnings
+- [x] (**mandatory**) Explicit conversions
 - [ ] (**mandatory**) Pointer arithmetic
 - [x] (**mandatory**) Increment/Decrement Operations
 - [ ] (**optional**) Const casting
