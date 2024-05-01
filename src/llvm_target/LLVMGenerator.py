@@ -16,6 +16,8 @@ class LLVMVisitor:
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0
+        self.break_blocks = []  # Stack to keep track of the nearest loop end block
+
         # Add printf and scanf function
         if stdio:
             function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
@@ -759,17 +761,20 @@ class LLVMVisitor:
         for statement in node.body:
             self.visit(statement)
 
-        self.builder.branch(after_if_block)
+        if not self.builder.block.is_terminated:
+            self.builder.branch(after_if_block)
 
         # Continue with the block after the if statement
         self.builder.position_at_start(after_if_block)
-
 
     def visit_WhileLoopNode(self, node):
         # Create blocks for the loop condition, loop body, and after the loop
         condition_block = self.builder.function.append_basic_block(name='while.cond')
         body_block = self.builder.function.append_basic_block(name='while.body')
         after_loop_block = self.builder.function.append_basic_block(name='after.while')
+
+        # Push the after_loop_block to the break_blocks stack
+        self.break_blocks.append(after_loop_block)
 
         # Generate code for the loop condition and set builder's position to the condition block
         self.builder.branch(condition_block)
@@ -787,8 +792,19 @@ class LLVMVisitor:
             self.visit(statement)
         self.builder.branch(condition_block)
 
+        # Pop the after_loop_block from the break_blocks stack
+        self.break_blocks.pop()
+
         # Set builder's position to the block after the loop
         self.builder.position_at_start(after_loop_block)
+
+    def visit_BreakNode(self, node):
+        # Get the nearest loop end block from the break_blocks stack
+        if self.break_blocks:
+            break_block = self.break_blocks[-1]
+            self.builder.branch(break_block)
+        else:
+            raise Exception("Invalid break statement. It should be inside a loop.")
 
     def visit_ContinueNode(self, node):
         pass
