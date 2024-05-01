@@ -118,12 +118,6 @@ class ASTGenerator(Visitor):
 
         if rval in ['char', 'int', 'float']:
             return rval
-        symbols = self.scope.lookup(rval)
-        if symbols and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
-            rval = symbols.type
-        else:
-            self.errors.append(f"line {rval.line}:{rval.column} Variable \'{rval}\' not declared yet!")
-            return 'char'
 
         return 'char'
 
@@ -139,12 +133,6 @@ class ASTGenerator(Visitor):
             return symbols.type.value
 
     def handle_node_type(self, rval):
-        if isinstance(rval, TypeNode):
-            if rval.value in ['char', 'int', 'float']:
-                return rval.value
-            symbols = self.scope.lookup(rval.value)
-            if symbols is not None and not isinstance(symbols.type, list) and symbols.symbol_type == 'typeDef':
-                return symbols.type
         if isinstance(rval, PointerNode):
             if isinstance(rval.type, list):
                 return rval.type[len(rval.type) - 1].value
@@ -158,7 +146,11 @@ class ASTGenerator(Visitor):
         if isinstance(rval, FunctionCallNode):
             return self.handle_function_call(rval)
         if isinstance(rval, TypeNode):
-            return rval.value
+            if rval.value in ['char', 'int', 'float']:
+                return rval.value
+            symbols = self.scope.lookup(rval.value)
+            if symbols is not None and isinstance(symbols, Symbol):
+                return self.get_highest_type(symbols.type)
         if isinstance(rval, ArrayIdentifierNode):
             return self.lookup_and_get_type(rval.value)
         type1 = self.get_highest_type(rval.children[0])
@@ -584,10 +576,8 @@ class ASTGenerator(Visitor):
                     for item in child:
                         if isinstance(item, TypeNode):
                             if item.value != 'const':
+                                a = self.get_highest_type(item)
                                 item.value = self.get_highest_type(item)
-                                if item.value not in ['int', 'char', 'float']:
-                                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Type \'{item.value}\' not declared yet!")
-                                    return None
                         children.append(item)
                         original += f"{item.original} "
                 else:
@@ -726,15 +716,6 @@ class ASTGenerator(Visitor):
                 # "=" is not second character -> definition.
                 identifier = children[children.index('=') - 1].value
                 var_type = children[children.index('=') - 2].value
-
-                if isinstance(var_type, str):
-                    symbols = self.scope.lookup(var_type)
-                    if symbols is not None and symbols.symbol_type == 'typeDef':
-                        var_type = symbols.type
-                    else:
-                        self.errors.append(
-                            f"line {ctx.start.line}:{ctx.start.column} Type \'{var_type}\' not declared yet!")
-                        return None
 
                 if isinstance(children[children.index('=') - 2], PointerNode):
                     if isinstance(children[children.index('=') - 2].type, list):
