@@ -1422,14 +1422,11 @@ class ASTGenerator(Visitor):
         for case in cases:
             original = ""
             if case.condition == 'Default':
-                defaultCondition = IntNode(value='1', line=case.line, column=case.column, original='1')
                 if not_default_condition is not None:
                     original = f"(! {not_default_condition.original})"
                     not_default_condition = LogicalNotNode(case.line, case.column, original=original, children=[not_default_condition])
-                    original = f"({not_default_condition.original} && {defaultCondition.original})"
-                    defaultCondition = LogicalAndNode(case.line, case.column, original=original, children=[not_default_condition, defaultCondition])
                     original = f"default:"
-                ifNode = IfStatementNode(line=case.line, column=case.column, original=original, condition=defaultCondition, body=case.children)
+                ifNode = IfStatementNode(line=case.line, column=case.column, original='default:', condition=not_default_condition, body=case.children)
                 ifNodes.append(ifNode)
             else:
                 if condition_since_break is None:
@@ -1442,14 +1439,18 @@ class ASTGenerator(Visitor):
                     original = f"({condition_since_break.original} || {case_condition.original})"
                     condition_since_break = LogicalOrNode(line=case.line, column=case.column, original=original, children=[condition_since_break, case_condition])
                     original = f"case {case.condition.original}:"
+                if not_default_condition is None:
+                    original = f"({rval.original} == {case.condition.original})"
+                    not_default_condition = EQNode(line=case.line, column=case.column, original=original, children=[rval, case.condition])
+                else:
+                    original = f"({rval.original} == {case.condition.original})"
+                    new_condition = EQNode(line=case.line, column=case.column, original=original, children=[rval, case.condition])
+                    original = f"({not_default_condition.original} || {original})"
+                    not_default_condition = LogicalOrNode(line=case.line, column=case.column, original=original, children=[not_default_condition, new_condition])
                 ifNodes.append(IfStatementNode(line=case.line, column=case.column, original=original, condition=condition_since_break, body=case.children))
                 for child in case.children:
                     # If break found, set condition to case condition.
                     if self.contains_node(child, BreakNode):
-                        if not_default_condition is None:
-                            not_default_condition = condition_since_break
-                        else:
-                            not_default_condition = LogicalAndNode(line=case.line, column=case.column, original=original, children=[not_default_condition, condition_since_break])
                         condition_since_break = None
                         break
 
