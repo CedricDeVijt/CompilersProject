@@ -223,7 +223,10 @@ class ASTGenerator(Visitor):
             return
         if isinstance(node, node_type):
             node.valid = True
-        if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode) or isinstance(node, FunctionNode):
+        if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode):
+            for child in node.body.children:
+                self.set_valid(child, node_type)
+        elif isinstance(node, FunctionNode):
             for child in node.body:
                 self.set_valid(child, node_type)
         else:
