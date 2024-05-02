@@ -386,7 +386,6 @@ class LLVMVisitor:
 
     def visit_PostFixNode(self, node):
         symbol = self.scope.lookup(name=node.value)
-        print(f"{node.value}, {symbol.alloca}")
         if isinstance(symbol, Symbol):
             value = 1
             if node.op == 'dec':
@@ -758,7 +757,7 @@ class LLVMVisitor:
 
     def visit_IdentifierNode(self, node):
         # Load the value from the alloca
-        return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
+        return self.builder.load(self.scope.lookup(name=node.value).alloca)
 
     def visit_AddrNode(self, node):
         alloca = self.scope.get_symbol(name=node.value.value).alloca
