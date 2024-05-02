@@ -177,9 +177,6 @@ class LLVMVisitor:
                 const = True
                 param_type = param_type[len(param_type) - 1]
             param_type = param_type.value
-            symbol = Symbol(name=param_name, var_type=param_type, const=const, symbol_type='variable', defined=True,
-                            params=None)
-            #symbol.alloca =
             symbol = Symbol(name=param_name, var_type=param_type, const=const, symbol_type='variable', defined=True, params=None)
             symbols = self.scope.get_symbol(name=param_name)
             if not symbols:
@@ -242,14 +239,39 @@ class LLVMVisitor:
         # close scope
         self.scope.close_scope()
 
+    def get_array_type(self, node):
+        type = node.type.value
+        length = len(node.rvalue.array)
+        if type == 'int':
+            return ir.ArrayType(ir.IntType(32), length)
+        elif type == 'float':
+            return ir.ArrayType(ir.FloatType(), length)
+        elif type == 'char':
+            return ir.ArrayType(ir.IntType(8), length)
+
     def visit_DefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
         rvalue = self.visit(node.rvalue)
+        # array
+        if isinstance(node.rvalue, ArrayNode):
+            array_type = self.get_array_type(node)
+            array_ptr = self.builder.alloca(array_type, name=var_name)
+            # todo: create array dynamically
+            rvalue = ir.Constant(array_type, [ir.Constant(ir.IntType(32), 5),
+                                                  ir.Constant(ir.IntType(32), 4)])
+            symbol = Symbol(name=var_name, var_type=array_type)
+            symbol.alloca = array_ptr
+            if self.scope.get_symbol(name=var_name) is None:
+                self.scope.add_symbol(symbol)
+            return self.builder.store(rvalue, array_ptr)
+        # not array
         enum = False
+        # if regular type
         if isinstance(node.type, list):
             var_type = self.get_highest_type(node.type[len(node.type) - 1])
             symbol = Symbol(name=var_name, var_type=node.type[len(node.type) - 1])
+        # if enum
         else:
             var_type = 'int'
             symbol = Symbol(name=var_name, var_type=var_type)
@@ -818,3 +840,10 @@ class LLVMVisitor:
 
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
+
+    def visit_ArrayNode(self, node):
+        ...
+
+    def visit_ArrayIdentifierNode(self, node):
+        return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
+
