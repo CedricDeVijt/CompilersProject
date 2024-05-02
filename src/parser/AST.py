@@ -608,3 +608,7 @@ class ArrayIdentifierNode(Node):
     def __init__(self, line: int, column: int, original: str | None, identifier: Symbol, indices: list, children=None):
         super().__init__(value=identifier.name, line=line, column=column, original_code=original, children=children)
         self.indices = indices
+
+class ScopeNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, children=None):
+        super().__init__(value="Scope", line=line, column=column, original_code=original, children=children)

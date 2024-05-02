@@ -223,7 +223,10 @@ class ASTGenerator(Visitor):
             return
         if isinstance(node, node_type):
             node.valid = True
-        if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode) or isinstance(node, FunctionNode):
+        if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode):
+            for child in node.body.children:
+                self.set_valid(child, node_type)
+        elif isinstance(node, FunctionNode):
             for child in node.body:
                 self.set_valid(child, node_type)
         else:
@@ -439,6 +442,7 @@ class ASTGenerator(Visitor):
         if isinstance(return_type, TypeNode) and return_type.value == 'int' and name == 'main' and len(params) == 0:
             self.has_main = True
         body = [] if ctx.getChild(ctx.getChildCount() - 1).getText() == ";" else self.visit(ctx.getChild(ctx.getChildCount() - 1))
+        body = body.children if isinstance(body, ScopeNode) else body
         original += ")" if body != [] else ") {}"
         node = FunctionNode(value=name, line=ctx.start.line, column=ctx.start.column, original=original, return_type=return_type, params=params, body=body, children=children)
         # Return nodes are valid in function.
@@ -543,7 +547,9 @@ class ASTGenerator(Visitor):
         self.remove_unused_children(children)
 
         self.scope.close_scope()
-        return children
+        node = ScopeNode(line=ctx.start.line, column=ctx.start.column, original="", children=children)
+
+        return node
 
     def visitStatement(self, ctx):
         children = []

@@ -818,3 +818,10 @@ class LLVMVisitor:
 
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
+
+
+    def visit_ScopeNode(self, node):
+        self.scope.open_scope()
+        for statement in node.children:
+            self.visit(statement)
+        self.scope.close_scope()
