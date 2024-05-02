@@ -223,7 +223,10 @@ class ASTGenerator(Visitor):
             return
         if isinstance(node, node_type):
             node.valid = True
-        if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode) or isinstance(node, FunctionNode):
+        if isinstance(node, IfStatementNode):
+            for child in node.body[0].children:
+                self.set_valid(child, node_type)
+        elif isinstance(node, FunctionNode) or isinstance(node, WhileLoopNode):
             for child in node.body:
                 self.set_valid(child, node_type)
         else:
@@ -250,10 +253,10 @@ class ASTGenerator(Visitor):
     def place_node_before_type(self, node1, node2, node_type):
         node2 = copy.deepcopy(node2)
         if isinstance(node1, IfStatementNode):
-            for child in node1.body:
+            for child in node1.body[0].children:
                 if isinstance(child, node_type):
-                    index = node1.body.index(child)
-                    node1.body.insert(index, node2)
+                    index = node1.body[0].children.index(child)
+                    node1.body[0].children.insert(index, node2)
                     break
                 else:
                     self.place_node_before_type(child, node2, node_type)
@@ -269,7 +272,10 @@ class ASTGenerator(Visitor):
     def check_validity(self, node):
         if node is None:
             return
-        if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode) or isinstance(node, FunctionNode):
+        if isinstance(node, IfStatementNode):
+            for child in node.body[0].children:
+                self.check_validity(child)
+        elif isinstance(node, FunctionNode) or isinstance(node, WhileLoopNode):
             for child in node.body:
                 self.check_validity(child)
         for child in node.children:
@@ -294,7 +300,11 @@ class ASTGenerator(Visitor):
     def check_returns(self, node, func_type):
         if node is None:
             return
-        if isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode):
+        if isinstance(node, IfStatementNode):
+            for child in node.body[0].children:
+                self.check_returns(child, func_type)
+
+        elif isinstance(node, WhileLoopNode):
             for child in node.body:
                 self.check_returns(child, func_type)
         for child in node.children:
@@ -439,6 +449,7 @@ class ASTGenerator(Visitor):
         if isinstance(return_type, TypeNode) and return_type.value == 'int' and name == 'main' and len(params) == 0:
             self.has_main = True
         body = [] if ctx.getChild(ctx.getChildCount() - 1).getText() == ";" else self.visit(ctx.getChild(ctx.getChildCount() - 1))
+        body = body.children if isinstance(body, ScopeNode) else body
         original += ")" if body != [] else ") {}"
         node = FunctionNode(value=name, line=ctx.start.line, column=ctx.start.column, original=original, return_type=return_type, params=params, body=body, children=children)
         # Return nodes are valid in function.
@@ -543,7 +554,8 @@ class ASTGenerator(Visitor):
         self.remove_unused_children(children)
 
         self.scope.close_scope()
-        return children
+        node = ScopeNode(line=ctx.start.line, column=ctx.start.column, original="", children=children)
+        return node
 
     def visitStatement(self, ctx):
         children = []
@@ -1291,10 +1303,11 @@ class ASTGenerator(Visitor):
                 else:
                     children.append(child)
         original = f"while ({children[0].original}) " + "{}"
-        node = WhileLoopNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=children[0], body=children[1:])
+        whilenode = WhileLoopNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=children[0], body=children[1:])
+        node = ScopeNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[whilenode])
         # Continue and break are valid.
-        self.set_valid(node, BreakNode)
-        self.set_valid(node, ContinueNode)
+        self.set_valid(whilenode, BreakNode)
+        self.set_valid(whilenode, ContinueNode)
         return node
 
     def visitForLoop(self, ctx):
@@ -1325,19 +1338,21 @@ class ASTGenerator(Visitor):
             original += f"{children[2].original}) " + "{}"
         else:
             original += ") {}"
-        node = WhileLoopNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=condition, body=body)
+
+        whilenode = WhileLoopNode(line=ctx.start.line, column=ctx.start.column, original=original, condition=condition, body=body)
+        node = ScopeNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[whilenode])
         # Continue and break are valid.
         self.set_valid(node, BreakNode)
         self.set_valid(node, ContinueNode)
         if children[2] is not None:
-            for child in node.body:
+            for child in node.children[0].body:
                 self.place_node_before_type(child, children[2], BreakNode)
                 self.place_node_before_type(child, children[2], ReturnNode)
                 self.place_node_before_type(child, children[2], ContinueNode)
-            if not isinstance(node.body[len(node.body) - 1], BreakNode) and not isinstance(node.body[len(node.body) - 1], ReturnNode) and not isinstance(node.body[len(node.body) - 1], ContinueNode):
-                node.body.append(children[2])
+            if not isinstance(node.children[0].body[len(node.children[0].body) - 1], BreakNode) and not isinstance(node.children[0].body[len(node.children[0].body) - 1], ReturnNode) and not isinstance(node.children[0].body[len(node.children[0].body) - 1], ContinueNode):
+                node.children[0].body.append(children[2])
             else:
-                node.body.insert(len(node.body) - 1, children[2])
+                node.children[0].body.insert(len(node.children[0].body) - 1, children[2])
         self.scope.close_scope()
         return node if children[0] is None else [children[0], node]
 

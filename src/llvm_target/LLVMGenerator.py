@@ -18,6 +18,7 @@ class LLVMVisitor:
         self.printf_string = 0
         self.enums = {}
         self.break_blocks = []  # Stack to keep track of the nearest loop end block
+        self.global_var = 0
 
         # Add printf and scanf function
         if stdio:
@@ -142,7 +143,6 @@ class LLVMVisitor:
         format_string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
         format_string_global.global_constant = True
         format_string_global.initializer = ir.Constant(c_string_type, bytearray(specifier, 'utf8'))
-        self.printf_string += 1
 
         # Call Printf Function.
         args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
@@ -278,16 +278,25 @@ class LLVMVisitor:
             enum = True
         if not enum and isinstance(node.type[0], PointerNode):
             if var_type == 'float':
-                rvalue = self.builder.inttoptr(rvalue, ir.PointerType(ir.FloatType))
+                pointer_type = ir.PointerType(ir.FloatType())
             elif var_type == 'int':
-                rvalue = self.builder.inttoptr(rvalue, ir.PointerType(ir.IntType(32)))
+                pointer_type = ir.PointerType(ir.IntType(32))
             elif var_type == 'char':
-                rvalue = self.builder.inttoptr(rvalue, ir.PointerType(ir.IntType(8)))
-            var_ptr = self.builder.alloca(rvalue.type)
+                pointer_type = ir.PointerType(ir.IntType(8))
+            var_ptr = ir.GlobalVariable(self.module, ir.PointerType(pointer_type), name=str(self.global_var))
+            self.global_var += 1
+            var_ptr.linkage = 'internal'
+            var_ptr.initializer = None
+
             symbol.alloca = var_ptr
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
-            return self.builder.store(rvalue, var_ptr)
+
+            rvalue = self.builder.inttoptr(rvalue, ir.PointerType(pointer_type))
+
+            # loaded = self.builder.load(rvalue)
+            return self.builder.store(rvalue, symbol.alloca)
+
         # Not a Pointer
         if not enum and rvalue.type != ir.FloatType() and var_type == 'float':
             if rvalue.type == ir.IntType(8):
@@ -303,7 +312,10 @@ class LLVMVisitor:
                 rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
             rvalue = self.builder.trunc(rvalue, ir.IntType(8))
 
-        var_ptr = self.builder.alloca(rvalue.type)
+        var_ptr = ir.GlobalVariable(self.module, rvalue.type, name=str(self.global_var))
+        self.global_var += 1
+        var_ptr.linkage = 'internal'
+        var_ptr.initializer = None
         symbol.alloca = var_ptr
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
@@ -315,25 +327,28 @@ class LLVMVisitor:
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         if isinstance(node.type[0], PointerNode):
             if var_type == 'float':
-                value = ir.Constant(ir.PointerType(ir.FloatType()), None)
+                rvalue = ir.Constant(ir.PointerType(ir.FloatType()), None)
             elif var_type == 'int':
-                value = ir.Constant(ir.PointerType(ir.IntType(32)), None)
+                rvalue = ir.Constant(ir.PointerType(ir.IntType(32)), None)
             elif var_type == 'char':
-                value = ir.Constant(ir.PointerType(ir.IntType(8)), None)
+                rvalue = ir.Constant(ir.PointerType(ir.IntType(8)), None)
+            else:
+                raise Exception("WTF")
         elif var_type == 'float':
-            value = ir.Constant(ir.FloatType(), 0)
+            rvalue = ir.Constant(ir.FloatType(), 0)
         elif var_type == 'int':
-            value = ir.Constant(ir.IntType(32), 0)
+            rvalue = ir.Constant(ir.IntType(32), 0)
         elif var_type == 'char':
-            value = ir.Constant(ir.IntType(8), 0)
-        var_ptr = self.builder.alloca(value.type)
-        self.builder.store(value, var_ptr)
+            rvalue = ir.Constant(ir.IntType(8), 0)
+        else:
+            raise Exception("WTF")
+        var_ptr = ir.GlobalVariable(self.module, rvalue.type, name=str(self.global_var))
+        self.global_var += 1
+        var_ptr.linkage = 'internal'
+        var_ptr.initializer = rvalue
         # Add to symbol table
         symbol = Symbol(name=var_name, var_type=node.type[len(node.type) - 1])
         symbol.alloca = var_ptr
-        symbol.pointer = False
-        if isinstance(node.type[len(node.type) - 1], PointerNode):
-            symbol.pointer = True
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         return var_ptr
@@ -346,43 +361,49 @@ class LLVMVisitor:
             var_name = var_name.identifier.value
         symbol = self.scope.lookup(name=var_name)
         var_type = self.get_highest_type(symbol.type)
-        value = self.visit(node.rvalue)
+        rvalue = self.visit(node.rvalue)
         # Pointer
         if isinstance(symbol.type, PointerNode):
-            pointer = self.builder.inttoptr(value, symbol.alloca.type)
-            loaded = self.builder.load(pointer)
-            return self.builder.store(loaded, symbol.alloca)
+            pointer = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee)
+            return self.builder.store(pointer, symbol.alloca)
+
         # Convert value if needed.
-        if value.type != ir.FloatType() and var_type == 'float':
-            if value.type == ir.IntType(8):
-                value = self.builder.fptosi(value, ir.IntType(32))
-            value = self.builder.sitofp(value, ir.FloatType())
-        elif value.type != ir.IntType(32) and var_type == 'int':
-            if value.type == ir.FloatType():
-                value = self.builder.fptosi(value, ir.IntType(32))
+        if rvalue.type != ir.FloatType() and var_type == 'float':
+            if rvalue.type == ir.IntType(8):
+                rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
+            rvalue = self.builder.sitofp(rvalue, ir.FloatType())
+        elif rvalue.type != ir.IntType(32) and var_type == 'int':
+            if rvalue.type == ir.FloatType():
+                rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
             else:
-                value = self.builder.sext(value, ir.IntType(32))
-        elif value.type != ir.IntType(8) and var_type == 'char':
-            if value.type == ir.FloatType():
-                value = self.builder.fptosi(value, ir.IntType(32))
-            value = self.builder.trunc(value, ir.IntType(8))
+                rvalue = self.builder.sext(rvalue, ir.IntType(32))
+        elif rvalue.type != ir.IntType(8) and var_type == 'char':
+            if rvalue.type == ir.FloatType():
+                rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
+            rvalue = self.builder.trunc(rvalue, ir.IntType(8))
         symbol = self.scope.lookup(name=var_name)
-        self.builder.store(value, symbol.alloca)
+        self.builder.store(rvalue, symbol.alloca)
 
     def visit_PostFixNode(self, node):
         symbol = self.scope.lookup(name=node.value)
+        print(f"{node.value}, {symbol.alloca}")
         if isinstance(symbol, Symbol):
             value = 1
             if node.op == 'dec':
                 value = -1
             # Pointer
             if isinstance(symbol.type, PointerNode):
-                index = ir.Constant(ir.IntType(64), value)
+                if symbol.alloca.type == ir.PointerType(ir.PointerType(ir.IntType(32))):
+                    value *= 4
+                elif symbol.alloca.type == ir.PointerType(ir.PointerType(ir.FloatType())):
+                    value *= 8
+                # TODO: FIX THIS BULLSHIT
+                index = ir.Constant(ir.IntType(64), 1)
+                index = self.builder.mul(index, ir.Constant(ir.IntType(64), value))
                 address = self.builder.ptrtoint(symbol.alloca, ir.IntType(64))
-                address = self.builder.add(address, index)
-                pointer = self.builder.inttoptr(address, symbol.alloca.type)
-                loaded = self.builder.load(pointer)
-                return self.builder.store(loaded, symbol.alloca)
+                new_address = self.builder.add(address, index)
+                pointer = self.builder.inttoptr(new_address, symbol.alloca.type.pointee)
+                return self.builder.store(pointer, symbol.alloca)
             # Do operation
             var_type = self.get_highest_type(symbol.type)
             original = self.builder.load(symbol.alloca)
@@ -786,9 +807,9 @@ class LLVMVisitor:
 
         # Generate code for the if body
         self.builder.position_at_start(if_body_block)
-        # body is a list of statements
-        for statement in node.body:
-            self.visit(statement)
+
+        # body is a scope
+        self.visit(node.body[0])
 
         if not self.builder.block.is_terminated:
             self.builder.branch(after_if_block)
@@ -840,6 +861,12 @@ class LLVMVisitor:
 
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
+
+    def visit_ScopeNode(self, node):
+        self.scope.open_scope()
+        for statement in node.children:
+            self.visit(statement)
+        self.scope.close_scope()
 
     def visit_ArrayNode(self, node):
         ...
