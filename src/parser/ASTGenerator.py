@@ -307,7 +307,6 @@ class ASTGenerator(Visitor):
         elif isinstance(node, WhileLoopNode):
             for child in node.body:
                 self.check_returns(child, func_type)
-
         for child in node.children:
             self.check_returns(child, func_type)
         if isinstance(node, ReturnNode):
