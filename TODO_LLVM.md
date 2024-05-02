@@ -39,10 +39,10 @@
 
 - [x] (**mandatory**) Conditional statements
 - [x] (**optional**) Else if statements
-- [ ] (**mandatory**) Loops
+- [x] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
 - [x] (**mandatory**) Switch statements
-- [ ] (**mandatory**) Enumerations
+- [x] (**mandatory**) Enumerations
 
 # project 5
 
@@ -57,21 +57,21 @@
     - [ ] Void function
     - [ ] Missing main -> error.
   - [ ] (**optional**) Overloading of functions on the amount and type of parameters
-  - [ ] (**mandatory**) Define `#define` 
-  - [ ] (**mandatory**) Includes `#include`
-  - [ ] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
+  - [x] (**mandatory**) Define `#define` 
+  - [x] (**mandatory**) Includes `#include`
+  - [x] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
 - Semantic Analysis
-  - [ ] (**mandatory**) Function scopes in symbol table
-  - [ ] (**mandatory**) Check consistency of return type
-  - [ ] (**mandatory**) Check consistency of function arguments
-  - [ ] (**mandatory**) Functions can only be called if they are declared/defined earlier
-  - [ ] (**mandatory**) Check redefinitions of functions (headers too)
+  - [x] (**mandatory**) Function scopes in symbol table
+  - [x] (**mandatory**) Check consistency of return type
+  - [x] (**mandatory**) Check consistency of function arguments
+  - [x] (**mandatory**) Functions can only be called if they are declared/defined earlier
+  - [x] (**mandatory**) Check redefinitions of functions (headers too)
   - [ ] (**optional**) All paths in function body end in return statement (except void functions)
 - Optimizations
-  - [ ] (**mandatory**) Do not generate code after return statement
-  - [ ] (**mandatory**) Do not generate code after continue/break statement
-  - [ ] (**mandatory**) Do not generate code for unused variables
-  - [ ] (**mandatory**) Do not generate code for conditionals that are never true
+  - [x] (**mandatory**) Do not generate code after return statement
+  - [x] (**mandatory**) Do not generate code after continue/break statement
+  - [x] (**mandatory**) Do not generate code for unused variables
+  - [x] (**mandatory**) Do not generate code for conditionals that are never true
 
 # project 6
 
@@ -82,11 +82,11 @@
   - [ ] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays
   - [ ] (**mandatory**) C-strings
-  - [ ] (**mandatory**) Including stdio.h
+  - [x] (**mandatory**) Including stdio.h
 - Semantical Analysis
-  - [ ] (**mandatory**) Type checking arrays
-  - [ ] (**mandatory**) Type of specified index is int when accessing arrays
-  - [ ] (**mandatory**) When assigning array initializers check that the length matches the array
+  - [x] (**mandatory**) Type checking arrays
+  - [x] (**mandatory**) Type of specified index is int when accessing arrays
+  - [x] (**mandatory**) When assigning array initializers check that the length matches the array
 
 # project 7
 
