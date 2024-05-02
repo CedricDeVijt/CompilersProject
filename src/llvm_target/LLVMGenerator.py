@@ -392,17 +392,17 @@ class LLVMVisitor:
                 value = -1
             # Pointer
             if isinstance(symbol.type, PointerNode):
-                if symbol.alloca.type == ir.PointerType(ir.PointerType(ir.IntType(32))):
+                if symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.IntType(32)))):
                     value *= 4
-                elif symbol.alloca.type == ir.PointerType(ir.PointerType(ir.FloatType())):
+                elif symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.FloatType()))):
                     value *= 8
-                # TODO: FIX THIS BULLSHIT
-                index = ir.Constant(ir.IntType(64), 1)
-                index = self.builder.mul(index, ir.Constant(ir.IntType(64), value))
-                address = self.builder.ptrtoint(symbol.alloca, ir.IntType(64))
-                new_address = self.builder.add(address, index)
-                pointer = self.builder.inttoptr(new_address, symbol.alloca.type.pointee)
-                return self.builder.store(pointer, symbol.alloca)
+                index = ir.Constant(ir.IntType(64), value)
+                original_pointer = self.builder.load(symbol.alloca)
+                pointer_as_int = self.builder.ptrtoint(original_pointer, ir.IntType(64))
+                new_pointer_as_int = self.builder.add(pointer_as_int, index)
+                new_pointer = self.builder.inttoptr(new_pointer_as_int, symbol.alloca.type.pointee)
+                self.builder.store(new_pointer, symbol.alloca)
+                return original_pointer
             # Do operation
             var_type = self.get_highest_type(symbol.type)
             original = self.builder.load(symbol.alloca)
@@ -423,10 +423,17 @@ class LLVMVisitor:
                 value = -1
             # Pointer
             if isinstance(symbol.type, PointerNode):
-                index = ir.Constant(ir.IntType(8), value)
-                loaded = self.builder.load(symbol.alloca)
-                gep = self.builder.gep(loaded, [index])
-                return self.builder.store(gep, symbol.alloca)
+                if symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.IntType(32)))):
+                    value *= 4
+                elif symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.FloatType()))):
+                    value *= 8
+                index = ir.Constant(ir.IntType(64), value)
+                pointer = self.builder.load(symbol.alloca)
+                pointer_as_int = self.builder.ptrtoint(pointer, ir.IntType(64))
+                new_pointer_as_int = self.builder.add(pointer_as_int, index)
+                new_pointer = self.builder.inttoptr(new_pointer_as_int, symbol.alloca.type.pointee)
+                self.builder.store(new_pointer, symbol.alloca)
+                return new_pointer
             # Do operation
             var_type = self.get_highest_type(symbol.type)
             original = self.builder.load(symbol.alloca)
