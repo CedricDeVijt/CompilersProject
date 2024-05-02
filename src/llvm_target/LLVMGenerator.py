@@ -364,6 +364,12 @@ class LLVMVisitor:
         rvalue = self.visit(node.rvalue)
         # Pointer
         if isinstance(symbol.type, PointerNode):
+            # Change value of pointee.
+            if isinstance(node.lvalue, DerefNode):
+                # TODO: FIX
+                pointee = self.visit(node.lvalue)
+                return self.builder.store(rvalue, pointee)
+            # Change value of pointer.
             pointer = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee)
             return self.builder.store(pointer, symbol.alloca)
 
