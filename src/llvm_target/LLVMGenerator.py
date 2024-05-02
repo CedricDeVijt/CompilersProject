@@ -737,16 +737,17 @@ class LLVMVisitor:
 
     def visit_IdentifierNode(self, node):
         # Load the value from the alloca
-        return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
+        return self.builder.load(self.scope.lookup(name=node.value).alloca)
 
     def visit_AddrNode(self, node):
-        alloca = self.scope.get_symbol(name=node.value.value).alloca
+        alloca = self.scope.lookup(name=node.value.value).alloca
         ptr_int = self.builder.ptrtoint(alloca, ir.IntType(64))
         return ptr_int
 
     def visit_DerefNode(self, node):
-        alloca = self.scope.get_symbol(name=node.identifier.value).alloca
-        loaded = self.builder.load(alloca)
+        alloca = self.scope.lookup(name=node.identifier.value).alloca
+        pointer = self.builder.load(alloca)
+        loaded = self.builder.load(pointer)
         return loaded
 
     def visit_ExplicitConversionNode(self, node):
