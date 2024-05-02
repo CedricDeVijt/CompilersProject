@@ -715,7 +715,7 @@ class LLVMVisitor:
 
     def visit_IdentifierNode(self, node):
         # Load the value from the alloca
-        return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
+        return self.builder.load(self.scope.lookup(name=node.value).alloca)
 
     def visit_AddrNode(self, node):
         alloca = self.scope.get_symbol(name=node.value.value).alloca
@@ -818,3 +818,9 @@ class LLVMVisitor:
 
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
+
+    def visit_ScopeNode(self, node):
+        self.scope.open_scope()
+        for statement in node.children:
+            self.visit(statement)
+        self.scope.close_scope()
