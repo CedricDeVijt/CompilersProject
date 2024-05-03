@@ -283,6 +283,8 @@ class LLVMVisitor:
                 pointer_type = ir.PointerType(ir.IntType(32))
             elif var_type == 'char':
                 pointer_type = ir.PointerType(ir.IntType(8))
+            for i in range(0, int(node.type[0].value) - 1):
+                pointer_type = ir.PointerType(pointer_type)
             var_ptr = ir.GlobalVariable(self.module, ir.PointerType(pointer_type), name=str(self.global_var))
             self.global_var += 1
             var_ptr.linkage = 'internal'
@@ -781,6 +783,8 @@ class LLVMVisitor:
         alloca = self.scope.lookup(name=node.identifier.value).alloca
         pointer = self.builder.load(alloca)
         loaded = self.builder.load(pointer)
+        for i in range(0, int(self.scope.lookup(name=node.identifier.value).type.value) - 1):
+            loaded = self.builder.load(loaded)
         return loaded
 
     def visit_ExplicitConversionNode(self, node):
