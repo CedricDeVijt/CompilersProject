@@ -55,7 +55,7 @@
     - [ ] Function arguments (basic types, pointers, constness, pass-by-value and pass-by-reference)
     - [ ] Return values
     - [ ] Void function
-    - [ ] Missing main -> error.
+    - [x] Missing main -> error.
   - [ ] (**optional**) Overloading of functions on the amount and type of parameters
   - [x] (**mandatory**) Define `#define` 
   - [x] (**mandatory**) Includes `#include`

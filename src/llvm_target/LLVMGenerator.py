@@ -182,46 +182,61 @@ class LLVMVisitor:
             if not symbols:
                 self.scope.add_symbol(symbol)
         # Arguments.
-        args = []
+        arg_types = []
+        arg_names = []
+        symbols = []
         for param in node.params:
             if isinstance(param, list):
                 param_type = param[len(param) - 2]
+                param_name = param[len(param) - 1]
+                if isinstance(param_name, IdentifierNode):
+                    param_name = param_name.value
+                arg_names.append(param_name)
+                symbol = Symbol(name=param_name, var_type=param_type)
+                symbols.append(symbol)
                 if isinstance(param_type, TypeNode):
                     if param_type.value == 'char':
-                        args.append(ir.IntType(8))
+                        arg_types.append(ir.IntType(8))
                     elif param_type.value == 'int':
-                        args.append(ir.IntType(32))
+                        arg_types.append(ir.IntType(32))
                     elif param_type.value == 'float':
-                        args.append(ir.FloatType())
-                    elif param_type.value == 'void':
-                        args.append(ir.VoidType())
+                        arg_types.append(ir.FloatType())
                 elif isinstance(param_type, PointerNode):
                     ...
+
         # Function type.
-        function_type = ir.FunctionType(ir.VoidType(), args)
+        function_type = ir.FunctionType(ir.VoidType(), arg_types)
         func_type = node.type
         if isinstance(func_type, list):
             func_type = func_type[len(func_type) - 1]
         if isinstance(func_type, TypeNode):
             if func_type.value == 'char':
-                function_type = ir.FunctionType(ir.IntType(8), args)
+                function_type = ir.FunctionType(ir.IntType(8), arg_types)
             elif func_type.value == 'int':
-                function_type = ir.FunctionType(ir.IntType(32), args)
+                function_type = ir.FunctionType(ir.IntType(32), arg_types)
             elif func_type.value == 'float':
-                function_type = ir.FunctionType(ir.FloatType(), args)
+                function_type = ir.FunctionType(ir.FloatType(), arg_types)
             elif func_type.value == 'void':
-                function_type = ir.FunctionType(ir.VoidType(), args)
+                function_type = ir.FunctionType(ir.VoidType(), arg_types)
         elif isinstance(func_type, PointerNode):
             ...
         function = ir.Function(self.module, function_type, name=node.value)
 
-
         entry_block = function.append_basic_block(name="entry")
         self.builder = ir.IRBuilder(entry_block)
 
+        for arg_name in arg_names:
+            function.args[arg_names.index(arg_name)].name = self.global_var
+            self.global_var += 1
+            if (self.scope.get_symbol(name=arg_name), Symbol):
+                # TODO: FIX THIS
+                self.scope.get_symbol(name=arg_name).alloca = function.args[arg_names.index(arg_name)]
+            else:
+                print("WTF")
+
         # Visit function body
         for statement in node.body:
-            self.builder.comment(statement.original.replace('\n', ''))
+            self.builder.comment(statement.original.replace('\n', '\\n'))
             self.visit(statement)
 
         # Close scope.
@@ -287,6 +302,7 @@ class LLVMVisitor:
             var_type = 'int'
             symbol = Symbol(name=var_name, var_type=var_type)
             enum = True
+
         if not enum and isinstance(node.type[0], PointerNode):
             if var_type == 'float':
                 pointer_type = ir.PointerType(ir.FloatType())
@@ -294,6 +310,8 @@ class LLVMVisitor:
                 pointer_type = ir.PointerType(ir.IntType(32))
             elif var_type == 'char':
                 pointer_type = ir.PointerType(ir.IntType(8))
+            for i in range(0, int(node.type[0].value) - 1):
+                pointer_type = ir.PointerType(pointer_type)
             var_ptr = ir.GlobalVariable(self.module, ir.PointerType(pointer_type), name=str(self.global_var))
             self.global_var += 1
             var_ptr.linkage = 'internal'
@@ -330,6 +348,9 @@ class LLVMVisitor:
         symbol.alloca = var_ptr
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
+        if self.scope.is_global():
+            var_ptr.initializer = rvalue
+            return
         return self.builder.store(rvalue, var_ptr)
 
     def visit_DeclarationNode(self, node):
@@ -338,13 +359,16 @@ class LLVMVisitor:
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         if isinstance(node.type[0], PointerNode):
             if var_type == 'float':
-                rvalue = ir.Constant(ir.PointerType(ir.FloatType()), None)
+                rvalue = ir.PointerType(ir.FloatType())
             elif var_type == 'int':
-                rvalue = ir.Constant(ir.PointerType(ir.IntType(32)), None)
+                rvalue = ir.PointerType(ir.IntType(32))
             elif var_type == 'char':
-                rvalue = ir.Constant(ir.PointerType(ir.IntType(8)), None)
+                rvalue = ir.PointerType(ir.IntType(8))
             else:
                 raise Exception("WTF")
+            for i in range(0, int(node.type[0].value) - 1):
+                rvalue = ir.PointerType(rvalue)
+            rvalue = ir.Constant(rvalue, None)
         elif var_type == 'float':
             rvalue = ir.Constant(ir.FloatType(), 0)
         elif var_type == 'int':
@@ -375,7 +399,14 @@ class LLVMVisitor:
         rvalue = self.visit(node.rvalue)
         # Pointer
         if isinstance(symbol.type, PointerNode):
+            # Change value of pointee.
+            if isinstance(node.lvalue, DerefNode):
+                # TODO: FIX
+                pointee = self.visit(node.lvalue)
+                return self.builder.store(rvalue, pointee)
+            # Change value of pointer.
             pointer = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee)
+            print(pointer)
             return self.builder.store(pointer, symbol.alloca)
 
         # Convert value if needed.
@@ -393,28 +424,30 @@ class LLVMVisitor:
                 rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
             rvalue = self.builder.trunc(rvalue, ir.IntType(8))
         symbol = self.scope.lookup(name=var_name)
+        if self.scope.is_global():
+            symbol.alloca.initializer = rvalue
+            return
         self.builder.store(rvalue, symbol.alloca)
 
     def visit_PostFixNode(self, node):
         symbol = self.scope.lookup(name=node.value)
-        print(f"{node.value}, {symbol.alloca}")
         if isinstance(symbol, Symbol):
             value = 1
             if node.op == 'dec':
                 value = -1
             # Pointer
             if isinstance(symbol.type, PointerNode):
-                if symbol.alloca.type == ir.PointerType(ir.PointerType(ir.IntType(32))):
+                if symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.IntType(32)))):
                     value *= 4
-                elif symbol.alloca.type == ir.PointerType(ir.PointerType(ir.FloatType())):
+                elif symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.FloatType()))):
                     value *= 8
-                # TODO: FIX THIS BULLSHIT
-                index = ir.Constant(ir.IntType(64), 1)
-                index = self.builder.mul(index, ir.Constant(ir.IntType(64), value))
-                address = self.builder.ptrtoint(symbol.alloca, ir.IntType(64))
-                new_address = self.builder.add(address, index)
-                pointer = self.builder.inttoptr(new_address, symbol.alloca.type.pointee)
-                return self.builder.store(pointer, symbol.alloca)
+                index = ir.Constant(ir.IntType(64), value)
+                original_pointer = self.builder.load(symbol.alloca)
+                pointer_as_int = self.builder.ptrtoint(original_pointer, ir.IntType(64))
+                new_pointer_as_int = self.builder.add(pointer_as_int, index)
+                new_pointer = self.builder.inttoptr(new_pointer_as_int, symbol.alloca.type.pointee)
+                self.builder.store(new_pointer, symbol.alloca)
+                return original_pointer
             # Do operation
             var_type = self.get_highest_type(symbol.type)
             original = self.builder.load(symbol.alloca)
@@ -435,10 +468,17 @@ class LLVMVisitor:
                 value = -1
             # Pointer
             if isinstance(symbol.type, PointerNode):
-                index = ir.Constant(ir.IntType(8), value)
-                loaded = self.builder.load(symbol.alloca)
-                gep = self.builder.gep(loaded, [index])
-                return self.builder.store(gep, symbol.alloca)
+                if symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.IntType(32)))):
+                    value *= 4
+                elif symbol.alloca.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.FloatType()))):
+                    value *= 8
+                index = ir.Constant(ir.IntType(64), value)
+                pointer = self.builder.load(symbol.alloca)
+                pointer_as_int = self.builder.ptrtoint(pointer, ir.IntType(64))
+                new_pointer_as_int = self.builder.add(pointer_as_int, index)
+                new_pointer = self.builder.inttoptr(new_pointer_as_int, symbol.alloca.type.pointee)
+                self.builder.store(new_pointer, symbol.alloca)
+                return new_pointer
             # Do operation
             var_type = self.get_highest_type(symbol.type)
             original = self.builder.load(symbol.alloca)
@@ -481,8 +521,10 @@ class LLVMVisitor:
         if pointer:
             if value.type == ir.FloatType():
                 val = self.builder.fptosi(value, ir.IntType(64))
-            else:
+            elif value.type == ir.IntType(8) or value.type == ir.IntType(32):
                 val = self.builder.sext(value, ir.IntType(64))
+            else:
+                return self.builder.ptrtoint(value, ir.IntType(64))
             bytes_size = 0
             if ast_type == 'float':
                 bytes_size = 8
@@ -566,17 +608,9 @@ class LLVMVisitor:
         child1 = self.visit(node.children[0])
         child2 = self.visit(node.children[1])
         pointer = False
-        if child1.type == ir.IntType(64):
+        if child1.type != ir.IntType(8) and child1.type != ir.IntType(32) and child1.type != ir.FloatType():
             pointer = True
-        if child1.type == ir.IntType(64):
-            pointer = True
-        if child1.type == ir.IntType(64):
-            pointer = True
-        if child2.type == ir.IntType(64):
-            pointer = True
-        if child2.type == ir.IntType(64):
-            pointer = True
-        if child2.type == ir.IntType(64):
+        if child2.type != ir.IntType(8) and child2.type != ir.IntType(32) and child2.type != ir.FloatType():
             pointer = True
         child1 = self.convertLLVMtype(var_type, child1, pointer)
         child2 = self.convertLLVMtype(var_type, child2, pointer)
@@ -769,16 +803,19 @@ class LLVMVisitor:
 
     def visit_IdentifierNode(self, node):
         # Load the value from the alloca
-        return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
+        return self.builder.load(self.scope.lookup(name=node.value).alloca)
 
     def visit_AddrNode(self, node):
-        alloca = self.scope.get_symbol(name=node.value.value).alloca
+        alloca = self.scope.lookup(name=node.value.value).alloca
         ptr_int = self.builder.ptrtoint(alloca, ir.IntType(64))
         return ptr_int
 
     def visit_DerefNode(self, node):
-        alloca = self.scope.get_symbol(name=node.identifier.value).alloca
-        loaded = self.builder.load(alloca)
+        alloca = self.scope.lookup(name=node.identifier.value).alloca
+        pointer = self.builder.load(alloca)
+        loaded = self.builder.load(pointer)
+        for i in range(0, int(self.scope.lookup(name=node.identifier.value).type.value) - 1):
+            loaded = self.builder.load(loaded)
         return loaded
 
     def visit_ExplicitConversionNode(self, node):
