@@ -221,7 +221,7 @@ class LLVMVisitor:
 
         # Visit function body
         for statement in node.body:
-            self.builder.comment(statement.original)
+            self.builder.comment(statement.original.replace('\n', '\\n'))
             self.visit(statement)
 
         # Close scope.
