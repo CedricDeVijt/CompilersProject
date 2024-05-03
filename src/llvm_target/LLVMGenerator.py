@@ -488,8 +488,10 @@ class LLVMVisitor:
         if pointer:
             if value.type == ir.FloatType():
                 val = self.builder.fptosi(value, ir.IntType(64))
-            else:
+            elif value.type == ir.IntType(8) or value.type == ir.IntType(32):
                 val = self.builder.sext(value, ir.IntType(64))
+            else:
+                return self.builder.ptrtoint(value, ir.IntType(64))
             bytes_size = 0
             if ast_type == 'float':
                 bytes_size = 8
@@ -573,17 +575,9 @@ class LLVMVisitor:
         child1 = self.visit(node.children[0])
         child2 = self.visit(node.children[1])
         pointer = False
-        if child1.type == ir.IntType(64):
+        if child1.type != ir.IntType(8) and child1.type != ir.IntType(32) and child1.type != ir.FloatType():
             pointer = True
-        if child1.type == ir.IntType(64):
-            pointer = True
-        if child1.type == ir.IntType(64):
-            pointer = True
-        if child2.type == ir.IntType(64):
-            pointer = True
-        if child2.type == ir.IntType(64):
-            pointer = True
-        if child2.type == ir.IntType(64):
+        if child2.type != ir.IntType(8) and child2.type != ir.IntType(32) and child2.type != ir.FloatType():
             pointer = True
         child1 = self.convertLLVMtype(var_type, child1, pointer)
         child2 = self.convertLLVMtype(var_type, child2, pointer)
