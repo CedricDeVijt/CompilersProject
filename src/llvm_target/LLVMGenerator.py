@@ -329,13 +329,16 @@ class LLVMVisitor:
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         if isinstance(node.type[0], PointerNode):
             if var_type == 'float':
-                rvalue = ir.Constant(ir.PointerType(ir.FloatType()), None)
+                rvalue = ir.PointerType(ir.FloatType())
             elif var_type == 'int':
-                rvalue = ir.Constant(ir.PointerType(ir.IntType(32)), None)
+                rvalue = ir.PointerType(ir.IntType(32))
             elif var_type == 'char':
-                rvalue = ir.Constant(ir.PointerType(ir.IntType(8)), None)
+                rvalue = ir.PointerType(ir.IntType(8))
             else:
                 raise Exception("WTF")
+            for i in range(0, int(node.type[0].value) - 1):
+                rvalue = ir.PointerType(rvalue)
+            rvalue = ir.Constant(rvalue, None)
         elif var_type == 'float':
             rvalue = ir.Constant(ir.FloatType(), 0)
         elif var_type == 'int':
@@ -373,6 +376,7 @@ class LLVMVisitor:
                 return self.builder.store(rvalue, pointee)
             # Change value of pointer.
             pointer = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee)
+            print(pointer)
             return self.builder.store(pointer, symbol.alloca)
 
         # Convert value if needed.
