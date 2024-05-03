@@ -337,6 +337,9 @@ class LLVMVisitor:
         symbol.alloca = var_ptr
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
+        if self.scope.is_global():
+            var_ptr.initializer = rvalue
+            return
         return self.builder.store(rvalue, var_ptr)
 
     def visit_DeclarationNode(self, node):
