@@ -28,11 +28,6 @@ def test_p5_include_guards():
     llvm_output_compare(root, source_file)
 
 
-def test_p4_for_loop():
-    source_file = "p4_for_loop.c"
-    llvm_output_compare(root, source_file)
-
-
 def test_p5_local_global_var():
     source_file = "p5_local_global_var.c"
     llvm_output_compare(root, source_file)

@@ -7,6 +7,5 @@ int main() {
     printf("%d\n", *p);
     *p = 10;
     printf("%d\n", a);
-
     return 0;
 }

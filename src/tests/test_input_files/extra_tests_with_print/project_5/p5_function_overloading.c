@@ -9,6 +9,7 @@ int main() {
     int b = add(1, 2, 3);
 
     printf("a = %d", a);
+    printf("b = %d", b);
 
     return 0;
 }

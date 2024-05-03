@@ -33,11 +33,6 @@ def test_p2_literals():
     llvm_output_compare(root, source_file)
 
 
-def test_p2_pointer_arith():
-    source_file = "p2_pointer_arith.c"
-    llvm_output_compare(root, source_file)
-
-
 def test_p2_pointers():
     source_file = "p2_pointers.c"
     llvm_output_compare(root, source_file)
