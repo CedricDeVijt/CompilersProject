@@ -1652,11 +1652,11 @@ class ASTGenerator(Visitor):
 
             # Check if array is valid with the given sizes
             if not self.checkArraySizes(rvalue, array_sizes):
-                raise ValueError("The size of the array does not match the given sizes.")
+                self.errors.append("The size of the array does not match the given sizes.")
 
             # Check if elements of array are the same type as the type node
             if not self.checkArrayTypes(rvalue, type_node):
-                raise ValueError("The elements of the array are not the same type as the type node.")
+                self.errors.append("The elements of the array are not the same type as the type node.")
 
             # Add symbol to scope
             if self.scope.get_symbol(identifier):
