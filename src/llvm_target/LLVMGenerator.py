@@ -413,6 +413,9 @@ class LLVMVisitor:
                 rvalue = self.builder.fptosi(rvalue, ir.IntType(32))
             rvalue = self.builder.trunc(rvalue, ir.IntType(8))
         symbol = self.scope.lookup(name=var_name)
+        if self.scope.is_global():
+            symbol.alloca.initializer = rvalue
+            return
         self.builder.store(rvalue, symbol.alloca)
 
     def visit_PostFixNode(self, node):
