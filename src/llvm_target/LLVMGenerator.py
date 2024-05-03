@@ -221,7 +221,7 @@ class LLVMVisitor:
 
         # Visit function body
         for statement in node.body:
-            self.builder.comment(statement.original.replace('\n', ''))
+            self.builder.comment(statement.original)
             self.visit(statement)
 
         # Close scope.
@@ -276,6 +276,7 @@ class LLVMVisitor:
             var_type = 'int'
             symbol = Symbol(name=var_name, var_type=var_type)
             enum = True
+
         if not enum and isinstance(node.type[0], PointerNode):
             if var_type == 'float':
                 pointer_type = ir.PointerType(ir.FloatType())
