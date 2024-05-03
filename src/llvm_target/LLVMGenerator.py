@@ -253,15 +253,26 @@ class LLVMVisitor:
         # definition vars
         var_name = node.lvalue.value
         rvalue = self.visit(node.rvalue)
-        # array
+        # arrays
         if isinstance(node.rvalue, ArrayNode):
             array_type = self.get_array_type(node)
             array_ptr = self.builder.alloca(array_type, name=var_name)
-            # todo: create array dynamically
-            rvalue = ir.Constant(array_type, [ir.Constant(ir.IntType(32), 5),
-                                                  ir.Constant(ir.IntType(32), 4)])
+            values = node.rvalue.array
+            array_constants = []
+            if node.type.value == 'int':
+                for val in values:
+                    array_constants.append(ir.Constant(ir.IntType(32), val.value))
+            elif node.type.value == 'float':
+                for val in values:
+                    array_constants.append(ir.Constant(ir.FloatType(), float(val.value)))
+            elif node.type.value == 'char':
+                for val in values:
+                    array_constants.append(ir.Constant(ir.IntType(8), val.value))
+            rvalue = ir.Constant(array_type, array_constants)
             symbol = Symbol(name=var_name, var_type=array_type)
             symbol.alloca = array_ptr
+            symbol.array = rvalue
+            symbol.t = array_type
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
             return self.builder.store(rvalue, array_ptr)
@@ -872,5 +883,14 @@ class LLVMVisitor:
         ...
 
     def visit_ArrayIdentifierNode(self, node):
-        return self.builder.load(self.scope.get_symbol(name=node.value).alloca)
+        # array index to retrieve
+        index = node.indices[0]
+
+        array_symbol = self.scope.get_symbol(name=node.value)
+        # Get the alloca associated with the array
+        array_alloca = array_symbol.alloca
+        # Use gep to get a pointer to the specific element in the array
+        ptr = self.builder.gep(array_alloca, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), index)])
+        # Load and return the value from the pointer
+        return self.builder.load(ptr)
 
