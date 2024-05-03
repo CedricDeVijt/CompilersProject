@@ -222,17 +222,17 @@ class LLVMVisitor:
             ...
         function = ir.Function(self.module, function_type, name=node.value)
 
+        entry_block = function.append_basic_block(name="entry")
+        self.builder = ir.IRBuilder(entry_block)
+
         for arg_name in arg_names:
             function.args[arg_names.index(arg_name)].name = self.global_var
             self.global_var += 1
             if (self.scope.get_symbol(name=arg_name), Symbol):
-                TEST = function.args[arg_names.index(arg_name)]
+                # TODO: FIX THIS
                 self.scope.get_symbol(name=arg_name).alloca = function.args[arg_names.index(arg_name)]
             else:
                 print("WTF")
-
-        entry_block = function.append_basic_block(name="entry")
-        self.builder = ir.IRBuilder(entry_block)
 
         # Visit function body
         for statement in node.body:
