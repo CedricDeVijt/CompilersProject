@@ -270,8 +270,7 @@ class LLVMVisitor:
         rvalue = self.visit(node.rvalue)
         # arrays
         if isinstance(node.rvalue, ArrayNode):
-            array_type = node.type.value               # example: int
-            array_types = self.get_array_type(node)    # example: [3 x i32]
+            array_types = self.get_array_type(node)
             array_ptr = self.builder.alloca(array_types, name=var_name)
             values = node.rvalue.array
             array_constants = []
@@ -286,8 +285,6 @@ class LLVMVisitor:
             rvalue = ir.Constant(array_types, array_constants)
             symbol = Symbol(name=var_name, var_type=array_types)
             symbol.alloca = array_ptr
-            symbol.type = array_type
-            #symbol.t = array_type
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
             # store the zero array
