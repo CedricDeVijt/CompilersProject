@@ -77,7 +77,7 @@
 
 - Functionality
   - [x] (**mandatory**) Arrays
-  - [ ] (**mandatory**) Multi-dimensional arrays
+  - [x] (**mandatory**) Multi-dimensional arrays
   - [x] (**mandatory**) Assignment of complete arrays or array rows
   - [x] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays

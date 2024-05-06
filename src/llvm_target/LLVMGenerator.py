@@ -254,34 +254,56 @@ class LLVMVisitor:
         # close scope
         self.scope.close_scope()
 
-    def get_array_type(self, node):
-        type = node.type.value
-        length = len(node.rvalue.array)
-        if type == 'int':
-            return ir.ArrayType(ir.IntType(32), length)
-        elif type == 'float':
-            return ir.ArrayType(ir.FloatType(), length)
-        elif type == 'char':
-            return ir.ArrayType(ir.IntType(8), length)
+    def get_array_type(self, node, c_type):
+        if not isinstance(node.array[0], ArrayNode):
+            length = len(node.array)
+            if c_type == 'int':
+                return ir.ArrayType(ir.IntType(32), length)
+            elif c_type == 'float':
+                return ir.ArrayType(ir.FloatType(), length)
+            elif c_type == 'char':
+                return ir.ArrayType(ir.IntType(8), length)
+        else:
+            return ir.ArrayType(self.get_array_type(node.array[0], c_type), len(node.array))
+
+    def initialize_array(self, node, c_type):
+        # initialize array on zeros
+        if isinstance(node.array[0], ArrayNode):
+            array_constants = []
+            for i in range(len(node.array)):
+                array_constants.append(self.initialize_array(node.array[i], c_type))
+            return array_constants
+        else:
+            array_constants = []
+            for i in range(len(node.array)):
+                if c_type == 'int':
+                    array_constants.append(ir.Constant(ir.IntType(32), 0))
+                elif c_type == 'float':
+                    array_constants.append(ir.Constant(ir.FloatType(), 0))
+                elif c_type == 'char':
+                    array_constants.append(ir.Constant(ir.IntType(8), 0))
+            return array_constants
+
+    def assign_array_values(self, node, array_ptr):
+        if isinstance(node.array[0], ArrayNode):
+            for i in range(len(node.array)):
+                ptr = self.builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                self.assign_array_values(node.array[i], ptr)
+            return
+        else:
+            for i in range(len(node.array)):
+                ptr = self.builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                self.builder.store(self.visit(node.array[i]), ptr)
 
     def visit_DefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
-        rvalue = self.visit(node.rvalue)
         # arrays
         if isinstance(node.rvalue, ArrayNode):
-            array_types = self.get_array_type(node)
+            c_type = node.type.value
+            array_types = self.get_array_type(node.rvalue, c_type)
             array_ptr = self.builder.alloca(array_types, name=var_name)
-            values = node.rvalue.array
-            array_constants = []
-            # initialize array on 0
-            for i in range(len(values)):
-                if node.type.value == 'int':
-                    array_constants.append(ir.Constant(ir.IntType(32), 0))
-                elif node.type.value == 'float':
-                    array_constants.append(ir.Constant(ir.FloatType(), 0))
-                elif node.type.value == 'char':
-                    array_constants.append(ir.Constant(ir.IntType(8), 0))
+            array_constants = self.initialize_array(node.rvalue, c_type)
             rvalue = ir.Constant(array_types, array_constants)
             symbol = Symbol(name=var_name, var_type=array_types)
             symbol.alloca = array_ptr
@@ -290,11 +312,10 @@ class LLVMVisitor:
             # store the zero array
             self.builder.store(rvalue, array_ptr)
             # assign the values
-            for i in range(len(values)):
-                ptr = self.builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
-                self.builder.store(self.visit(values[i]), ptr)
+            self.assign_array_values(node.rvalue, array_ptr)
             return
         # not array
+        rvalue = self.visit(node.rvalue)
         enum = False
         # if regular type
         if isinstance(node.type, list):
@@ -359,6 +380,9 @@ class LLVMVisitor:
     def visit_DeclarationNode(self, node):
         # Get the type and name of the variable being declared
         var_name = node.lvalue.value
+        if isinstance(node.rvalue, ArrayNode):
+            #todo array declaration when dimensions get added in AST
+            return
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         if isinstance(node.type[0], PointerNode):
             if var_type == 'float':
@@ -399,9 +423,11 @@ class LLVMVisitor:
             var_name = var_name.identifier.value
         elif isinstance(var_name, ArrayIdentifierNode):
             # array assignment
+            index = node.lvalue.indices
             array_symbol = self.scope.get_symbol(name=node.lvalue.value)
-            array_alloca = array_symbol.alloca
-            ptr = self.builder.gep(array_alloca, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), node.lvalue.indices[0])])
+            ptr = array_symbol.alloca
+            for i in index:
+                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
             self.builder.store(self.visit(node.rvalue), ptr)
             return
         symbol = self.scope.lookup(name=var_name)
@@ -931,13 +957,14 @@ class LLVMVisitor:
 
     def visit_ArrayIdentifierNode(self, node):
         # array index to retrieve
-        index = node.indices[0]
+        index = node.indices
 
         array_symbol = self.scope.get_symbol(name=node.value)
-        # Get the alloca associated with the array
-        array_alloca = array_symbol.alloca
+        # Get pointer to original array
+        ptr = array_symbol.alloca
         # Use gep to get a pointer to the specific element in the array
-        ptr = self.builder.gep(array_alloca, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), index)])
+        for i in index:
+            ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
         # Load and return the value from the pointer
         return self.builder.load(ptr)
 
