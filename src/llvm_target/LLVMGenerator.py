@@ -270,27 +270,30 @@ class LLVMVisitor:
         rvalue = self.visit(node.rvalue)
         # arrays
         if isinstance(node.rvalue, ArrayNode):
-            array_type = self.get_array_type(node)
-            array_ptr = self.builder.alloca(array_type, name=var_name)
+            array_types = self.get_array_type(node)
+            array_ptr = self.builder.alloca(array_types, name=var_name)
             values = node.rvalue.array
             array_constants = []
-            if node.type.value == 'int':
-                for val in values:
-                    array_constants.append(ir.Constant(ir.IntType(32), val.value))
-            elif node.type.value == 'float':
-                for val in values:
-                    array_constants.append(ir.Constant(ir.FloatType(), float(val.value)))
-            elif node.type.value == 'char':
-                for val in values:
-                    array_constants.append(ir.Constant(ir.IntType(8), val.value))
-            rvalue = ir.Constant(array_type, array_constants)
-            symbol = Symbol(name=var_name, var_type=array_type)
+            # initialize array on 0
+            for i in range(len(values)):
+                if node.type.value == 'int':
+                    array_constants.append(ir.Constant(ir.IntType(32), 0))
+                elif node.type.value == 'float':
+                    array_constants.append(ir.Constant(ir.FloatType(), 0))
+                elif node.type.value == 'char':
+                    array_constants.append(ir.Constant(ir.IntType(8), 0))
+            rvalue = ir.Constant(array_types, array_constants)
+            symbol = Symbol(name=var_name, var_type=array_types)
             symbol.alloca = array_ptr
-            symbol.array = rvalue
-            symbol.t = array_type
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
-            return self.builder.store(rvalue, array_ptr)
+            # store the zero array
+            self.builder.store(rvalue, array_ptr)
+            # assign the values
+            for i in range(len(values)):
+                ptr = self.builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                self.builder.store(self.visit(values[i]), ptr)
+            return
         # not array
         enum = False
         # if regular type
@@ -394,6 +397,13 @@ class LLVMVisitor:
             var_name = var_name.value
         elif isinstance(var_name, DerefNode):
             var_name = var_name.identifier.value
+        elif isinstance(var_name, ArrayIdentifierNode):
+            # array assignment
+            array_symbol = self.scope.get_symbol(name=node.lvalue.value)
+            array_alloca = array_symbol.alloca
+            ptr = self.builder.gep(array_alloca, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), node.lvalue.indices[0])])
+            self.builder.store(self.visit(node.rvalue), ptr)
+            return
         symbol = self.scope.lookup(name=var_name)
         var_type = self.get_highest_type(symbol.type)
         rvalue = self.visit(node.rvalue)
