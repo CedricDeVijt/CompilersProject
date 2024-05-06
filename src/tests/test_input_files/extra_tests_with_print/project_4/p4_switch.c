@@ -8,7 +8,6 @@ int main() {
             break;
         case 2:
             printf("%d", 2);
-            break;
         default:
             printf("%d", 999);
             break;
