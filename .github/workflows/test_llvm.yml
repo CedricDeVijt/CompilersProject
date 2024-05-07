@@ -27,7 +27,7 @@ jobs:
         run: |
           cp -r src/tests/test_input_files/extra_tests_with_print* .
           cp -r src/tests/LLVM_tests/expected_output/ .
-          ls
+          tree
 
       - name: Run all tests
         run: |
