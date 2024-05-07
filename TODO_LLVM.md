@@ -48,7 +48,7 @@
 
 - Functionality
   - [x] (**mandatory**) Function scopes
-  - [ ] (**mandatory**) Local and global variables
+  - [x] (**mandatory**) Local and global variables
   - [x] (**mandatory**) Functions
     - [x] Defining functions
     - [x] Calling functions
@@ -56,7 +56,7 @@
     - [x] Return values
     - [x] Void function
     - [x] Missing main -> error.
-  - [ ] (**optional**) Overloading of functions on the amount and type of parameters
+  - [x] (**optional**) Overloading of functions on the amount and type of parameters
   - [x] (**mandatory**) Define `#define` 
   - [x] (**mandatory**) Includes `#include`
   - [x] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
