@@ -26,6 +26,7 @@ jobs:
       - name: Copy test input files
         run: |
           cp -r src/tests/test_input_files/extra_tests_with_print* .
+          cp -r src/tests/LLVM_tests/expected_output/ .
 
       - name: Run all tests
         run: |
