@@ -8,8 +8,8 @@ int main() {
     int a = add(1, 2);
     int b = add(1, 2, 3);
 
-    printf("a = %d", a);
-    printf("b = %d", b);
+    printf("%d", a);
+    printf("%d", b);
 
     return 0;
 }
