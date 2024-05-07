@@ -167,13 +167,13 @@ class ASTGenerator(Visitor):
         symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
         if isinstance(symbols, Symbol):
             symbols = [symbols]
-            for symbol in symbols:
-                if len(symbol.params) != len(rval.arguments):
-                    continue
+        for symbol in symbols:
+            if len(symbol.params) != len(rval.arguments):
+                continue
 
-                similar = all(self.get_highest_type(param[0]) == self.get_highest_type(arg) for param, arg in zip(symbol.params, rval.arguments))
-                if similar:
-                    return self.get_highest_type(symbol.type)
+            similar = all(self.get_highest_type(param[0]) == self.get_highest_type(arg) for param, arg in zip(symbol.params, rval.arguments))
+            if similar:
+                return self.get_highest_type(symbol.type)
         return 'char'
 
     def implicit_type_conversion(self, lvalType, rval):

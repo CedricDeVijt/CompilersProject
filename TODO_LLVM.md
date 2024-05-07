@@ -47,14 +47,14 @@
 # project 5
 
 - Functionality
-  - [ ] (**mandatory**) Function scopes
+  - [x] (**mandatory**) Function scopes
   - [ ] (**mandatory**) Local and global variables
-  - [ ] (**mandatory**) Functions
-    - [ ] Defining functions
-    - [ ] Calling functions
-    - [ ] Function arguments (basic types, pointers, constness, pass-by-value and pass-by-reference)
-    - [ ] Return values
-    - [ ] Void function
+  - [x] (**mandatory**) Functions
+    - [x] Defining functions
+    - [x] Calling functions
+    - [x] Function arguments (basic types, pointers, constness, pass-by-value and pass-by-reference)
+    - [x] Return values
+    - [x] Void function
     - [x] Missing main -> error.
   - [ ] (**optional**) Overloading of functions on the amount and type of parameters
   - [x] (**mandatory**) Define `#define` 
