@@ -149,7 +149,11 @@ class LLVMVisitor:
         for arg in node.children:
             if isinstance(arg, StringNode):
                 self.printf_string += 1
-            arg = self.visit(arg)
+            if isinstance(arg, DerefNode):
+                arg = self.visit(arg)
+                arg = self.builder.load(arg)
+            else:
+                arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
@@ -245,7 +249,12 @@ class LLVMVisitor:
     def visit_FunctionCallNode(self, node):
         args = []
         for arg in node.arguments:
-            args.append(self.visit(arg))
+            if isinstance(arg, DerefNode):
+                arg = self.visit(arg)
+                arg = self.builder.load(arg)
+            else:
+                arg = self.visit(arg)
+            args.append(arg)
         return self.builder.call(self.module.get_global(node.value), args)
 
     def visit_ifStatementNode(self, node):
@@ -316,6 +325,8 @@ class LLVMVisitor:
             return
         # not array
         rvalue = self.visit(node.rvalue)
+        if isinstance(node.rvalue, DerefNode):
+            rvalue = self.builder.load(rvalue)
         enum = False
         # if regular type
         if isinstance(node.type, list):
@@ -434,6 +445,8 @@ class LLVMVisitor:
         symbol = self.scope.lookup(name=var_name)
         var_type = self.get_highest_type(symbol.type)
         rvalue = self.visit(node.rvalue)
+        if isinstance(node.rvalue, DerefNode):
+            rvalue = self.builder.load(rvalue)
         # Pointer
         if isinstance(symbol.type, PointerNode):
             # Change value of pointee.
@@ -442,7 +455,6 @@ class LLVMVisitor:
                 alloca = self.builder.alloca(pointee.type.pointee)
                 self.builder.store(rvalue, pointee)
                 return
-                return self.builder.store(rvalue, pointee)
             # Change value of pointer.
             rvalue = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee.pointee)
 
@@ -650,7 +662,11 @@ class LLVMVisitor:
         elif 'int' in [type1, type2]:
             var_type = 'int'
         child1 = self.visit(node.children[0])
+        if isinstance(node.children[0], DerefNode):
+            child1 = self.builder.load(child1)
         child2 = self.visit(node.children[1])
+        if isinstance(node.children[1], DerefNode):
+            child2 = self.builder.load(child2)
         pointer = False
         if child1.type != ir.IntType(8) and child1.type != ir.IntType(32) and child1.type != ir.FloatType():
             pointer = True
@@ -893,6 +909,8 @@ class LLVMVisitor:
     def visit_IfStatementNode(self, node):
         # Generate code for the condition
         condition = self.visit(node.condition)
+        if isinstance(node.condition, DerefNode):
+            condition = self.builder.load(condition)
 
         if condition.type != ir.IntType(1):
             condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
