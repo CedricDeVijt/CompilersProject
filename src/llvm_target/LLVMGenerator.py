@@ -4,6 +4,7 @@ from llvmlite import ir
 
 from src.parser.AST import *
 from src.parser.SymbolTable import *
+from src.parser.ASTGenerator import matching_params
 
 unary_ops = {'LogicalNotNode', 'BitwiseNotNode'}
 binary_ops = {'DivNode', 'ModNode', 'MultNode', 'MinusNode', 'PlusNode', 'GTNode', 'LTNode', 'GTEQNode', 'LTEQNode', 'EQNode', 'NEQNode', 'SLNode', 'SRNode', 'BitwiseAndNode', 'BitwiseOrNode', 'BitwiseXorNode', 'LogicalAndNode', 'LogicalOrNode'}
@@ -26,6 +27,44 @@ class LLVMVisitor:
             function = ir.Function(self.module, function_type, name='printf')
 
             self.builder = function
+
+    def get_pointer_size(self, node, by_ref=False):
+        size = []
+        if isinstance(node, DerefNode):
+            identifier = node.identifier.value
+            if self.scope.lookup(identifier):
+                if isinstance(self.scope.lookup(identifier).type, PointerNode):
+                    if int(self.scope.lookup(identifier).type.value) - 1 != 0:
+                        size.append(int(self.scope.lookup(identifier).type.value) - int(node.value))
+        elif isinstance(node, IdentifierNode):
+            identifier = node.value
+            if self.scope.lookup(identifier):
+                if isinstance(self.scope.lookup(identifier).type, PointerNode):
+                    size.append(int(self.scope.lookup(identifier).type.value))
+        elif isinstance(node, AddrNode):
+            identifier = node.value.value
+            if self.scope.lookup(identifier):
+                if isinstance(self.scope.lookup(identifier).type, PointerNode):
+                    if by_ref:
+                        size.append(int(self.scope.lookup(identifier).type.value))
+                    else:
+                        size.append(int(self.scope.lookup(identifier).type.value) + 1)
+                else:
+                    size.append(1)
+        elif isinstance(node, PointerNode):
+            size.append(node.value)
+        elif isinstance(node, CharNode) or isinstance(node, IntNode) or isinstance(node, FloatNode) or isinstance(node, str) or isinstance(node, int):
+            return []
+        elif isinstance(node, EQNode) or isinstance(node, NEQNode) or isinstance(node, LTEQNode) or isinstance(node, GTEQNode):
+            return []
+        elif isinstance(node, StringNode):
+            return [1]
+        else:
+            for child in node.children:
+                plist = self.get_pointer_size(child)
+                if len(plist) != 0:
+                    size.extend(plist)
+        return size
 
     def get_highest_type(self, rval):
         type_check_dict = {
@@ -162,6 +201,33 @@ class LLVMVisitor:
         self.printf_string += 1
 
     def visit_FunctionNode(self, node):
+        # Add symbol if not exist
+        const = False
+        if isinstance(node.type, PointerNode):
+            const = isinstance(node.type.type, list)
+        else:
+            const = isinstance(node.type, list)
+        symbol = Symbol(name=node.value, var_type=type, symbol_type='function', const=const, params=node.params)
+        symbol.original = str(self.global_var)
+        if node.value == 'main' and len(node.params) == 0:
+            original = 'main'
+        else:
+            original = str(self.global_var)
+            self.global_var += 1
+        symbols = self.scope.get_symbol(name=node.value) if self.scope.get_symbol(name=node.value) is not None else []
+        if isinstance(symbols, Symbol):
+            symbols = [symbols]
+        if len(symbols) != 0:
+            for symb in symbols:
+                if symb.symbol_type != 'function':
+                    return
+                elif not symb.defined:
+                    continue
+                elif len(symbol.params) == len(symb.params):
+                    if matching_params(symb.params, node.params):
+                        if symb.defined == symbol.defined:
+                            return
+        self.scope.add_symbol(symbol)
         # Open new scope.
         self.scope.open_scope()
         # Add params
@@ -224,19 +290,18 @@ class LLVMVisitor:
                 function_type = ir.FunctionType(ir.VoidType(), arg_types)
         elif isinstance(func_type, PointerNode):
             ...
-        function = ir.Function(self.module, function_type, name=node.value)
+        function = ir.Function(self.module, function_type, name=original)
 
         entry_block = function.append_basic_block(name="entry")
         self.builder = ir.IRBuilder(entry_block)
 
         for arg_name in arg_names:
-            function.args[arg_names.index(arg_name)].name = self.global_var
-            self.global_var += 1
-            if (self.scope.get_symbol(name=arg_name), Symbol):
-                # TODO: FIX THIS
-                self.scope.get_symbol(name=arg_name).alloca = function.args[arg_names.index(arg_name)]
-            else:
-                print("WTF")
+            # Update symbol alloca
+            symbol = self.scope.get_symbol(name=arg_name)
+            if isinstance(symbol, Symbol):
+                alloca = self.builder.alloca(function.args[arg_names.index(arg_name)].type)
+                self.builder.store(function.args[arg_names.index(arg_name)], alloca)
+                symbol.alloca = alloca
 
         # Visit function body
         for statement in node.body:
@@ -255,7 +320,35 @@ class LLVMVisitor:
             else:
                 arg = self.visit(arg)
             args.append(arg)
-        return self.builder.call(self.module.get_global(node.value), args)
+        if node.value == 'test' and len(node.arguments) == 0:
+            return self.builder.call(self.module.get_global(node.value), args)
+        symbols = self.scope.lookup(name=node.value) if self.scope.lookup(name=node.value) is not None else []
+        if isinstance(symbols, Symbol):
+            symbols = [symbols]
+        found = False
+        for symbol in symbols:
+            similar = True
+            params = symbol.params
+            if len(node.arguments) != len(params):
+                continue
+            for i in range(0, len(params)):
+                type1 = self.get_highest_type(params[i][0])
+                type2 = self.get_highest_type(node.arguments[i])
+                if type1 != type2:
+                    similar = False
+                lval = self.get_pointer_size(params[i][0], by_ref=True)
+                rval = self.get_pointer_size(node.arguments[i])
+                error = False
+                if len(lval) != len(rval):
+                    similar = False
+                else:
+                    for i in range(0, len(lval)):
+                        if lval[i] != rval[i]:
+                            if not error:
+                                similar = False
+            if similar:
+                a = self.module.get_global(symbol.original)
+                return self.builder.call(self.module.get_global(symbol.original), args)
 
     def visit_ifStatementNode(self, node):
         # open scope
