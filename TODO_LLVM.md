@@ -21,7 +21,7 @@
 - [x] (**mandatory**) Constants
 - [x] (**mandatory**) Implicit conversions warnings
 - [x] (**mandatory**) Explicit conversions
-- [ ] (**mandatory**) Pointer arithmetic
+- [x] (**mandatory**) Pointer arithmetic
 - [x] (**mandatory**) Increment/Decrement Operations
 - [x] (**optional**) Const casting
 

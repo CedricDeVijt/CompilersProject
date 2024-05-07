@@ -149,7 +149,11 @@ class LLVMVisitor:
         for arg in node.children:
             if isinstance(arg, StringNode):
                 self.printf_string += 1
-            arg = self.visit(arg)
+            if isinstance(arg, DerefNode):
+                arg = self.visit(arg)
+                arg = self.builder.load(arg)
+            else:
+                arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
@@ -245,7 +249,12 @@ class LLVMVisitor:
     def visit_FunctionCallNode(self, node):
         args = []
         for arg in node.arguments:
-            args.append(self.visit(arg))
+            if isinstance(arg, DerefNode):
+                arg = self.visit(arg)
+                arg = self.builder.load(arg)
+            else:
+                arg = self.visit(arg)
+            args.append(arg)
         return self.builder.call(self.module.get_global(node.value), args)
 
     def visit_ifStatementNode(self, node):
@@ -254,7 +263,6 @@ class LLVMVisitor:
         # close scope
         self.scope.close_scope()
 
-    # for definition
     def get_array_type(self, node, c_type):
         if not isinstance(node.array[0], ArrayNode):
             length = len(node.array)
@@ -354,6 +362,8 @@ class LLVMVisitor:
             return
         # not array
         rvalue = self.visit(node.rvalue)
+        if isinstance(node.rvalue, DerefNode):
+            rvalue = self.builder.load(rvalue)
         enum = False
         # if regular type
         if isinstance(node.type, list):
@@ -383,10 +393,14 @@ class LLVMVisitor:
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
 
-            rvalue = self.builder.inttoptr(rvalue, ir.PointerType(pointer_type))
+            rvalue = self.builder.inttoptr(rvalue, pointer_type)
+
+            alloca = self.builder.alloca(pointer_type)
+
+            self.builder.store(rvalue, alloca)
 
             # loaded = self.builder.load(rvalue)
-            return self.builder.store(rvalue, symbol.alloca)
+            return self.builder.store(alloca, symbol.alloca)
 
         # Not a Pointer
         if not enum and rvalue.type != ir.FloatType() and var_type == 'float':
@@ -445,15 +459,15 @@ class LLVMVisitor:
                 rvalue = ir.PointerType(ir.IntType(8))
             else:
                 raise Exception("WTF")
-            for i in range(0, int(node.type[0].value) - 1):
+            for i in range(0, int(node.type[0].value)):
                 rvalue = ir.PointerType(rvalue)
             rvalue = ir.Constant(rvalue, None)
         elif var_type == 'float':
-            rvalue = ir.Constant(ir.FloatType(), 0)
+            rvalue = ir.Constant(ir.FloatType(), None)
         elif var_type == 'int':
-            rvalue = ir.Constant(ir.IntType(32), 0)
+            rvalue = ir.Constant(ir.IntType(32), None)
         elif var_type == 'char':
-            rvalue = ir.Constant(ir.IntType(8), 0)
+            rvalue = ir.Constant(ir.IntType(8), None)
         else:
             raise Exception("WTF")
         var_ptr = ir.GlobalVariable(self.module, rvalue.type, name=str(self.global_var))
@@ -485,17 +499,25 @@ class LLVMVisitor:
         symbol = self.scope.lookup(name=var_name)
         var_type = self.get_highest_type(symbol.type)
         rvalue = self.visit(node.rvalue)
+        if isinstance(node.rvalue, DerefNode):
+            rvalue = self.builder.load(rvalue)
         # Pointer
         if isinstance(symbol.type, PointerNode):
             # Change value of pointee.
             if isinstance(node.lvalue, DerefNode):
-                # TODO: FIX
                 pointee = self.visit(node.lvalue)
-                return self.builder.store(rvalue, pointee)
+                alloca = self.builder.alloca(pointee.type.pointee)
+                self.builder.store(rvalue, pointee)
+                return
             # Change value of pointer.
-            pointer = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee)
-            print(pointer)
-            return self.builder.store(pointer, symbol.alloca)
+            rvalue = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee.pointee)
+
+            alloca = self.builder.alloca(symbol.alloca.type.pointee.pointee)
+
+            self.builder.store(rvalue, alloca)
+
+            # loaded = self.builder.load(rvalue)
+            return self.builder.store(alloca, symbol.alloca)
 
         # Convert value if needed.
         if rvalue.type != ir.FloatType() and var_type == 'float':
@@ -694,7 +716,11 @@ class LLVMVisitor:
         elif 'int' in [type1, type2]:
             var_type = 'int'
         child1 = self.visit(node.children[0])
+        if isinstance(node.children[0], DerefNode):
+            child1 = self.builder.load(child1)
         child2 = self.visit(node.children[1])
+        if isinstance(node.children[1], DerefNode):
+            child2 = self.builder.load(child2)
         pointer = False
         if child1.type != ir.IntType(8) and child1.type != ir.IntType(32) and child1.type != ir.FloatType():
             pointer = True
@@ -906,6 +932,13 @@ class LLVMVisitor:
             loaded = self.builder.load(loaded)
         return loaded
 
+    def get_DerefNodePointee(self, node):
+        alloca = self.scope.lookup(name=node.identifier.value).alloca
+        loaded = self.builder.load(alloca)
+        for i in range(0, int(self.scope.lookup(name=node.identifier.value).type.value) - 1):
+            loaded = self.builder.load(loaded)
+        return loaded
+
     def visit_ExplicitConversionNode(self, node):
         value = self.visit(node.rvalue)
         if node.type == 'int':
@@ -930,6 +963,8 @@ class LLVMVisitor:
     def visit_IfStatementNode(self, node):
         # Generate code for the condition
         condition = self.visit(node.condition)
+        if isinstance(node.condition, DerefNode):
+            condition = self.builder.load(condition)
 
         if condition.type != ir.IntType(1):
             condition = self.builder.icmp_signed('!=', condition, ir.Constant(ir.IntType(32), 0))
