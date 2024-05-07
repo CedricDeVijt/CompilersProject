@@ -1072,6 +1072,18 @@ class ASTGenerator(Visitor):
                     node = LogicalAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "||":
                     node = LogicalOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
+                case ">":
+                    node = GTNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
+                case "<":
+                    node = LTNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
+                case "==":
+                    node = EQNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
+                case ">=":
+                    node = GTEQNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
+                case "<=":
+                    node = LTEQNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
+                case "!=":
+                    node = NEQNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
             if isinstance(node.children[0], IdentifierNode):
                 identifier = node.children[0].value
                 if self.scope.lookup(identifier) is None:
@@ -1440,8 +1452,10 @@ class ASTGenerator(Visitor):
                 if not_default_condition is not None:
                     original = f"(! {not_default_condition.original})"
                     not_default_condition = LogicalNotNode(case.line, case.column, original=original, children=[not_default_condition])
+                    if condition_since_break is not None:
+                        not_default_condition = LogicalOrNode(line=case.line, column=case.column, original=f"({condition_since_break.original} || {not_default_condition.original})", children=[condition_since_break, not_default_condition])
                     original = f"default:"
-                ifNode = IfStatementNode(line=case.line, column=case.column, original='default:', condition=not_default_condition, body=case.children)
+                ifNode = IfStatementNode(line=case.line, column=case.column, original=original, condition=not_default_condition, body=case.children)
                 ifNodes.append(ifNode)
             else:
                 if condition_since_break is None:

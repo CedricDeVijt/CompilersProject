@@ -637,15 +637,14 @@ class LLVMVisitor:
 
         if child.type == ir.FloatType():
             result = self.builder.fcmp_ordered("==", child, ir.Constant(child.type, 0))
+            result = self.builder.zext(result, ir.IntType(32))
+            return self.builder.sitofp(result, ir.FloatType())
         else:
             result = self.builder.icmp_signed("==", child, ir.Constant(child.type, 0))
-        if child.type == ir.FloatType():
-            result = self.builder.zext(child, ir.IntType(32))
-            return self.builder.sitofp(result, ir.FloatType())
-        elif child.type == ir.IntType(8):
-            return self.builder.zext(result, ir.IntType(8))
-        else:
-            return self.builder.zext(result, ir.IntType(32))
+            if child.type == ir.IntType(8):
+                return self.builder.zext(result, ir.IntType(8))
+            else:
+                return self.builder.zext(result, ir.IntType(32))
 
     def visit_BinaryOp(self, node, method):
         type1 = self.get_highest_type(node.children[0])

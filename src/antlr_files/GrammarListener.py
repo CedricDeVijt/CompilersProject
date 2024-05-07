@@ -35,24 +35,6 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by GrammarParser#structDefinition.
-    def enterStructDefinition(self, ctx:GrammarParser.StructDefinitionContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#structDefinition.
-    def exitStructDefinition(self, ctx:GrammarParser.StructDefinitionContext):
-        pass
-
-
-    # Enter a parse tree produced by GrammarParser#structMember.
-    def enterStructMember(self, ctx:GrammarParser.StructMemberContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#structMember.
-    def exitStructMember(self, ctx:GrammarParser.StructMemberContext):
-        pass
-
-
     # Enter a parse tree produced by GrammarParser#function.
     def enterFunction(self, ctx:GrammarParser.FunctionContext):
         pass
@@ -221,15 +203,6 @@ class GrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by GrammarParser#rvalue.
     def exitRvalue(self, ctx:GrammarParser.RvalueContext):
-        pass
-
-
-    # Enter a parse tree produced by GrammarParser#conditionalExpression.
-    def enterConditionalExpression(self, ctx:GrammarParser.ConditionalExpressionContext):
-        pass
-
-    # Exit a parse tree produced by GrammarParser#conditionalExpression.
-    def exitConditionalExpression(self, ctx:GrammarParser.ConditionalExpressionContext):
         pass
 
 

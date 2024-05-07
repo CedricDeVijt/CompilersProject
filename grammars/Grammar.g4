@@ -80,28 +80,25 @@ rvalue: unaryExpression
       | rvalue BITWISE_AND rvalue
       | rvalue BITWISE_OR rvalue
       | rvalue BITWISE_XOR rvalue
+      | rvalue EQUALS rvalue
+      | rvalue NOT_EQUAL rvalue
       | rvalue LOGICAL_AND rvalue
       | rvalue LOGICAL_OR rvalue
+      | rvalue GREATER_THAN rvalue
+      | rvalue LESS_THAN rvalue
+      | rvalue GREATER_EQUAL rvalue
+      | rvalue LESS_EQUAL rvalue
       | LPAREN rvalue RPAREN
       | explicitConversion
       | postFixIncrement
       | postFixDecrement
       | preFixIncrement
       | preFixDecrement
-      | rvalue conditionalExpression
       | functionCall
       | jumpStatement
       | arrayElement
       | string
       ;
-
-conditionalExpression: GREATER_THAN rvalue
-                     | LESS_THAN rvalue
-                     | GREATER_EQUAL rvalue
-                     | LESS_EQUAL rvalue
-                     | EQUALS rvalue
-                     | NOT_EQUAL rvalue
-                     ;
 
 jumpStatement: 'break'
              | 'continue'
