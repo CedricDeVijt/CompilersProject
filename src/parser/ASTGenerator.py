@@ -1239,7 +1239,10 @@ class ASTGenerator(Visitor):
                     if specifiers > len(children) - 1:
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too few arguments for format string!")
                         return None
-                    format_type = self.get_highest_type(children[specifiers])
+                    if isinstance(children[specifiers], StructMemberNode):
+                        format_type = self.get_highest_type(children[specifiers].type)
+                    else:
+                        format_type = self.get_highest_type(children[specifiers])
                     if (char == 'd' or char == 'x') and format_type != 'int':
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
                         return None
@@ -1833,3 +1836,130 @@ class ASTGenerator(Visitor):
         for size in array_sizes:
             original += f"{size}]"
         return ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=original, indices=array_sizes)
+
+    def visitStructDefinition(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        struct_name = children[1].getText()
+        struct_members = []
+
+        for i in range(len(children)):
+            if children[i].getText() in ["{", "}", ";", "struct", struct_name]:
+                continue
+            if isinstance(children[i], Parser.TypeContext) and isinstance(children[i+1], Parser.IdentifierContext):
+                struct_members.append([self.visit(children[i]), self.visit(children[i+1])])
+            elif isinstance(children[i], Parser.ArrayDeclarationContext):
+                struct_members.append(self.visit(children[i]))
+
+        for i in range(len(struct_members)):
+            if isinstance(struct_members[i], list):
+                original = f"{struct_members[i][0].original} {struct_members[i][1].original}"
+                struct_members[i] = DeclarationNode(line=struct_members[i][0].line, column=struct_members[i][0].column, original=original, type=struct_members[i][0], lvalue=struct_members[i][1])
+
+
+        # Check if struct members are unique
+        member_set = set([])
+        for struct_member in struct_members:
+            member_set.add(struct_member.lvalue.value)
+        if len(member_set) != len(struct_members):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Struct members must be unique!")
+            return None
+
+        # Check if struct is already declared
+        if self.scope.get_struct(struct_name):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Struct \'{struct_name}\' already declared!")
+            return None
+
+        self.scope.add_struct(struct_name, struct_members)
+
+        # Create struct node
+        original = f"struct {struct_name} " + "{"
+        for member in struct_members:
+            original += f"{member.original}, "
+        original = original[:-2] + "}"
+        return StructNode(line=ctx.start.line, column=ctx.start.column, original=original, struct_name=struct_name, struct_members=struct_members)
+
+    def visitStructStatement(self, ctx):
+        return self.visit(ctx.getChild(0))
+
+    def visitStructVariable(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        struct_type_name = children[1].getText()
+        struct_var_name = children[2].getText()
+
+        # Check if struct type is declared
+        if self.scope.get_struct(struct_type_name) is None:
+            self.errors.append(
+                f"line {ctx.start.line}:{ctx.start.column} Struct type \'{struct_type_name}\' not declared!")
+            return None
+
+        # Check if variable is already declared
+        if self.scope.get_symbol(struct_var_name):
+            self.errors.append(
+                f"line {ctx.start.line}:{ctx.start.column} Variable \'{struct_var_name}\' already declared!")
+            return None
+
+        # Add symbol to scope
+        type_node = TypeNode(value=struct_type_name, line=ctx.start.line, column=ctx.start.column,
+                             original=struct_type_name)
+        symbol = Symbol(name=struct_var_name, var_type=type_node, symbol_type='struct')
+        self.scope.add_symbol(symbol)
+
+        # Create declaration node
+        original = f"{struct_type_name} {struct_var_name}"
+        lvalue = IdentifierNode(value=struct_var_name, line=ctx.start.line, column=ctx.start.column,
+                                original=struct_var_name)
+        return DeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type_node,
+                               lvalue=lvalue)
+
+    def visitStructAssignment(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        lvalue = self.visit(children[0])
+        rvalue = self.visit(children[-1])
+
+        # check if left and right value are the same value
+        if self.get_highest_type(lvalue.type) != self.get_highest_type(rvalue):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Type mismatch!")
+            return None
+
+        return StructAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=rvalue)
+
+    def visitStructMember(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        struct_var_name = children[0].getText()
+
+        # Check if struct variable is declared
+        struct_var_node = self.scope.get_symbol(struct_var_name)
+        if struct_var_node is None:
+            self.errors.append(
+                f"line {ctx.start.line}:{ctx.start.column} Variable \'{struct_var_name}\' not declared yet!")
+            return None
+
+        # Check if struct variable is a struct
+        if struct_var_node.symbol_type != 'struct':
+            self.errors.append(
+                f"line {ctx.start.line}:{ctx.start.column} Variable \'{struct_var_name}\' is not a struct!")
+            return None
+
+        # Check if struct member is declared
+        struct_member_name = children[2].getText()
+        if not self.scope.does_struct_contain_member(struct_var_node.type.value, struct_member_name):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Struct member \'{struct_member_name}\' not declared!")
+            return None
+
+        member_type = self.scope.get_struct_member_type(struct_var_node.type.value, struct_member_name)
+
+        original = f"{struct_var_name}.{struct_member_name}"
+        return StructMemberNode(line=ctx.start.line, column=ctx.start.column, original=original,
+                                struct_var_name=struct_var_name, struct_member_name=struct_member_name, type=member_type)

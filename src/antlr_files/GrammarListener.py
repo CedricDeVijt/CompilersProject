@@ -44,6 +44,51 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#structDefinition.
+    def enterStructDefinition(self, ctx:GrammarParser.StructDefinitionContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structDefinition.
+    def exitStructDefinition(self, ctx:GrammarParser.StructDefinitionContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#structStatement.
+    def enterStructStatement(self, ctx:GrammarParser.StructStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structStatement.
+    def exitStructStatement(self, ctx:GrammarParser.StructStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#structVariable.
+    def enterStructVariable(self, ctx:GrammarParser.StructVariableContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structVariable.
+    def exitStructVariable(self, ctx:GrammarParser.StructVariableContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#structMember.
+    def enterStructMember(self, ctx:GrammarParser.StructMemberContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structMember.
+    def exitStructMember(self, ctx:GrammarParser.StructMemberContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#structAssignment.
+    def enterStructAssignment(self, ctx:GrammarParser.StructAssignmentContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structAssignment.
+    def exitStructAssignment(self, ctx:GrammarParser.StructAssignmentContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#functionParams.
     def enterFunctionParams(self, ctx:GrammarParser.FunctionParamsContext):
         pass

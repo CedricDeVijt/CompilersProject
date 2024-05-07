@@ -1,6 +1,6 @@
 grammar Grammar;
 
-program: (comment | (enumDeclaration SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+) | function)+ EOF;
+program: (comment | ((enumDeclaration | structDefinition) SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+) | function)+ EOF;
 
 scope: LBRACE statement* RBRACE;
 
@@ -17,11 +17,24 @@ statement: rvalue SEMICOLON+
          | function
          | switchStatement
          | arrayStatement SEMICOLON+
+         | structStatement SEMICOLON+
          ;
 
 function: (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN scope
         | (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN SEMICOLON
         ;
+
+structDefinition: 'struct' IDENTIFIER '{' (((type identifier) | arrayDeclaration) SEMICOLON)* '}';
+
+structStatement: structVariable
+               | structAssignment
+               ;
+
+structVariable: 'struct' IDENTIFIER IDENTIFIER;
+
+structMember: IDENTIFIER '.' IDENTIFIER ('[' INT ']')*;
+
+structAssignment: structMember '=' rvalue;
 
 functionParams: (pointer | type) (addr | identifier)
       | functionParams COMMA functionParams;
@@ -47,7 +60,7 @@ forLoop: 'for' LPAREN forCondition RPAREN scope;
 
 forCondition: variable? SEMICOLON rvalue? SEMICOLON rvalue?;
 
-printfStatement: 'printf' '(' formatSpecifier (','( rvalue | string))* ')';
+printfStatement: 'printf' '(' formatSpecifier (','( rvalue | string | structMember))* ')';
 
 formatSpecifier: STRING;
 

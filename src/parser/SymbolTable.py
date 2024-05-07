@@ -14,6 +14,7 @@ class SymbolTable:
     def __init__(self):
         self.symbols = []
         self.enums = {}
+        self.structs = {}
 
     def add_symbol(self, symbol):
         for existing_symbol in self.symbols:
@@ -30,6 +31,12 @@ class SymbolTable:
             raise Exception(f"Enum {name} already exists in the table")
         else:
             self.enums[name] = enum_list
+
+    def add_struct(self, name, struct_members: list):
+        if name in self.structs:
+            raise Exception(f"Struct {name} already exists in the table")
+        else:
+            self.structs[name] = struct_members
 
     def remove_symbol(self, symbol):
         for symb in self.symbols:
@@ -52,6 +59,9 @@ class SymbolTable:
     def get_enum(self, name):
         # get list of enum values from the enum name
         return self.enums.get(name, None)
+
+    def get_struct(self, name):
+        return self.structs.get(name, None)
 
 
 class TreeNode:
@@ -182,7 +192,6 @@ class SymbolTableTree:
     def current_scope(self):
         return self.current_node.table
 
-
     def get_enum_values_of_enum(self, enum_name):
         # get all values of the enum in the current scope or parent as a list
         enum_values = []
@@ -194,3 +203,28 @@ class SymbolTableTree:
                 return enum_values
             node = node.parent
         return enum_values
+
+
+    def add_struct(self, name, struct_members):
+        self.root.table.add_struct(name, struct_members)
+
+    def get_struct(self, name):
+        return self.root.table.get_struct(name)
+
+    def does_struct_contain_member(self, struct_name, member_name):
+        struct = self.get_struct(struct_name)
+        if struct is None:
+            return False
+        for member in struct:
+            if member.lvalue.value == member_name:
+                return True
+        return False
+
+    def get_struct_member_type(self, struct_name, member_name):
+        struct = self.get_struct(struct_name)
+        if struct is None:
+            return None
+        for member in struct:
+            if member.lvalue.value == member_name:
+                return member.type
+        return None

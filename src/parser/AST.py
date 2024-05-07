@@ -1,5 +1,3 @@
-from graphviz import Source
-
 from src.parser.SymbolTable import Symbol
 
 
@@ -609,6 +607,29 @@ class ArrayIdentifierNode(Node):
         super().__init__(value=identifier.name, line=line, column=column, original_code=original, children=children)
         self.indices = indices
 
+
 class ScopeNode(Node):
     def __init__(self, line: int, column: int, original: str | None, children=None):
         super().__init__(value="Scope", line=line, column=column, original_code=original, children=children)
+
+
+class StructNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, struct_name: str, struct_members: list, children=None):
+        super().__init__(value="Struct", line=line, column=column, original_code=original, children=children)
+        self.struct_name = struct_name
+        self.struct_members = struct_members
+
+
+class StructMemberNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, type: TypeNode, struct_var_name: str, struct_member_name: str, children=None):
+        super().__init__(value="StructMember", line=line, column=column, original_code=original, children=children)
+        self.type = type
+        self.struct_var_name = struct_var_name
+        self.struct_member_name = struct_member_name
+
+
+class StructAssignmentNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, lvalue: Node, rvalue: Node, children=None):
+        super().__init__(value="StructAssignment", line=line, column=column, original_code=original, children=children)
+        self.lvalue = lvalue
+        self.rvalue = rvalue
