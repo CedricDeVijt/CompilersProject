@@ -43,9 +43,7 @@ def llvm_output_compare_with_expected_output(root: str, input_file: str, expecte
     # remove the file extension
     filename = source_file.split(".")[0]
 
-    llvm_generated_code = filename + "_generated.ll"
     llvm_test_code = filename + "_test.ll"
-    llvm_generated_output = filename + "_generated_output.txt"
     llvm_test_output = filename + "_test_output.txt"
 
     # compile to llvm and run with our compiler
@@ -54,7 +52,7 @@ def llvm_output_compare_with_expected_output(root: str, input_file: str, expecte
     os.system("lli " + file_dir + llvm_test_code + " > " + file_dir + llvm_test_output)
 
     # compare the output
-    with open(file_dir + llvm_generated_output, 'r') as f:
+    with open(file_dir + llvm_test_output, 'r') as f:
         generated_output = f.read()
 
     with open(expected_output, 'r') as f:
