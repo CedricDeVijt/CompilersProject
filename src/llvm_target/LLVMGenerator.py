@@ -257,12 +257,6 @@ class LLVMVisitor:
             args.append(arg)
         return self.builder.call(self.module.get_global(node.value), args)
 
-    def visit_ifStatementNode(self, node):
-        # open scope
-        self.scope.open_scope()
-        # close scope
-        self.scope.close_scope()
-
     def get_array_type(self, node, c_type):
         if not isinstance(node.array[0], ArrayNode):
             length = len(node.array)
