@@ -345,10 +345,14 @@ class LLVMVisitor:
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
 
-            rvalue = self.builder.inttoptr(rvalue, ir.PointerType(pointer_type))
+            rvalue = self.builder.inttoptr(rvalue, pointer_type)
+
+            alloca = self.builder.alloca(pointer_type)
+
+            self.builder.store(rvalue, alloca)
 
             # loaded = self.builder.load(rvalue)
-            return self.builder.store(rvalue, symbol.alloca)
+            return self.builder.store(alloca, symbol.alloca)
 
         # Not a Pointer
         if not enum and rvalue.type != ir.FloatType() and var_type == 'float':
@@ -380,9 +384,6 @@ class LLVMVisitor:
     def visit_DeclarationNode(self, node):
         # Get the type and name of the variable being declared
         var_name = node.lvalue.value
-        if isinstance(node.rvalue, ArrayNode):
-            #todo array declaration when dimensions get added in AST
-            return
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         if isinstance(node.type[0], PointerNode):
             if var_type == 'float':
@@ -393,15 +394,15 @@ class LLVMVisitor:
                 rvalue = ir.PointerType(ir.IntType(8))
             else:
                 raise Exception("WTF")
-            for i in range(0, int(node.type[0].value) - 1):
+            for i in range(0, int(node.type[0].value)):
                 rvalue = ir.PointerType(rvalue)
             rvalue = ir.Constant(rvalue, None)
         elif var_type == 'float':
-            rvalue = ir.Constant(ir.FloatType(), 0)
+            rvalue = ir.Constant(ir.FloatType(), None)
         elif var_type == 'int':
-            rvalue = ir.Constant(ir.IntType(32), 0)
+            rvalue = ir.Constant(ir.IntType(32), None)
         elif var_type == 'char':
-            rvalue = ir.Constant(ir.IntType(8), 0)
+            rvalue = ir.Constant(ir.IntType(8), None)
         else:
             raise Exception("WTF")
         var_ptr = ir.GlobalVariable(self.module, rvalue.type, name=str(self.global_var))
@@ -437,13 +438,20 @@ class LLVMVisitor:
         if isinstance(symbol.type, PointerNode):
             # Change value of pointee.
             if isinstance(node.lvalue, DerefNode):
-                # TODO: FIX
                 pointee = self.visit(node.lvalue)
+                alloca = self.builder.alloca(pointee.type.pointee)
+                self.builder.store(rvalue, pointee)
+                return
                 return self.builder.store(rvalue, pointee)
             # Change value of pointer.
-            pointer = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee)
-            print(pointer)
-            return self.builder.store(pointer, symbol.alloca)
+            rvalue = self.builder.inttoptr(rvalue, symbol.alloca.type.pointee.pointee)
+
+            alloca = self.builder.alloca(symbol.alloca.type.pointee.pointee)
+
+            self.builder.store(rvalue, alloca)
+
+            # loaded = self.builder.load(rvalue)
+            return self.builder.store(alloca, symbol.alloca)
 
         # Convert value if needed.
         if rvalue.type != ir.FloatType() and var_type == 'float':
@@ -850,6 +858,13 @@ class LLVMVisitor:
         alloca = self.scope.lookup(name=node.identifier.value).alloca
         pointer = self.builder.load(alloca)
         loaded = self.builder.load(pointer)
+        for i in range(0, int(self.scope.lookup(name=node.identifier.value).type.value) - 1):
+            loaded = self.builder.load(loaded)
+        return loaded
+
+    def get_DerefNodePointee(self, node):
+        alloca = self.scope.lookup(name=node.identifier.value).alloca
+        loaded = self.builder.load(alloca)
         for i in range(0, int(self.scope.lookup(name=node.identifier.value).type.value) - 1):
             loaded = self.builder.load(loaded)
         return loaded
