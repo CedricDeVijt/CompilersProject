@@ -10,7 +10,7 @@ def test_p5_define_value():
 
 def test_p5_function_overloading():
     source_file = "p5_function_overloading.c"
-    llvm_output_compare_with_expected_output(root, source_file, "src/tests/LLVM_tests/expected_output/p5_function_overloading_expected_output.txt")
+    llvm_output_compare_with_expected_output(root, source_file, "expected_output/p5_function_overloading_expected_output.txt")
 
 
 def test_p5_functions_1():
