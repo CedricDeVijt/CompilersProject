@@ -257,6 +257,12 @@ class LLVMVisitor:
             args.append(arg)
         return self.builder.call(self.module.get_global(node.value), args)
 
+    def visit_ifStatementNode(self, node):
+        # open scope
+        self.scope.open_scope()
+        # close scope
+        self.scope.close_scope()
+
     def get_array_type(self, node, c_type):
         if not isinstance(node.array[0], ArrayNode):
             length = len(node.array)
@@ -269,6 +275,25 @@ class LLVMVisitor:
         else:
             return ir.ArrayType(self.get_array_type(node.array[0], c_type), len(node.array))
 
+    def create_multi_dimensional_list(self, dimensions):
+        if not dimensions:
+            return 0
+        else:
+            return [self.create_multi_dimensional_list(dimensions[1:]) for _ in range(dimensions[0])]
+
+    # for declaration
+    def get_array_type_dec(self, zero_list, c_type):
+        if not isinstance(zero_list[0], list):
+            length = len(zero_list)
+            if c_type == 'int':
+                return ir.ArrayType(ir.IntType(32), length)
+            elif c_type == 'float':
+                return ir.ArrayType(ir.FloatType(), length)
+            elif c_type == 'char':
+                return ir.ArrayType(ir.IntType(8), length)
+        else:
+            return ir.ArrayType(self.get_array_type_dec(zero_list[0], c_type), len(zero_list))
+
     def initialize_array(self, node, c_type):
         # initialize array on zeros
         if isinstance(node.array[0], ArrayNode):
@@ -279,6 +304,24 @@ class LLVMVisitor:
         else:
             array_constants = []
             for i in range(len(node.array)):
+                if c_type == 'int':
+                    array_constants.append(ir.Constant(ir.IntType(32), 0))
+                elif c_type == 'float':
+                    array_constants.append(ir.Constant(ir.FloatType(), 0))
+                elif c_type == 'char':
+                    array_constants.append(ir.Constant(ir.IntType(8), 0))
+            return array_constants
+
+    def initialize_array_dec(self, zero_list, c_type):
+        # initialize array on zeros
+        if isinstance(zero_list[0], list):
+            array_constants = []
+            for i in range(len(zero_list)):
+                array_constants.append(self.initialize_array_dec(zero_list[i], c_type))
+            return array_constants
+        else:
+            array_constants = []
+            for i in range(len(zero_list)):
                 if c_type == 'int':
                     array_constants.append(ir.Constant(ir.IntType(32), 0))
                 elif c_type == 'float':
@@ -389,6 +432,23 @@ class LLVMVisitor:
     def visit_DeclarationNode(self, node):
         # Get the type and name of the variable being declared
         var_name = node.lvalue.value
+        if node.value == "Declaration":
+            c_type = node.type.value
+            dimensions = []
+            for i in node.original:
+                if i.isdigit():
+                    dimensions.append(int(i))
+            array_types = self.get_array_type_dec(self.create_multi_dimensional_list(dimensions), c_type)
+            array_ptr = self.builder.alloca(array_types, name=var_name)
+            array_constants = self.initialize_array_dec(self.create_multi_dimensional_list(dimensions), c_type)
+            rvalue = ir.Constant(array_types, array_constants)
+            symbol = Symbol(name=var_name, var_type=array_types)
+            symbol.alloca = array_ptr
+            if self.scope.get_symbol(name=var_name) is None:
+                self.scope.add_symbol(symbol)
+            # store the zero array
+            self.builder.store(rvalue, array_ptr)
+            return
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         if isinstance(node.type[0], PointerNode):
             if var_type == 'float':
