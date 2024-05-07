@@ -57,7 +57,7 @@ def llvm_output_compare_with_expected_output(root: str, input_file: str, expecte
     with open(file_dir + llvm_generated_output, 'r') as f:
         generated_output = f.read()
 
-    with open(file_dir + expected_output, 'r') as f:
+    with open(expected_output, 'r') as f:
         expected_output = f.read()
 
     assert generated_output == expected_output
