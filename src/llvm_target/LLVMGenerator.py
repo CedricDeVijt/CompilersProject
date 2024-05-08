@@ -583,11 +583,13 @@ class LLVMVisitor:
         elif isinstance(var_name, ArrayIdentifierNode):
             # array assignment
             index = node.lvalue.indices
+            print(index)
             array_symbol = self.scope.get_symbol(name=node.lvalue.value)
             ptr = array_symbol.alloca
             for i in index:
                 ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
-            self.builder.store(self.visit(node.rvalue), ptr)
+            self.assign_array_values(node.rvalue, ptr)
+            #self.builder.store(self.visit(node.rvalue), ptr)
             return
         symbol = self.scope.lookup(name=var_name)
         var_type = self.get_highest_type(symbol.type)
