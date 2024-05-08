@@ -376,7 +376,7 @@ class LLVMVisitor:
 
     # for declaration
     def get_array_type_dec(self, zero_list, c_type):
-        if not isinstance(zero_list, list):
+        if not isinstance(zero_list[0], list):
             length = len(zero_list)
             if c_type == 'int':
                 return ir.ArrayType(ir.IntType(32), length)
@@ -525,24 +525,6 @@ class LLVMVisitor:
     def visit_DeclarationNode(self, node):
         # Get the type and name of the variable being declared
         var_name = node.lvalue.value
-        # TODO: FIX (FUCKS UP OTHER SHIT, ALSO NODE.VALUE IS ALTIJD "Declaration")
-        # if node.value == "Declaration":
-        #     c_type = self.get_highest_type(node.type)
-        #     dimensions = []
-        #     for i in node.original:
-        #         if i.isdigit():
-        #             dimensions.append(int(i))
-        #     array_types = self.get_array_type_dec(self.create_multi_dimensional_list(dimensions), c_type)
-        #     array_ptr = self.builder.alloca(array_types, name=var_name)
-        #     array_constants = self.initialize_array_dec(self.create_multi_dimensional_list(dimensions), c_type)
-        #     rvalue = ir.Constant(array_types, array_constants)
-        #     symbol = Symbol(name=var_name, var_type=array_types)
-        #     symbol.alloca = array_ptr
-        #     if self.scope.get_symbol(name=var_name) is None:
-        #         self.scope.add_symbol(symbol)
-        #     # store the zero array
-        #     self.builder.store(rvalue, array_ptr)
-        #     return
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         if isinstance(node.type[0], PointerNode):
             if var_type == 'float':
@@ -574,6 +556,23 @@ class LLVMVisitor:
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         return var_ptr
+
+    def visit_ArrayDeclarationNode(self, node):
+        # Get the type and name of the variable being declared
+        var_name = node.lvalue.value
+        c_type = self.get_highest_type(node.type)
+        dimensions = node.size
+        array_types = self.get_array_type_dec(self.create_multi_dimensional_list(dimensions), c_type)
+        array_ptr = self.builder.alloca(array_types, name=var_name)
+        array_constants = self.initialize_array_dec(self.create_multi_dimensional_list(dimensions), c_type)
+        rvalue = ir.Constant(array_types, array_constants)
+        symbol = Symbol(name=var_name, var_type=array_types)
+        symbol.alloca = array_ptr
+        if self.scope.get_symbol(name=var_name) is None:
+            self.scope.add_symbol(symbol)
+        # store the zero array
+        self.builder.store(rvalue, array_ptr)
+        return
 
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue
