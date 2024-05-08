@@ -651,3 +651,9 @@ class ArrayDefinitionNode(Node):
         self.lvalue = lvalue
         self.size = size
         self.rvalue = rvalue
+
+
+class ScanfNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, specifier, children=None):
+        super().__init__(value="scanf", line=line, column=column, original_code=original, children=children)
+        self.specifier = specifier
