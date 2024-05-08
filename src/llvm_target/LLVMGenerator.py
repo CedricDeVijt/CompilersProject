@@ -437,23 +437,6 @@ class LLVMVisitor:
     def visit_DefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
-        # arrays
-        if isinstance(node.rvalue, ArrayNode):
-            c_type = node.type.value
-            array_types = self.get_array_type(node.rvalue, c_type)
-            array_ptr = self.builder.alloca(array_types, name=var_name)
-            array_constants = self.initialize_array(node.rvalue, c_type)
-            rvalue = ir.Constant(array_types, array_constants)
-            symbol = Symbol(name=var_name, var_type=array_types)
-            symbol.alloca = array_ptr
-            if self.scope.get_symbol(name=var_name) is None:
-                self.scope.add_symbol(symbol)
-            # store the zero array
-            self.builder.store(rvalue, array_ptr)
-            # assign the values
-            self.assign_array_values(node.rvalue, array_ptr)
-            return
-        # not array
         rvalue = self.visit(node.rvalue)
         if isinstance(node.rvalue, DerefNode):
             rvalue = self.builder.load(rvalue)
@@ -521,6 +504,24 @@ class LLVMVisitor:
             var_ptr.initializer = rvalue
             return
         return self.builder.store(rvalue, var_ptr)
+
+    def visit_ArrayDefinitionNode(self, node):
+        # definition vars
+        var_name = node.lvalue.value
+        c_type = node.type.value
+        array_types = self.get_array_type(node.rvalue, c_type)
+        array_ptr = self.builder.alloca(array_types, name=var_name)
+        array_constants = self.initialize_array(node.rvalue, c_type)
+        rvalue = ir.Constant(array_types, array_constants)
+        symbol = Symbol(name=var_name, var_type=array_types)
+        symbol.alloca = array_ptr
+        if self.scope.get_symbol(name=var_name) is None:
+            self.scope.add_symbol(symbol)
+        # store the zero array
+        self.builder.store(rvalue, array_ptr)
+        # assign the values
+        self.assign_array_values(node.rvalue, array_ptr)
+        return
 
     def visit_DeclarationNode(self, node):
         # Get the type and name of the variable being declared
