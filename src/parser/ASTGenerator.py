@@ -1960,6 +1960,25 @@ class ASTGenerator(Visitor):
 
         member_type = self.scope.get_struct_member_type(struct_var_node.type.value, struct_member_name)
 
-        original = f"{struct_var_name}.{struct_member_name}"
-        return StructMemberNode(line=ctx.start.line, column=ctx.start.column, original=original,
-                                struct_var_name=struct_var_name, struct_member_name=struct_member_name, type=member_type)
+
+        if len(children) == 3:
+            original = f"{struct_var_name}.{struct_member_name}"
+            return StructMemberNode(line=ctx.start.line, column=ctx.start.column, original=original,
+                                    struct_var_name=struct_var_name, struct_member_name=struct_member_name,
+                                    type=member_type)
+        else:
+            array_sizes = []
+            for child in children[3:]:
+                if child.getText() == "[":
+                    continue
+                if child.getText() == "]":
+                    continue
+                array_sizes.append(int(child.getText()))
+
+            original = f"{struct_var_name}.{struct_member_name}["
+            for size in array_sizes:
+                original += f"{size}]"
+
+            return StructMemberNode(line=ctx.start.line, column=ctx.start.column, original=original,
+                                    struct_var_name=struct_var_name, struct_member_name=struct_member_name,
+                                    type=member_type, array_size=array_sizes)
