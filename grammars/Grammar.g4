@@ -8,6 +8,7 @@ statement: rvalue SEMICOLON+
          | variable SEMICOLON+
          | comment
          | printfStatement SEMICOLON+
+         | scanfStatement SEMICOLON+
          | scope
          | conditional
          | whileLoop
@@ -61,6 +62,7 @@ forLoop: 'for' LPAREN forCondition RPAREN scope;
 forCondition: variable? SEMICOLON rvalue? SEMICOLON rvalue?;
 
 printfStatement: 'printf' '(' formatSpecifier (','( rvalue | string | structMember))* ')';
+scanfStatement: 'scanf' '(' formatSpecifier (',' addr)* ')';
 
 formatSpecifier: STRING;
 

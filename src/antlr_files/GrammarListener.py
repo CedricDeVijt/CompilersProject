@@ -206,6 +206,15 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#scanfStatement.
+    def enterScanfStatement(self, ctx:GrammarParser.ScanfStatementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#scanfStatement.
+    def exitScanfStatement(self, ctx:GrammarParser.ScanfStatementContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#formatSpecifier.
     def enterFormatSpecifier(self, ctx:GrammarParser.FormatSpecifierContext):
         pass
