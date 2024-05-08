@@ -91,7 +91,7 @@
 # project 7
 
 - Functionality
-  - [ ] (**mandatory**) Structs
+  - [x] (**mandatory**) Structs
   - [ ] (**optional**) Structs containing other structs
   - [ ] (**optional**) Dynamic allocation of structs
   - [ ] (**optional**) Unions
@@ -100,6 +100,6 @@
   - [ ] (**optional**) File writing using fputs
   - [ ] (**optional**) Dynamically allocated strings and charracter buffers
 - Semantic Analysis
-  - [ ] (**optional**) Type checking for function pointers
+  - [x] (**optional**) Type checking for function pointers
   - [ ] (**mandatory**) Type checking for accessing and assigning struct members
   - [ ] (**optional**) Type checking for accessing and assigning union members

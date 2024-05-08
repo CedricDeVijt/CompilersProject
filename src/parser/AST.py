@@ -621,11 +621,12 @@ class StructNode(Node):
 
 
 class StructMemberNode(Node):
-    def __init__(self, line: int, column: int, original: str | None, type: TypeNode, struct_var_name: str, struct_member_name: str, children=None):
+    def __init__(self, line: int, column: int, original: str | None, type: TypeNode, struct_var_name: str, struct_member_name: str, array_size= None, children=None):
         super().__init__(value="StructMember", line=line, column=column, original_code=original, children=children)
         self.type = type
         self.struct_var_name = struct_var_name
         self.struct_member_name = struct_member_name
+        self.array_size = array_size
 
 
 class StructAssignmentNode(Node):
