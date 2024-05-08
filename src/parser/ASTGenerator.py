@@ -1646,7 +1646,7 @@ class ASTGenerator(Visitor):
         for size in arraySizes:
             original += f"{size}]["
         original = original[:-2] + "]"
-        return DeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=typeNode, lvalue=lvalue)
+        return ArrayDeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=typeNode, lvalue=lvalue, size=arraySizes)
 
     def visitArrayDefinition(self, ctx):
         children = []
@@ -1685,7 +1685,7 @@ class ASTGenerator(Visitor):
 
             # Create definition node
             lvalue = IdentifierNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=identifier)
-            return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type_node, lvalue=lvalue, rvalue=rvalue)
+            return ArrayDefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type_node, lvalue=lvalue, rvalue=rvalue, size=array_sizes)
 
         elif isinstance(rvalue, StringNode):
             # Check if type is char
@@ -1707,7 +1707,7 @@ class ASTGenerator(Visitor):
             # Create definition node
             lvalue = IdentifierNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=identifier)
             original = f"{type_node.original} {identifier} [{len(rvalue.value)}] = {rvalue.original}"
-            return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type_node, lvalue=lvalue, rvalue=rvalue)
+            return ArrayDefinitionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type_node, lvalue=lvalue, rvalue=rvalue, size=[len(rvalue.value)])
 
         else:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid array or string definition!")

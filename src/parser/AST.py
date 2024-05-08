@@ -633,3 +633,20 @@ class StructAssignmentNode(Node):
         super().__init__(value="StructAssignment", line=line, column=column, original_code=original, children=children)
         self.lvalue = lvalue
         self.rvalue = rvalue
+
+
+class ArrayDeclarationNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, type: TypeNode, lvalue: IdentifierNode, size: list, children=None):
+        super().__init__(value="ArrayDeclaration", line=line, column=column, original_code=original, children=children)
+        self.type = type
+        self.lvalue = lvalue
+        self.size = size
+
+
+class ArrayDefinitionNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, type: TypeNode, lvalue: IdentifierNode, size: list, rvalue: Node, children=None):
+        super().__init__(value="ArrayDefinition", line=line, column=column, original_code=original, children=children)
+        self.type = type
+        self.lvalue = lvalue
+        self.size = size
+        self.rvalue = rvalue
