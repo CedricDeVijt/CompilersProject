@@ -647,10 +647,11 @@ class LLVMVisitor:
                     value *= 8
                 index = ir.Constant(ir.IntType(64), value)
                 original_pointer = self.builder.load(symbol.alloca)
+                original_pointer = self.builder.load(original_pointer)
                 pointer_as_int = self.builder.ptrtoint(original_pointer, ir.IntType(64))
                 new_pointer_as_int = self.builder.add(pointer_as_int, index)
-                new_pointer = self.builder.inttoptr(new_pointer_as_int, symbol.alloca.type.pointee)
-                self.builder.store(new_pointer, symbol.alloca)
+                new_pointer = self.builder.inttoptr(new_pointer_as_int, symbol.alloca.type.pointee.pointee)
+                self.builder.store(new_pointer, self.builder.load(symbol.alloca))
                 return original_pointer
             # Do operation
             var_type = self.get_highest_type(symbol.type)
