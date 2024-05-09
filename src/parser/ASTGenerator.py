@@ -1941,8 +1941,8 @@ class ASTGenerator(Visitor):
         original = f"{struct_type_name} {struct_var_name}"
         lvalue = IdentifierNode(value=struct_var_name, line=ctx.start.line, column=ctx.start.column,
                                 original=struct_var_name)
-        return DeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type_node,
-                               lvalue=lvalue)
+        return StructDeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type_node,
+                                     lvalue=lvalue)
 
     def visitStructAssignment(self, ctx):
         children = []
