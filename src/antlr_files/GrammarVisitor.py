@@ -14,6 +14,11 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GrammarParser#declaration.
+    def visitDeclaration(self, ctx:GrammarParser.DeclarationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by GrammarParser#scope.
     def visitScope(self, ctx:GrammarParser.ScopeContext):
         return self.visitChildren(ctx)
