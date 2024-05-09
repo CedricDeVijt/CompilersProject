@@ -37,7 +37,6 @@ class LLVMVisitor:
             function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
             function = ir.Function(self.module, function_type, name='scanf')
             self.builder = function
-            # define zero terminator for printf
 
     def get_pointer_size(self, node, by_ref=False):
         size = []
@@ -231,16 +230,7 @@ class LLVMVisitor:
         # Call Scanf Function.
         args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
         for arg in node.children:
-            if isinstance(arg, StringNode):
-                self.printf_string += 1
-            if isinstance(arg, DerefNode):
-                arg = self.visit(arg)
-                arg = self.builder.load(arg)
-            else:
-                arg = self.visit(arg)
-            if arg.type == ir.FloatType():
-                # Convert to double
-                arg = self.builder.fpext(arg, ir.DoubleType())
+            arg = self.visit(arg)
             args.append(arg)
         self.builder.call(self.module.get_global('scanf'), args)
         self.scanf_string += 1
