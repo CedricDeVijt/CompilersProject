@@ -308,6 +308,17 @@ class Node:
                 self.value = int(~int(self.children[0].value))
                 self.children = []
 
+    def remove_forward_declarations(self):
+        remove = []
+        if isinstance(self, ProgramNode):
+            for node in self.children:
+                if isinstance(node, FunctionNode):
+                    if len(node.body) == 0:
+                        remove.append(node)
+
+        for node in remove:
+            self.children.remove(node)
+
 
 class ProgramNode(Node):
     def __init__(self, line: int, column: int, original: str | None, children=None):

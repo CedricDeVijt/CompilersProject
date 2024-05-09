@@ -45,12 +45,19 @@ def generate_ast(path, visitor, constant_fold=True):
     ast = genAST.node
     symbolTable = genAST.scope
     errors = genAST.errors
-    warnings = genAST.warnings
+
     # Print Warnings
+    warnings = genAST.warnings
     for warning in warnings:
         print(f"Warning: {warning}")
+
+    # Constant folding of expressions
     if constant_fold:
         ast.constant_fold(errors=errors, warnings=warnings)
+
+    # remove forward declarations
+    ast.remove_forward_declarations()
+
     # Print Errors
     err_str = ''
     if not genAST.has_main:
