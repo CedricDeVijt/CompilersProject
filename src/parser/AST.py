@@ -309,15 +309,25 @@ class Node:
                 self.children = []
 
     def remove_forward_declarations(self):
-        remove = []
-        if isinstance(self, ProgramNode):
-            for node in self.children:
-                if isinstance(node, FunctionNode):
-                    if len(node.body) == 0:
-                        remove.append(node)
+        # Find forward declarations
+        forward_declarations = []
+        for node in self.children:
+            if isinstance(node, FunctionNode):
+                if len(node.body) == 0:
+                    forward_declarations.append(node)
 
-        for node in remove:
-            self.children.remove(node)
+        # replace forward declaration with definition
+        for forward_declaration in forward_declarations:
+            definition = None
+            function_name = forward_declaration.value
+            for node in self.children:
+                if isinstance(node, FunctionNode) and node is not forward_declaration:
+                    if node.value == function_name:
+                        definition = node
+                        break
+            if definition is not None:
+                index = self.children.index(forward_declaration)
+                self.children[index] = definition
 
 
 class ProgramNode(Node):
