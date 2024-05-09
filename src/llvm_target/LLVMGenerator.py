@@ -365,8 +365,6 @@ class LLVMVisitor:
             else:
                 arg = self.visit(arg)
             args.append(arg)
-        if node.value == 'test' and len(node.arguments) == 0:
-            return self.builder.call(self.module.get_global(node.value), args)
         symbols = self.scope.lookup(name=node.value) if self.scope.lookup(name=node.value) is not None else []
         if isinstance(symbols, Symbol):
             symbols = [symbols]
