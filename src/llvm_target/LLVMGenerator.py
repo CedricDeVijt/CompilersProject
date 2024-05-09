@@ -577,7 +577,7 @@ class LLVMVisitor:
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
-        self.builder.store(self.assign_array_values(node.rvalue), array_ptr)
+        self.builder.store(rvalue, array_ptr)
         return
 
     def visit_AssignmentNode(self, node):
@@ -586,15 +586,6 @@ class LLVMVisitor:
             var_name = var_name.value
         elif isinstance(var_name, DerefNode):
             var_name = var_name.identifier.value
-        #if isinstance(node.lvalue, ArrayIdentifierNode or isinstance(node.rvalue, ArrayNode)):
-        #    # array assignment
-        #    index = node.lvalue.indices
-        #    array_symbol = self.scope.lookup(name=node.lvalue.value)
-        #    ptr = array_symbol.alloca
-        #    for i in index:
-        #        ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
-        #    self.assign_array_values(node.rvalue, ptr)
-        #    return
         symbol = self.scope.lookup(name=var_name)
         var_type = self.get_highest_type(symbol.type)
         rvalue = self.visit(node.rvalue)
