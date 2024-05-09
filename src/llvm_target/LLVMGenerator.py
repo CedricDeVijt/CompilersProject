@@ -242,7 +242,7 @@ class LLVMVisitor:
             const = isinstance(node.type.type, list)
         else:
             const = isinstance(node.type, list)
-        symbol = Symbol(name=node.value, var_type=type, symbol_type='function', const=const, params=node.params)
+        symbol = Symbol(name=node.value, var_type=node.type, symbol_type='function', const=const, params=node.params)
         symbol.original = str(self.global_var)
         if node.value == 'main' and len(node.params) == 0:
             original = 'main'
