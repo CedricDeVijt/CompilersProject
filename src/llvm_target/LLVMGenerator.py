@@ -21,6 +21,7 @@ class LLVMVisitor:
         self.break_blocks = []
         self.continue_blocks = []
         self.global_var = 0
+        self.structs = {}
 
         # Add printf and scanf function
         if stdio:
@@ -517,9 +518,9 @@ class LLVMVisitor:
         array_ptr = self.builder.alloca(array_types, name=var_name)
         array_constants = self.initialize_array(node.rvalue, c_type)
         rvalue = ir.Constant(array_types, array_constants)
+        # create and store symbol for symbol table
         symbol = Symbol(name=var_name, var_type=array_types)
         symbol.alloca = array_ptr
-
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
@@ -581,6 +582,17 @@ class LLVMVisitor:
         self.builder.store(rvalue, array_ptr)
         return
 
+    def visit_StructDeclarationNode(self, node):
+        var_name = node.lvalue.value
+        struct_type = self.structs[node.type.value][0]
+        struct_ptr = self.builder.alloca(struct_type, name=var_name)
+        symbol = Symbol(name=var_name, var_type=struct_type)
+        symbol.alloca = struct_ptr
+        symbol.vars = self.structs[node.type.value][1]
+        if self.scope.get_symbol(name=var_name) is None:
+            self.scope.add_symbol(symbol)
+        return
+
     def visit_AssignmentNode(self, node):
         var_name = node.lvalue
         if isinstance(var_name, IdentifierNode):
@@ -594,7 +606,7 @@ class LLVMVisitor:
             rvalue = self.builder.load(rvalue)
         # Pointer
         if isinstance(symbol.type, PointerNode):
-            # Change value of pointee.
+            # Change value of pointer.
             if isinstance(node.lvalue, DerefNode):
                 pointee = self.visit(node.lvalue)
                 alloca = self.builder.alloca(pointee.type.pointee)
@@ -639,6 +651,17 @@ class LLVMVisitor:
             for i in index:
                 ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
         self.assign_array_values(node.rvalue, ptr)
+        return
+
+    def visit_StructAssignmentNode(self, node):
+        # get pointer to struct
+        symbol = self.scope.lookup(name=node.lvalue.struct_var_name)
+        struct_ptr = symbol.alloca
+        # get index of variable in struct
+        vars = symbol.vars
+        var_name = node.lvalue.struct_member_name
+        index = vars.index(var_name)
+        self.builder.store(self.visit(node.rvalue), self.builder.gep(struct_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), index)]))
         return
 
     def visit_PostFixNode(self, node):
@@ -1167,3 +1190,30 @@ class LLVMVisitor:
             ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
         # Load and return the value from the pointer
         return self.builder.load(ptr)
+
+    def visit_StructNode(self, node):
+        struct_name = node.struct_name
+        # get all types
+        struct_types = []
+        for i in node.struct_members:
+            if self.get_highest_type(i.type) == 'int':
+                struct_types.append(ir.IntType(32))
+            elif self.get_highest_type(i.type) == 'float':
+                struct_types.append(ir.FloatType())
+            elif self.get_highest_type(i.type) == 'char':
+                struct_types.append(ir.IntType(8))
+        struct_type = ir.LiteralStructType(struct_types)
+        struct_vars = []
+        for i in node.struct_members:
+            struct_vars.append(i.lvalue.value)
+
+        # save struct with name and type
+        self.structs[struct_name] = [struct_type, struct_vars]
+
+    def visit_StructMemberNode(self, node):
+        symbol = self.scope.get_symbol(name=node.struct_var_name)
+        struct_ptr = symbol.alloca
+        vars = symbol.vars
+        index = vars.index(node.struct_member_name)
+        struct_ptr = self.builder.gep(struct_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), index)])
+        return self.builder.load(struct_ptr)
