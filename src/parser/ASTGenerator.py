@@ -131,8 +131,14 @@ class ASTGenerator(Visitor):
                 return symbols.type
             if isinstance(symbols.type, PointerNode):
                 if isinstance(symbols.type.type, list):
-                    return symbols.type.type[len(symbols.type.type) - 1].value
-                return symbols.type.type.value
+                    var_type = symbols.type.type[len(symbols.type.type) - 1].value
+                else:
+                    var_type = symbols.type.type.value
+                if var_type == 'char' and symbols.type.value == 1:
+                    return 'string'
+                return var_type
+            if symbols.symbol_type == 'array' and symbols.type.value == 'char':
+                return 'string'
             return symbols.type.value
 
     def handle_node_type(self, rval):
