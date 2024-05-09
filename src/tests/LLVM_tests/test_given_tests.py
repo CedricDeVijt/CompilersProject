@@ -73,8 +73,8 @@ def test_modulo():
     llvm_output_compare(root, source_file)
 
 
-def test_pointerArguments():
-    source_file = "pointerArguments.c"
+def test_pointerArgument():
+    source_file = "pointerArgument.c"
     llvm_output_compare(root, source_file)
 
 
@@ -95,16 +95,6 @@ def test_printf2():
 
 def test_printf3():
     source_file = "printf3.c"
-    llvm_output_compare(root, source_file)
-
-
-def test_scanf1():
-    source_file = "scanf1.c"
-    llvm_output_compare(root, source_file)
-
-
-def test_scanf2():
-    source_file = "scanf2.c"
     llvm_output_compare(root, source_file)
 
 

@@ -1147,10 +1147,8 @@ class ASTGenerator(Visitor):
                         f"line {ctx.start.line}:{ctx.start.column} \'" + identifier + "\' is declared as type!")
                     return node
             return node
-        node = self.visitChildren(ctx)
-        if node is None:
-            pass
         if len(lines) == 1:
+            node = self.visit(lines[0])
             negatives = 0
             original = ""
             for child in lines[0].children:
@@ -1207,6 +1205,10 @@ class ASTGenerator(Visitor):
 
     def visitString(self, ctx):
         node = StringNode(value=ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
+        return node
+
+    def visitChar(self, ctx):
+        node = CharNode(value=ord(ctx.getText().strip("\'")), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
         return node
 
     def visitExplicitConversion(self, ctx):
