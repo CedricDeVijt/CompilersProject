@@ -67,10 +67,12 @@ forLoop: 'for' LPAREN forCondition RPAREN scope;
 
 forCondition: variable? SEMICOLON rvalue? SEMICOLON rvalue?;
 
-printfStatement: 'printf' '(' formatSpecifier (','( rvalue | string | structMember))* ')';
+printfStatement: 'printf' '(' formatSpecifier (','( char | string | rvalue | structMember))* ')';
 scanfStatement: 'scanf' '(' formatSpecifier (',' addr)* ')';
 
 formatSpecifier: STRING;
+
+char: CHAR;
 
 string: STRING;
 
@@ -213,7 +215,7 @@ SEMICOLON: ';';
 COMMA: ',';
 INT:  '0' | [1-9][0-9]*;
 FLOAT: [0-9]+ ('.' [0-9]+)?;
-CHAR : '\'' '\\'? [a-zA-Z0-9] '\'' ;
+CHAR : '\'' '\\'? (~["\r\n\t]) '\'' ;
 STRING: '"' (~["\r\n\t])* '"';
 WHITESPACE: [ \t\n\r]+ -> skip;
 

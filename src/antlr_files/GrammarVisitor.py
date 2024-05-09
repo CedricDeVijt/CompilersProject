@@ -134,6 +134,11 @@ class GrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GrammarParser#char.
+    def visitChar(self, ctx:GrammarParser.CharContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by GrammarParser#string.
     def visitString(self, ctx:GrammarParser.StringContext):
         return self.visitChildren(ctx)
