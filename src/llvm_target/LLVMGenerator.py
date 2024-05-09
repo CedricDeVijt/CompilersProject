@@ -1185,7 +1185,7 @@ class LLVMVisitor:
         self.scope.close_scope()
 
     def visit_ArrayNode(self, node):
-        ...
+        pass
 
     def visit_ArrayIdentifierNode(self, node):
         # array index to retrieve
