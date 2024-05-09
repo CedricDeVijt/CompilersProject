@@ -270,7 +270,10 @@ class Node:
                 if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
                     return
                 self.__class__ = IntNode
-                self.value = int(float(self.children[0].value) and float(self.children[1].value))
+                if float(self.children[0].value) == 0 or float(self.children[1].value) == 0:
+                    self.value = 0
+                else:
+                    self.value = 1
                 self.children = []
             case LogicalOrNode():
                 if isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode):
