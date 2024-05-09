@@ -112,7 +112,7 @@ rvalue: unaryExpression
       | rvalue LESS_THAN rvalue
       | rvalue GREATER_EQUAL rvalue
       | rvalue LESS_EQUAL rvalue
-      | LPAREN rvalue RPAREN
+      | (PLUS | MINUS)? LPAREN rvalue RPAREN
       | explicitConversion
       | postFixIncrement
       | postFixDecrement
