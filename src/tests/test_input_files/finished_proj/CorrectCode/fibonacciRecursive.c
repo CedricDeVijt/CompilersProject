@@ -15,9 +15,7 @@ int main(){
 	int n = 10;
 	int i = 1;
 	while(i++ <= n){
-	    number = f(i);
-
-		printf("fib(%d)\t= %d;\n", i, number);
+		printf("fib(%d)\t= %d;\n", i, f(i));
 	}
 	return 0;
 }
