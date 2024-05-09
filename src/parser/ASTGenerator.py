@@ -2029,7 +2029,6 @@ class ASTGenerator(Visitor):
             if copy_specifier[i] == '%':
                 original_i = i
                 i += 1
-                amount = 0
                 if copy_specifier[i] == '%':
                     i += 1
                     continue
@@ -2068,8 +2067,6 @@ class ASTGenerator(Visitor):
                         i += 1
                         continue
                     if copy_specifier[i] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                        amount *= 10
-                        amount += int(copy_specifier[i])
                         i += 1
                         continue
                     i -= 1
