@@ -180,6 +180,10 @@ class LLVMVisitor:
 
     def visit_PrintfNode(self, node):
         specifier = node.specifier
+        for child in node.children:
+            if isinstance(child, StringNode):
+                child.value = child.value.strip('"')
+                child.value = child.value + "\00"
         specifier += '\00'
         j = 0
         while j < len(specifier) - 1:
