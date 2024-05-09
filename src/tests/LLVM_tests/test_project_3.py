@@ -1,6 +1,6 @@
 from src.tests.utils import llvm_output_compare
 
-root = "src/tests/test_input_files/extra_tests_with_print/project_3/"
+root = "src/tests/test_input_files/custom_tests/project_3/"
 
 
 def test_p3_comments():
