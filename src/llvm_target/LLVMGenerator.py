@@ -101,6 +101,8 @@ class LLVMVisitor:
         return 'char'
 
     def lookup_and_get_type(self, identifier):
+        if isinstance(identifier, IdentifierNode):
+            identifier = identifier.value
         symbols = self.scope.lookup(identifier)
         if symbols:
             if isinstance(symbols.type, str):
