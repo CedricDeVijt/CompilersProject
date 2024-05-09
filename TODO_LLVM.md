@@ -98,8 +98,8 @@
   - [ ] (**optional**) Function pointers
   - [ ] (**optional**) File reading using fgets
   - [ ] (**optional**) File writing using fputs
-  - [ ] (**optional**) Dynamically allocated strings and charracter buffers
+  - [ ] (**optional**) Dynamically allocated strings and character buffers
 - Semantic Analysis
   - [ ] (**optional**) Type checking for function pointers
-  - [ ] (**mandatory**) Type checking for accessing and assigning struct members
+  - [x] (**mandatory**) Type checking for accessing and assigning struct members
   - [ ] (**optional**) Type checking for accessing and assigning union members
