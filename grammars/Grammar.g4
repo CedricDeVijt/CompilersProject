@@ -1,6 +1,12 @@
 grammar Grammar;
 
-program: (comment | ((enumDeclaration | structDefinition) SEMICOLON+) | (variable SEMICOLON+) | (typedef SEMICOLON+) | function)+ EOF;
+program: (comment | declaration SEMICOLON+ | function)+ EOF;
+
+declaration: enumDeclaration
+           | structDefinition
+           | variable
+           | typedef
+           ;
 
 scope: LBRACE statement* RBRACE;
 

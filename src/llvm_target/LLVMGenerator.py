@@ -17,6 +17,7 @@ class LLVMVisitor:
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0
+        self.scanf_string = 0
         self.enums = {}
         self.break_blocks = []
         self.continue_blocks = []
@@ -25,9 +26,17 @@ class LLVMVisitor:
 
         # Add printf and scanf function
         if stdio:
+
+            # Printf
+
             function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
             function = ir.Function(self.module, function_type, name='printf')
+            self.builder = function
 
+            # Scanf
+
+            function_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
+            function = ir.Function(self.module, function_type, name='scanf')
             self.builder = function
 
     def get_pointer_size(self, node, by_ref=False):
@@ -72,6 +81,7 @@ class LLVMVisitor:
         type_check_dict = {
             DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier.value),
             IdentifierNode: lambda rval: self.lookup_and_get_type(rval.value),
+            AddrNode: lambda rval: self.lookup_and_get_type(rval.value.value),
             CharNode: lambda rval: 'char',
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
@@ -94,8 +104,14 @@ class LLVMVisitor:
                 return symbols.type
             if isinstance(symbols.type, PointerNode):
                 if isinstance(symbols.type.type, list):
-                    return symbols.type.type[len(symbols.type.type) - 1].value
-                return symbols.type.type.value
+                    var_type = symbols.type.type[len(symbols.type.type) - 1].value
+                else:
+                    var_type = symbols.type.type.value
+                if var_type == 'char' and symbols.type.value == 1:
+                    return 'string'
+                return var_type
+            if symbols.symbol_type == 'array' and symbols.type.value == 'char':
+                return 'string'
             return symbols.type.value
 
     def handle_node_type(self, rval):
@@ -131,13 +147,14 @@ class LLVMVisitor:
         symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
         if isinstance(symbols, Symbol):
             symbols = [symbols]
-            for symbol in symbols:
-                if len(symbol.params) != len(rval.arguments):
-                    continue
+        for symbol in symbols:
+            if len(symbol.params) != len(rval.arguments):
+                continue
 
-                similar = all(self.get_highest_type(param[0]) == self.get_highest_type(arg) for param, arg in zip(symbol.params, rval.arguments))
-                if similar:
-                    return self.get_highest_type(symbol.type)
+            similar = all(self.get_highest_type(param[0]) == self.get_highest_type(arg) for param, arg in
+                          zip(symbol.params, rval.arguments))
+            if similar:
+                return self.get_highest_type(symbol.type)
         return 'char'
 
     def visit(self, node):
@@ -202,6 +219,23 @@ class LLVMVisitor:
         self.builder.call(self.module.get_global('printf'), args)
         self.printf_string += 1
 
+    def visit_ScanfNode(self, node):
+        specifier = node.specifier
+        specifier += '\00'
+        # Create Global Variable For Format String.
+        c_string_type = ir.ArrayType(ir.IntType(8), len(specifier))
+        format_string_global = ir.GlobalVariable(self.module, c_string_type, name=f'scanf_string_{self.scanf_string}')
+        format_string_global.global_constant = True
+        format_string_global.initializer = ir.Constant(c_string_type, bytearray(specifier, 'utf8'))
+
+        # Call Scanf Function.
+        args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
+        for arg in node.children:
+            arg = self.visit(arg)
+            args.append(arg)
+        self.builder.call(self.module.get_global('scanf'), args)
+        self.scanf_string += 1
+
     def visit_FunctionNode(self, node):
         # Add symbol if not exist
         const = False
@@ -209,7 +243,7 @@ class LLVMVisitor:
             const = isinstance(node.type.type, list)
         else:
             const = isinstance(node.type, list)
-        symbol = Symbol(name=node.value, var_type=type, symbol_type='function', const=const, params=node.params)
+        symbol = Symbol(name=node.value, var_type=node.type, symbol_type='function', const=const, params=node.params)
         symbol.original = str(self.global_var)
         if node.value == 'main' and len(node.params) == 0:
             original = 'main'
@@ -305,6 +339,21 @@ class LLVMVisitor:
                 self.builder.store(function.args[arg_names.index(arg_name)], alloca)
                 symbol.alloca = alloca
 
+        # Add return statement if last instruction is IfStatementNode
+        if len(node.body) != 0 and isinstance(node.body[len(node.body) - 1], IfStatementNode):
+            original = 'return'
+            func_type = self.get_highest_type(node.type)
+            if func_type == 'void':
+                ret_val = None
+            elif func_type == 'char':
+                ret_val = CharNode(line=0, column=0, original='0', value='0')
+            elif func_type == 'int':
+                ret_val = IntNode(line=0, column=0, original='0', value='0')
+            elif func_type == 'float':
+                ret_val = FloatNode(line=0, column=0, original='0', value='0')
+            ret_node = ReturnNode(line=0, column=0, original=original, ret_val=ret_val)
+            node.body.append(ret_node)
+
         # Visit function body
         for statement in node.body:
             self.builder.comment(statement.original.replace('\n', '\\n'))
@@ -322,8 +371,6 @@ class LLVMVisitor:
             else:
                 arg = self.visit(arg)
             args.append(arg)
-        if node.value == 'test' and len(node.arguments) == 0:
-            return self.builder.call(self.module.get_global(node.value), args)
         symbols = self.scope.lookup(name=node.value) if self.scope.lookup(name=node.value) is not None else []
         if isinstance(symbols, Symbol):
             symbols = [symbols]
@@ -1176,7 +1223,7 @@ class LLVMVisitor:
         self.scope.close_scope()
 
     def visit_ArrayNode(self, node):
-        ...
+        pass
 
     def visit_ArrayIdentifierNode(self, node):
         # array index to retrieve

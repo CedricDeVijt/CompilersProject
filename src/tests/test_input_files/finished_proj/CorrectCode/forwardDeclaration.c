@@ -13,10 +13,10 @@ void g(){
 	printf("World\n");
 	f();
 	printf("World\n");
+	return;
 }
 
 int main(){
-    // Should print "hello world" twice
 	f();
 	g();
 	return 0;

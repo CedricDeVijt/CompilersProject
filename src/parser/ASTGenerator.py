@@ -1247,9 +1247,8 @@ class ASTGenerator(Visitor):
                 if char == 'd' or char == 'x' or char == 's' or char == 'f' or char == 'c' or char == '%':
                     specifiers += 1
                     if char == '%':
-                        copy_specifier = copy_specifier[:i] + copy_specifier[i + 1:]
                         specifiers -= 1
-                        i += 1
+                        i += 2
                         continue
                     if specifiers > len(children) - 1:
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too few arguments for format string!")
@@ -2030,7 +2029,9 @@ class ASTGenerator(Visitor):
             if copy_specifier[i] == '%':
                 original_i = i
                 i += 1
-                amount = 0
+                if copy_specifier[i] == '%':
+                    i += 1
+                    continue
                 while i != len(copy_specifier):
                     if copy_specifier[i] in ['d', 'x', 'f', 'c', 's']:
                         specifiers += 1
@@ -2066,20 +2067,17 @@ class ASTGenerator(Visitor):
                         i += 1
                         continue
                     if copy_specifier[i] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                        amount *= 10
-                        amount += int(copy_specifier[i])
                         i += 1
                         continue
                     i -= 1
-                    # Remove current i
-                    copy_specifier = copy_specifier[:original_i] + copy_specifier[original_i+1:]
-                    i -= 1
+                    if copy_specifier[i] == '%':
+                        # Remove current i
+                        copy_specifier = copy_specifier[:original_i] + copy_specifier[original_i+1:]
+                        i -= 1
                     break
                 if i == len(copy_specifier) and copy_specifier[i - 1] == '%':
                     copy_specifier = copy_specifier[:i-1]
-                i += 1
-            else:
-                copy_specifier = copy_specifier[:i] + copy_specifier[i+1:]
+            i += 1
         children[0].specifier = copy_specifier
         if specifiers < len(children) - 1:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too many arguments for format string!")

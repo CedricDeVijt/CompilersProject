@@ -10,11 +10,9 @@ int f(int a) {
 	}
 }
 
-// Recursive fibonnaci
+// Recursive Fibonacci
 int main(){
-	int n;
-    printf("Enter a number:");
-	scanf("%d",&n);
+	int n = 10;
 	int i = 1;
 	while(i++ <= n){
 		printf("fib(%d)\t= %d;\n", i, f(i));
