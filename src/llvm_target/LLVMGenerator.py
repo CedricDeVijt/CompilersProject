@@ -406,6 +406,8 @@ class LLVMVisitor:
         self.scope.close_scope()
 
     def get_array_type(self, node, c_type):
+        if isinstance(node, StringNode):
+            return ir.ArrayType(ir.IntType(8), len(node.value))
         if not isinstance(node.array[0], ArrayNode):
             length = len(node.array)
             if c_type == 'int':
@@ -438,6 +440,11 @@ class LLVMVisitor:
 
     def initialize_array(self, node, c_type):
         # initialize array on zeros
+        if isinstance(node, StringNode):
+            array_constants = []
+            for i in range(len(node.value)):
+                array_constants.append(ir.Constant(ir.IntType(8), 0))
+            return array_constants
         if isinstance(node.array[0], ArrayNode):
             array_constants = []
             for i in range(len(node.array)):
@@ -473,6 +480,11 @@ class LLVMVisitor:
             return array_constants
 
     def assign_array_values(self, node, array_ptr):
+        if isinstance(node, StringNode):
+            for i in range(len(node.value)):
+                ptr = self.builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                self.builder.store(ir.Constant(ir.IntType(8), ord(node.value[i])), ptr)
+            return
         if not isinstance(node, ArrayNode):
             self.builder.store(self.visit(node), array_ptr)
             return
