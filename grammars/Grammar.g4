@@ -77,6 +77,7 @@ lvalue: identifier
       | type identifier
       | pointer identifier
       | deref
+      | LPAREN lvalue RPAREN
       ;
 
 rvalue: unaryExpression
