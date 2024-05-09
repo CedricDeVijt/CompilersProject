@@ -180,7 +180,10 @@ class LLVMVisitor:
 
     def visit_PrintfNode(self, node):
         specifier = node.specifier
-        specifier += '\00'
+        for child in node.children:
+            if isinstance(child, StringNode):
+                child.value = child.value.strip('"')
+                child.value = child.value + "\00"
         j = 0
         while j < len(specifier) - 1:
             if specifier[j] == '\\':
@@ -215,6 +218,7 @@ class LLVMVisitor:
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
+
             args.append(arg)
         self.builder.call(self.module.get_global('printf'), args)
         self.printf_string += 1
