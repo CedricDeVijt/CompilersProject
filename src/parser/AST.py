@@ -653,6 +653,13 @@ class ArrayDefinitionNode(Node):
         self.rvalue = rvalue
 
 
+class ArrayAssignmentNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, lvalue: Node, rvalue: Node, children=None):
+        super().__init__(value="ArrayAssignment", line=line, column=column, original_code=original, children=children)
+        self.lvalue = lvalue
+        self.rvalue = rvalue
+
+
 class ScanfNode(Node):
     def __init__(self, line: int, column: int, original: str | None, specifier, children=None):
         super().__init__(value="scanf", line=line, column=column, original_code=original, children=children)

@@ -1779,7 +1779,7 @@ class ASTGenerator(Visitor):
 
                 # Create assignment node
                 lvalue = ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=identifier, indices=array_sizes)
-                return AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
+                return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
 
     def visitArray(self, ctx):
         children = []
