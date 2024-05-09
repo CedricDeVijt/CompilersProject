@@ -338,6 +338,21 @@ class LLVMVisitor:
                 self.builder.store(function.args[arg_names.index(arg_name)], alloca)
                 symbol.alloca = alloca
 
+        # Add return statement if last instruction is IfStatementNode
+        if len(node.body) != 0 and isinstance(node.body[len(node.body) - 1], IfStatementNode):
+            original = 'return'
+            func_type = self.get_highest_type(node.type)
+            if func_type == 'void':
+                ret_val = None
+            elif func_type == 'char':
+                ret_val = CharNode(line=0, column=0, original='0', value='0')
+            elif func_type == 'int':
+                ret_val = IntNode(line=0, column=0, original='0', value='0')
+            elif func_type == 'float':
+                ret_val = FloatNode(line=0, column=0, original='0', value='0')
+            ret_node = ReturnNode(line=0, column=0, original=original, ret_val=ret_val)
+            node.body.append(ret_node)
+
         # Visit function body
         for statement in node.body:
             self.builder.comment(statement.original.replace('\n', '\\n'))
