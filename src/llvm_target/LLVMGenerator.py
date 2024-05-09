@@ -536,6 +536,10 @@ class LLVMVisitor:
             enum = True
 
         if not enum and isinstance(node.type[0], PointerNode):
+            # C-String
+            if var_type == 'char' and int(node.value) == 1:
+                ...
+            # Other Pointers
             if var_type == 'float':
                 pointer_type = ir.PointerType(ir.FloatType())
             elif var_type == 'int':
