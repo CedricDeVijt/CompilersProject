@@ -233,6 +233,15 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#char.
+    def enterChar(self, ctx:GrammarParser.CharContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#char.
+    def exitChar(self, ctx:GrammarParser.CharContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#string.
     def enterString(self, ctx:GrammarParser.StringContext):
         pass
