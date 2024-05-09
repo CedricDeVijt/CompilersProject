@@ -1243,7 +1243,7 @@ class ASTGenerator(Visitor):
                         format_type = self.get_highest_type(children[specifiers].type)
                     else:
                         format_type = self.get_highest_type(children[specifiers])
-                    if (char == 'd' or char == 'x') and format_type != 'int':
+                    if (char == 'd' or char == 'x') and format_type not in {'int', 'float'}:
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
                         return None
                     elif char == 's' and format_type != 'string':

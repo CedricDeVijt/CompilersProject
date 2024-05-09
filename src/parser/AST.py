@@ -293,7 +293,7 @@ class Node:
                 if not (isinstance(self.children[1], CharNode) or isinstance(self.children[1], IntNode) or isinstance(self.children[1], FloatNode)):
                     return
                 self.__class__ = IntNode
-                self.value = int(float(self.children[0].value) or float(self.children[1].value))
+                self.value = int(float(self.children[0].value) != 0 or float(self.children[1].value) != 0)
                 self.children = []
             case LogicalNotNode():
                 if not (isinstance(self.children[0], CharNode) or isinstance(self.children[0], IntNode) or isinstance(self.children[0], FloatNode)):
