@@ -1017,6 +1017,22 @@ class ASTGenerator(Visitor):
         for line in ctx.getChildren():
             lines.append(line)
         original = ""
+        if len(lines) == 4:
+            node = self.visit(lines[2])
+
+            if isinstance(node, IntNode) or isinstance(node, CharNode):
+                if lines[0].getText() == "-":
+                    node.value = - int(node.value)
+            elif isinstance(node, FloatNode):
+                if lines[0].getText() == "-":
+                    node.value = - float(node.value)
+            else :
+                if lines[0].getText() == "-":
+                    node.value = "-" + node.value
+
+
+            node.original = f"{lines[0].getText} ({node.original})"
+
         if len(lines) == 3:
             node = ProgramNode(line=0, column=0, original=None)
             if str(lines[0]) == "(" and ")" == str(lines[2]):
