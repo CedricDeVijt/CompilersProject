@@ -1749,7 +1749,7 @@ class ASTGenerator(Visitor):
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array type mismatch!")
                     return None
                 lvalue = IdentifierNode(value=id_node.name, line=ctx.start.line, column=ctx.start.column, original=identifier)
-                return AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
+                return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
             else:
                 self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
                 return None
@@ -1766,7 +1766,7 @@ class ASTGenerator(Visitor):
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
                     return None
                 lvalue = ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=identifier, indices=array_sizes)
-                return AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
+                return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
             else:
                 # If array is an array node, it is an array
                 if not self.checkArraySizes(array_node, symbol_array_sizes[len(array_sizes):]):
