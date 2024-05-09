@@ -553,6 +553,19 @@ class LLVMVisitor:
             if self.scope.get_symbol(name=var_name) is None:
                 self.scope.add_symbol(symbol)
 
+            identifier = node.rvalue
+            if isinstance(identifier, IdentifierNode):
+                identifier = identifier.value
+            elif isinstance(identifier, AddrNode):
+                identifier = identifier.value.value
+            elif isinstance(identifier, DerefNode):
+                identifier = identifier.identifier.value
+            rval_symbol = self.scope.lookup(name=identifier)
+            if isinstance(rval_symbol.type, PointerNode):
+                pointer_type = ir.PointerType(pointer_type)
+                rvalue = self.builder.inttoptr(rvalue, pointer_type)
+                return self.builder.store(rvalue, symbol.alloca)
+
             rvalue = self.builder.inttoptr(rvalue, pointer_type)
 
             alloca = self.builder.alloca(pointer_type)
