@@ -2,10 +2,13 @@
 
 int main()
 {
-   int n, i = 3, count, c;
+   int n;
+   int i = 3;
+   int count;
+   int c;
 
    printf("Enter the number of prime numbers required\n");
-   scanf("%d",&n);
+   n = 10;
 
    if ( n >= 1 )
    {

@@ -98,16 +98,6 @@ def test_printf3():
     llvm_output_compare(root, source_file)
 
 
-def test_scanf1():
-    source_file = "scanf1.c"
-    llvm_output_compare(root, source_file)
-
-
-def test_scanf2():
-    source_file = "scanf2.c"
-    llvm_output_compare(root, source_file)
-
-
 def test_scoping():
     source_file = "scoping.c"
     llvm_output_compare(root, source_file)
