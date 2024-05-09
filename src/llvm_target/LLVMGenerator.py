@@ -18,7 +18,8 @@ class LLVMVisitor:
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
         self.printf_string = 0
         self.enums = {}
-        self.break_blocks = []  # Stack to keep track of the nearest loop end block
+        self.break_blocks = []
+        self.continue_blocks = []
         self.global_var = 0
 
         # Add printf and scanf function
@@ -1107,6 +1108,9 @@ class LLVMVisitor:
         # Push the after_loop_block to the break_blocks stack
         self.break_blocks.append(after_loop_block)
 
+        # Push the condition_block to the continue_blocks stack
+        self.continue_blocks.append(condition_block)
+
         # Generate code for the loop condition and set builder's position to the condition block
         self.builder.branch(condition_block)
         self.builder.position_at_start(condition_block)
@@ -1126,6 +1130,9 @@ class LLVMVisitor:
         # Pop the after_loop_block from the break_blocks stack
         self.break_blocks.pop()
 
+        # Continue with the block after the loop
+        self.builder.position_at_start(after_loop_block)
+
         # Set builder's position to the block after the loop
         self.builder.position_at_start(after_loop_block)
 
@@ -1138,7 +1145,12 @@ class LLVMVisitor:
             raise Exception("Invalid break statement. It should be inside a loop.")
 
     def visit_ContinueNode(self, node):
-        pass
+        # Get the nearest loop condition block from the continue_blocks stack
+        if self.continue_blocks:
+            continue_block = self.continue_blocks[-1]
+            self.builder.branch(continue_block)
+        else:
+            raise Exception("Invalid continue statement. It should be inside a loop.")
 
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
