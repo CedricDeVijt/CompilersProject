@@ -17,7 +17,6 @@ void g(){
 }
 
 int main(){
-    // Should print "hello world" twice
 	f();
 	g();
 	return 0;
