@@ -108,6 +108,7 @@ class ASTGenerator(Visitor):
         type_check_dict = {
             DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier.value),
             IdentifierNode: lambda rval: self.lookup_and_get_type(rval.value),
+            AddrNode: lambda rval: self.lookup_and_get_type(rval.value.value),
             CharNode: lambda rval: 'char',
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
@@ -130,8 +131,14 @@ class ASTGenerator(Visitor):
                 return symbols.type
             if isinstance(symbols.type, PointerNode):
                 if isinstance(symbols.type.type, list):
-                    return symbols.type.type[len(symbols.type.type) - 1].value
-                return symbols.type.type.value
+                    var_type = symbols.type.type[len(symbols.type.type) - 1].value
+                else:
+                    var_type = symbols.type.type.value
+                if var_type == 'char' and symbols.type.value == 1:
+                    return 'string'
+                return var_type
+            if symbols.symbol_type == 'array' and symbols.type.value == 'char':
+                return 'string'
             return symbols.type.value
 
     def handle_node_type(self, rval):
@@ -1229,13 +1236,21 @@ class ASTGenerator(Visitor):
         children[0].specifier = children[0].specifier.replace('\"', '')
         copy_specifier = children[0].specifier
         i = 0
-        while i < len(copy_specifier) - 1:
+        while i < len(copy_specifier):
             if i == len(copy_specifier):
-                continue
+                break
             if copy_specifier[i] == '%':
+                if len(copy_specifier) - 1 == i:
+                    copy_specifier = copy_specifier[:i] + copy_specifier[i + 1:]
+                    continue
                 char = copy_specifier[i + 1]
                 if char == 'd' or char == 'x' or char == 's' or char == 'f' or char == 'c' or char == '%':
                     specifiers += 1
+                    if char == '%':
+                        copy_specifier = copy_specifier[:i] + copy_specifier[i + 1:]
+                        specifiers -= 1
+                        i += 1
+                        continue
                     if specifiers > len(children) - 1:
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too few arguments for format string!")
                         return None
@@ -1243,7 +1258,16 @@ class ASTGenerator(Visitor):
                         format_type = self.get_highest_type(children[specifiers].type)
                     else:
                         format_type = self.get_highest_type(children[specifiers])
-                    if (char == 'd' or char == 'x') and format_type not in {'int', 'float'}:
+                    if format_type is None:
+                        if isinstance(children[specifiers], IdentifierNode):
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + children[specifiers].value + "\' not declared yet!")
+                        else:
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + children[specifiers].identifier.value + "\' not declared yet!")
+                        return None
+                    if char == 'd' and format_type != 'int':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
+                        return None
+                    if  char == 'x' and format_type not in ['int', 'float']:
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
                         return None
                     elif char == 's' and format_type != 'string':
@@ -1255,15 +1279,18 @@ class ASTGenerator(Visitor):
                     elif char == 'c' and format_type != 'char':
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %c but got {format_type}")
                         return None
-                    copy_specifier = copy_specifier[:i] + copy_specifier[i + 2:]
-                    i -= 2
-                    if i < 0:
-                        i = 0
+                else:
+                    copy_specifier = copy_specifier[:i] + copy_specifier[i + 1:]
                     continue
             i += 1
+        children[0].specifier = copy_specifier
         if specifiers < len(children) - 1:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too many arguments for format string!")
             return None
+        original = f"printf(\"{children[0].specifier}\""
+        for i in range(1, len(children)):
+            original += f", {children[i].original}"
+        original += ")"
         node = PrintfNode(line=ctx.start.line, column=ctx.start.column, original=original, specifier=children[0].specifier, children=children[1:])
         if len(children) == 1:
             return node
@@ -1983,7 +2010,6 @@ class ASTGenerator(Visitor):
                                     struct_var_name=struct_var_name, struct_member_name=struct_member_name,
                                     type=member_type, array_size=array_sizes)
 
-
     def visitScanfStatement(self, ctx):
         children = []
         for line in ctx.getChildren():
@@ -1993,58 +2019,78 @@ class ASTGenerator(Visitor):
             else:
                 if child:
                     children.append(child)
-        original = f"scanf({children[0].original}"
-        for i in range(1, len(children)):
-            original += f", {children[i].original}"
-        original += ")"
-
         # Count amount of specifiers
         specifiers = 0
         children[0].specifier = children[0].specifier.replace('\"', '')
         copy_specifier = children[0].specifier
         i = 0
-
-        while i < len(copy_specifier) - 1:
+        while i < len(copy_specifier):
             if i == len(copy_specifier):
-                continue
+                break
             if copy_specifier[i] == '%':
-                char = copy_specifier[i + 1]
-                if char == 'd' or char == 'x' or char == 's' or char == 'f' or char == 'c' or char == '%':
-                    specifiers += 1
-                    if specifiers > len(children) - 1:
-                        self.errors.append(
-                            f"line {ctx.start.line}:{ctx.start.column} Too few arguments for format string!")
-                        return None
-                    if isinstance(children[specifiers], StructMemberNode):
-                        format_type = self.get_highest_type(children[specifiers].type)
-                    else:
+                original_i = i
+                i += 1
+                amount = 0
+                while i != len(copy_specifier):
+                    if copy_specifier[i] in ['d', 'x', 'f', 'c', 's']:
+                        specifiers += 1
+                        if specifiers > len(children) - 1:
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too few arguments for format string!")
+                            return None
+                        if not isinstance(children[specifiers], AddrNode):
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Scanf argument is not an address to a variable!")
+                            return None
                         format_type = self.get_highest_type(children[specifiers])
-                    if (char == 'd' or char == 'x') and format_type != 'int':
-                        self.errors.append(
-                            f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
-                        return None
-                    elif char == 's' and format_type != 'string':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %s but got {format_type}")
-                        return None
-                    elif char == 'f' and format_type != 'float':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %f but got {format_type}")
-                        return None
-                    elif char == 'c' and format_type != 'char':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %c but got {format_type}")
-                        return None
-                    copy_specifier = copy_specifier[:i] + copy_specifier[i + 2:]
-                    i -= 2
-                    if i < 0:
-                        i = 0
-                    continue
-            i += 1
+                        symbol = self.scope.lookup(name=children[specifiers].value.value)
+                        if not isinstance(symbol, Symbol):
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'{children[specifiers].value.value}\' not declared yet!")
+                            return None
+                        if isinstance(symbol.type, PointerNode):
+                            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'{children[specifiers].value.value}\' is a pointer!")
+                        # Check if variable is same type as specifier
+                        if copy_specifier[i] == 'd':
+                            if format_type != 'int':
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Use of %d but not an int!")
+                        if copy_specifier[i] == 'x':
+                            if format_type != 'int':
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Use of %x but not an int!")
+                        if copy_specifier[i] == 'f':
+                            if format_type != 'float':
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Use of %f but not a float!")
+                        if copy_specifier[i] == 'c':
+                            if format_type != 'char':
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Use of %c but not a char!")
+                        if copy_specifier[i] == 's':
+                            if format_type != 'string':
+                                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Use of %s but not a string!")
+                        i += 1
+                        continue
+                    if copy_specifier[i] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                        amount *= 10
+                        amount += int(copy_specifier[i])
+                        i += 1
+                        continue
+                    i -= 1
+                    # Remove current i
+                    copy_specifier = copy_specifier[:original_i] + copy_specifier[original_i+1:]
+                    i -= 1
+                    break
+                if i == len(copy_specifier) and copy_specifier[i - 1] == '%':
+                    copy_specifier = copy_specifier[:i-1]
+                i += 1
+            else:
+                copy_specifier = copy_specifier[:i] + copy_specifier[i+1:]
+        children[0].specifier = copy_specifier
         if specifiers < len(children) - 1:
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Too many arguments for format string!")
             return None
-
-        node = ScanfNode(line=ctx.start.line, column=ctx.start.column, original=original,
-                         specifier=children[0].specifier, children=children[1:])
-
+        original = f"scanf(\"{children[0].specifier}\""
+        for i in range(1, len(children)):
+            original += f", {children[i].original}"
+        original += ")"
+        node = ScanfNode(line=ctx.start.line, column=ctx.start.column, original=original, specifier=children[0].specifier, children=children[1:])
+        if len(children) == 1:
+            return node
         if isinstance(children[1], IdentifierNode) or isinstance(children[1], DerefNode):
             identifier = ''
             if isinstance(children[1], IdentifierNode):

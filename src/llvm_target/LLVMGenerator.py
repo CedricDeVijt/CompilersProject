@@ -1167,4 +1167,3 @@ class LLVMVisitor:
             ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
         # Load and return the value from the pointer
         return self.builder.load(ptr)
-
