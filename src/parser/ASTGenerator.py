@@ -90,7 +90,7 @@ class ASTGenerator(Visitor):
                 else:
                     size.append(1)
         elif isinstance(node, PointerNode):
-            size.append(node.value)
+            size.append(int(node.value))
         elif isinstance(node, CharNode) or isinstance(node, IntNode) or isinstance(node, FloatNode) or isinstance(node, str) or isinstance(node, int):
             return []
         elif isinstance(node, EQNode) or isinstance(node, NEQNode) or isinstance(node, LTEQNode) or isinstance(node, GTEQNode):
@@ -125,6 +125,8 @@ class ASTGenerator(Visitor):
         return 'char'
 
     def lookup_and_get_type(self, identifier):
+        if isinstance(identifier, IdentifierNode):
+            identifier = identifier.value
         symbols = self.scope.lookup(identifier)
         if symbols:
             if isinstance(symbols.type, str):
@@ -517,7 +519,6 @@ class ASTGenerator(Visitor):
                 error = False
                 if len(lval) != len(rval):
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} function call to function that doesn't exist!")
-                    error = True
                 else:
                     for i in range(0, len(lval)):
                         if lval[i] != rval[i]:
@@ -931,7 +932,7 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"{identifier}--"
-        node = PostFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
+        node = PostFixNode(value=variable, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
         return node
 
     def visitPostFixIncrement(self, ctx):
@@ -943,7 +944,7 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"{identifier}++"
-        node = PostFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
+        node = PostFixNode(value=variable, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
         return node
 
     def visitPreFixDecrement(self, ctx):
@@ -955,7 +956,7 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"--{identifier}"
-        node = PreFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
+        node = PreFixNode(value=variable, line=ctx.start.line, column=ctx.start.column, original=original, op='dec')
         return node
 
     def visitPreFixIncrement(self, ctx):
@@ -967,7 +968,7 @@ class ASTGenerator(Visitor):
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"++{identifier}"
-        node = PreFixNode(value=identifier, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
+        node = PreFixNode(value=variable, line=ctx.start.line, column=ctx.start.column, original=original, op='inc')
         return node
 
     def visitAddr(self, ctx):

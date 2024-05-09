@@ -4,6 +4,7 @@
 
 void f(int* a){
 	(*a)++;
+	return;
 }
 
 int main(){
