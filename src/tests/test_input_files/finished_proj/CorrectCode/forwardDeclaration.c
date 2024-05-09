@@ -13,6 +13,7 @@ void g(){
 	printf("World\n");
 	f();
 	printf("World\n");
+	return;
 }
 
 int main(){
