@@ -424,7 +424,10 @@ class LLVMVisitor:
             return array_constants
 
     def assign_array_values(self, node, array_ptr):
-        if isinstance(node.array[0], ArrayNode):
+        if not isinstance(node, ArrayNode):
+            self.builder.store(self.visit(node), array_ptr)
+            return
+        elif isinstance(node.array[0], ArrayNode):
             for i in range(len(node.array)):
                 ptr = self.builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
                 self.assign_array_values(node.array[i], ptr)
@@ -515,6 +518,7 @@ class LLVMVisitor:
         rvalue = ir.Constant(array_types, array_constants)
         symbol = Symbol(name=var_name, var_type=array_types)
         symbol.alloca = array_ptr
+
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
@@ -569,10 +573,11 @@ class LLVMVisitor:
         rvalue = ir.Constant(array_types, array_constants)
         symbol = Symbol(name=var_name, var_type=array_types)
         symbol.alloca = array_ptr
+        symbol.dimensions = dimensions
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
-        self.builder.store(rvalue, array_ptr)
+        self.builder.store(self.assign_array_values(node.rvalue), array_ptr)
         return
 
     def visit_AssignmentNode(self, node):
@@ -581,17 +586,15 @@ class LLVMVisitor:
             var_name = var_name.value
         elif isinstance(var_name, DerefNode):
             var_name = var_name.identifier.value
-        elif isinstance(var_name, ArrayIdentifierNode):
-            # array assignment
-            index = node.lvalue.indices
-            print(index)
-            array_symbol = self.scope.get_symbol(name=node.lvalue.value)
-            ptr = array_symbol.alloca
-            for i in index:
-                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
-            self.assign_array_values(node.rvalue, ptr)
-            #self.builder.store(self.visit(node.rvalue), ptr)
-            return
+        #if isinstance(node.lvalue, ArrayIdentifierNode or isinstance(node.rvalue, ArrayNode)):
+        #    # array assignment
+        #    index = node.lvalue.indices
+        #    array_symbol = self.scope.lookup(name=node.lvalue.value)
+        #    ptr = array_symbol.alloca
+        #    for i in index:
+        #        ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+        #    self.assign_array_values(node.rvalue, ptr)
+        #    return
         symbol = self.scope.lookup(name=var_name)
         var_type = self.get_highest_type(symbol.type)
         rvalue = self.visit(node.rvalue)
@@ -634,6 +637,17 @@ class LLVMVisitor:
             symbol.alloca.initializer = rvalue
             return
         self.builder.store(rvalue, symbol.alloca)
+
+    def visit_ArrayAssignmentNode(self, node):
+        # array assignment
+        array_symbol = self.scope.lookup(name=node.lvalue.value)
+        ptr = array_symbol.alloca
+        if isinstance(node.lvalue, ArrayIdentifierNode):
+            index = node.lvalue.indices
+            for i in index:
+                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+        self.assign_array_values(node.rvalue, ptr)
+        return
 
     def visit_PostFixNode(self, node):
         symbol = self.scope.lookup(name=node.value)
