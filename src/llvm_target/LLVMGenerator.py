@@ -219,14 +219,14 @@ class LLVMVisitor:
         for arg in node.children:
             if isinstance(arg, StringNode):
                 self.printf_string += 1
-            if isinstance(arg, DerefNode):
+            elif isinstance(arg, DerefNode):
                 arg = self.visit(arg)
                 arg = self.builder.load(arg)
+            elif isinstance(arg, IdentifierNode):
+                symbol = self.scope.lookup(arg.value)
+                if isinstance(symbol.type, TypeNode) and symbol.type.value == 'array':
+                    arg = self.get_c_string(arg)
             else:
-                #symbol = self.scope.lookup(arg.value)
-                #if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
-                #    arg = self.get_c_string(arg)
-                #else:
                 arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
@@ -637,7 +637,7 @@ class LLVMVisitor:
         array_constants = self.initialize_array(node.rvalue, c_type)
         rvalue = ir.Constant(array_types, array_constants)
         # create and store symbol for symbol table
-        symbol = Symbol(name=var_name, var_type=array_types)
+        symbol = Symbol(name=var_name, var_type=TypeNode(line=0, column=0, original=None, value='array'))
         symbol.alloca = array_ptr
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
@@ -709,7 +709,7 @@ class LLVMVisitor:
         self.global_var += 1
         array_constants = self.initialize_array_dec(self.create_multi_dimensional_list(dimensions), c_type)
         rvalue = ir.Constant(array_types, array_constants)
-        symbol = Symbol(name=var_name, var_type=array_types)
+        symbol = Symbol(name=var_name, var_type=TypeNode(line=0, column=0, original=None, value='array'))
         symbol.alloca = array_ptr
         symbol.dimensions = dimensions
         if self.scope.get_symbol(name=var_name) is None:
