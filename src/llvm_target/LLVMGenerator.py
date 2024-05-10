@@ -538,7 +538,11 @@ class LLVMVisitor:
         if not enum and isinstance(node.type[0], PointerNode):
             # C-String
             if var_type == 'char' and int(node.type[0].value) == 1:
-                print()
+                # Create Global Variable For Format String.
+                c_string_type = ir.ArrayType(ir.IntType(8), 1)
+                format_string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
+                format_string_global.global_constant = True
+                format_string_global.initializer = ir.Constant(c_string_type, bytearray([0]))
             # Other Pointers
             if var_type == 'float':
                 pointer_type = ir.PointerType(ir.FloatType())
@@ -744,8 +748,9 @@ class LLVMVisitor:
         ptr = array_symbol.alloca
         if isinstance(node.lvalue, ArrayIdentifierNode):
             index = node.lvalue.indices
+            index = [self.visit(i) for i in index]
             for i in index:
-                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                ptr = self.builder.gep(ptr, [i])
         self.assign_array_values(node.rvalue, ptr)
         return
 

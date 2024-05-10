@@ -1782,7 +1782,10 @@ class ASTGenerator(Visitor):
                 continue
             if child.getText() == "]":
                 continue
-            array_sizes.append(int(child.getText()))
+            if isinstance(child, Parser.RvalueContext):
+                array_sizes.append(self.visit(child))
+            else:
+                array_sizes.append(int(child.getText()))
 
         symbol_array_sizes = id_node.arraySizes
 
@@ -1800,16 +1803,16 @@ class ASTGenerator(Visitor):
                 return None
         else:
             # Partial array assignment
-            for i in range(len(array_sizes)):
-                # Check if array sizes are not too big
-                if array_sizes[i] > symbol_array_sizes[i]:
-                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
-                    return None
+            # for i in range(len(array_sizes)):
+                # # Check if array sizes are not too big
+                # if array_sizes[i] > symbol_array_sizes[i]:
+                #     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
+                #     return None
             if not isinstance(array_node, ArrayNode):
-                # If array is not an array node, it is a single value
-                if len(array_sizes) != len(symbol_array_sizes):
-                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
-                    return None
+                # # If array is not an array node, it is a single value
+                # if len(array_sizes) != len(symbol_array_sizes):
+                #     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
+                #     return None
                 lvalue = ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=identifier, indices=array_sizes)
                 return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
             else:
@@ -1870,12 +1873,15 @@ class ASTGenerator(Visitor):
                 continue
             if child.getText() == "]":
                 continue
-            array_sizes.append(int(child.getText()))
+            if isinstance(child, Parser.RvalueContext):
+                array_sizes.append(self.visit(child))
+            else:
+                array_sizes.append(int(child.getText()))
 
-        for i in range(len(array_sizes)):
-            if array_sizes[i] > id_node.arraySizes[i]:
-                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
-                return None
+        # for i in range(len(array_sizes)):
+        #     if array_sizes[i] > id_node.arraySizes[i]:
+        #         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
+        #         return None
 
         original = f"{identifier}["
         for size in array_sizes:
