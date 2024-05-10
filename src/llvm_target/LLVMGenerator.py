@@ -228,6 +228,7 @@ class LLVMVisitor:
                     arg = self.get_c_string(arg)
             else:
                 arg = self.visit(arg)
+
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
