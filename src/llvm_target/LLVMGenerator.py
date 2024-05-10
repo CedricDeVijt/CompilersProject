@@ -220,6 +220,10 @@ class LLVMVisitor:
                 arg = self.visit(arg)
                 arg = self.builder.load(arg)
             else:
+                #symbol = self.scope.lookup(arg.value)
+                #if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
+                #    arg = self.get_c_string(arg)
+                #else:
                 arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
@@ -244,6 +248,15 @@ class LLVMVisitor:
             args.append(arg)
         self.builder.call(self.module.get_global('scanf'), args)
         self.scanf_string += 1
+
+    def get_c_string(self, node):
+        string = "test"
+        c_string_type = ir.ArrayType(ir.IntType(8), len(string))
+        string_global = ir.GlobalVariable(self.module, c_string_type, name=f'string_{self.printf_string}')
+        string_global.global_constant = True
+        string_global.initializer = ir.Constant(c_string_type, bytearray(string, 'utf8'))
+        self.printf_string += 1
+        return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
 
     def visit_FunctionNode(self, node):
         # Add symbol if not exist
