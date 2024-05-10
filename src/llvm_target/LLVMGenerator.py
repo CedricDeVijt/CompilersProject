@@ -16,7 +16,6 @@ class LLVMVisitor:
         self.scope = SymbolTableTree()
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
-        self.global_comment = 0
         self.printf_string = 0
         self.scanf_string = 0
         self.global_var = 0
@@ -1204,8 +1203,8 @@ class LLVMVisitor:
 
     def visit_CommentNode(self, node):
         if self.scope.is_global():
-            self.module.add_metadata([str(self.global_comment), node.value.replace("\n", "\\n")])
-            self.global_comment += 1
+            self.module.add_metadata([str(self.global_var), node.value.replace("\n", "\\n")])
+            self.global_var += 1
 
     def visit_TypedefNode(self, node):
         pass
