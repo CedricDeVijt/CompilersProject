@@ -219,16 +219,15 @@ class LLVMVisitor:
         for arg in node.children:
             if isinstance(arg, StringNode):
                 self.printf_string += 1
-            elif isinstance(arg, DerefNode):
+            if isinstance(arg, DerefNode):
                 arg = self.visit(arg)
                 arg = self.builder.load(arg)
-            elif isinstance(arg, IdentifierNode):
-                symbol = self.scope.lookup(arg.value)
-                if isinstance(symbol.type, TypeNode) and symbol.type.value == 'array':
-                    arg = self.get_c_string(arg)
             else:
+                #symbol = self.scope.lookup(arg.value)
+                #if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
+                #    arg = self.get_c_string(arg)
+                #else:
                 arg = self.visit(arg)
-
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
