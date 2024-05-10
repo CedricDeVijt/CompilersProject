@@ -40,7 +40,7 @@ structStatement: structVariable
 
 structVariable: 'struct' IDENTIFIER IDENTIFIER;
 
-structMember: IDENTIFIER '.' IDENTIFIER ('[' INT ']')*;
+structMember: IDENTIFIER '.' IDENTIFIER ('[' rvalue ']')*;
 
 structAssignment: structMember '=' rvalue;
 
@@ -169,11 +169,11 @@ arrayStatement: arrayDeclaration
               | arrayDefinition
               ;
 
-arrayDeclaration: type identifier ('[' INT ']')+;
-arrayAssignment: identifier ('[' INT ']')+ '=' (rvalue | array)
+arrayDeclaration: type identifier ('[' rvalue ']')+;
+arrayAssignment: identifier ('[' rvalue ']')+ '=' (rvalue | array)
                | identifier '=' array
                ;
-arrayDefinition: type identifier ('[' INT ']')+ '=' (array | string);
+arrayDefinition: type identifier ('[' rvalue ']')+ '=' (array | string);
 
 array: LBRACE (rvalue | array) (',' (rvalue | array))* RBRACE;
 
