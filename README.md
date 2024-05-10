@@ -6,6 +6,10 @@
 - Robbe Stuer
 - Thomas Urkens
 
+## Project Video
+
+[LLVM Video](https://youtu.be/8hy_M8X0pR4)
+
 ## Project Description
 
 This project is a compiler for `C`. The compiler is written in python and generates MIPS assembly
