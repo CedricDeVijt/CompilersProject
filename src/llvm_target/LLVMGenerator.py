@@ -652,7 +652,7 @@ class LLVMVisitor:
         array_constants = self.initialize_array(node.rvalue, c_type)
         rvalue = ir.Constant(array_types, array_constants)
         # create and store symbol for symbol table
-        symbol = Symbol(name=var_name, var_type=array_types)
+        symbol = Symbol(name=var_name, var_type=TypeNode(line=0, column=0, original=None, value='array'))
         symbol.alloca = array_ptr
         symbol.string = rvalue
         symbol.cString = cString
@@ -726,7 +726,7 @@ class LLVMVisitor:
         self.global_var += 1
         array_constants = self.initialize_array_dec(self.create_multi_dimensional_list(dimensions), c_type)
         rvalue = ir.Constant(array_types, array_constants)
-        symbol = Symbol(name=var_name, var_type=array_types)
+        symbol = Symbol(name=var_name, var_type=TypeNode(line=0, column=0, original=None, value='array'))
         symbol.alloca = array_ptr
         symbol.dimensions = dimensions
         if self.scope.get_symbol(name=var_name) is None:
