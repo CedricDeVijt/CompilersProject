@@ -630,6 +630,7 @@ class LLVMVisitor:
         c_type = node.type.value
         array_types = self.get_array_type(node.rvalue, c_type)
         array_ptr = ir.GlobalVariable(self.module, array_types, name=str(self.global_var))
+        array_ptr.linkage = 'internal'
         self.global_var += 1
         array_constants = self.initialize_array(node.rvalue, c_type)
         rvalue = ir.Constant(array_types, array_constants)
@@ -702,6 +703,7 @@ class LLVMVisitor:
         dimensions = node.size
         array_types = self.get_array_type_dec(self.create_multi_dimensional_list(dimensions), c_type)
         array_ptr = ir.GlobalVariable(self.module, array_types, name=str(self.global_var))
+        array_ptr.linkage = 'internal'
         self.global_var += 1
         array_constants = self.initialize_array_dec(self.create_multi_dimensional_list(dimensions), c_type)
         rvalue = ir.Constant(array_types, array_constants)
