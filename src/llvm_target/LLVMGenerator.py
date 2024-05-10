@@ -629,7 +629,8 @@ class LLVMVisitor:
         var_name = node.lvalue.value
         c_type = node.type.value
         array_types = self.get_array_type(node.rvalue, c_type)
-        array_ptr = self.builder.alloca(array_types, name=var_name)
+        array_ptr = ir.GlobalVariable(self.module, array_types, name=str(self.global_var))
+        self.global_var += 1
         array_constants = self.initialize_array(node.rvalue, c_type)
         rvalue = ir.Constant(array_types, array_constants)
         # create and store symbol for symbol table
@@ -638,7 +639,10 @@ class LLVMVisitor:
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
-        self.builder.store(rvalue, array_ptr)
+        if self.scope.is_global():
+            array_ptr.initializer = rvalue
+        else:
+            self.builder.store(rvalue, array_ptr)
         # assign the values
         self.assign_array_values(node.rvalue, array_ptr)
         return
@@ -697,7 +701,8 @@ class LLVMVisitor:
         c_type = self.get_highest_type(node.type)
         dimensions = node.size
         array_types = self.get_array_type_dec(self.create_multi_dimensional_list(dimensions), c_type)
-        array_ptr = self.builder.alloca(array_types, name=var_name)
+        array_ptr = ir.GlobalVariable(self.module, array_types, name=str(self.global_var))
+        self.global_var += 1
         array_constants = self.initialize_array_dec(self.create_multi_dimensional_list(dimensions), c_type)
         rvalue = ir.Constant(array_types, array_constants)
         symbol = Symbol(name=var_name, var_type=array_types)
@@ -706,7 +711,10 @@ class LLVMVisitor:
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
-        self.builder.store(rvalue, array_ptr)
+        if self.scope.is_global():
+            array_ptr.initializer = rvalue
+        else:
+            self.builder.store(rvalue, array_ptr)
         return
 
     def visit_StructDeclarationNode(self, node):
@@ -1325,7 +1333,7 @@ class LLVMVisitor:
         # array index to retrieve
         index = node.indices
 
-        array_symbol = self.scope.get_symbol(name=node.value)
+        array_symbol = self.scope.lookup(name=node.value)
         # Get pointer to original array
         ptr = array_symbol.alloca
         # Use gep to get a pointer to the specific element in the array
