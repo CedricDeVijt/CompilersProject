@@ -695,3 +695,11 @@ class StructDeclarationNode(Node):
         super().__init__(value="StructDeclaration", line=line, column=column, original_code=original, children=children)
         self.type = type
         self.lvalue = lvalue
+
+
+class StructDefinitionNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, type: TypeNode, lvalue: IdentifierNode, rvalue: Node, children=None):
+        super().__init__(value="StructDefinition", line=line, column=column, original_code=original, children=children)
+        self.type = type
+        self.lvalue = lvalue
+        self.rvalue = rvalue

@@ -61,10 +61,10 @@ COMMENT=60
 BLOCKCOMMENT=61
 LINECOMMENT=62
 'struct'=1
-'.'=2
-'['=3
-']'=4
-'='=5
+'='=2
+'.'=3
+'['=4
+']'=5
 'switch'=6
 'case'=7
 'default'=8

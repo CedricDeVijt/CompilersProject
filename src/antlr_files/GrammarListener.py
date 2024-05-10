@@ -80,6 +80,15 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#structVariableDefinition.
+    def enterStructVariableDefinition(self, ctx:GrammarParser.StructVariableDefinitionContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structVariableDefinition.
+    def exitStructVariableDefinition(self, ctx:GrammarParser.StructVariableDefinitionContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#structMember.
     def enterStructMember(self, ctx:GrammarParser.StructMemberContext):
         pass

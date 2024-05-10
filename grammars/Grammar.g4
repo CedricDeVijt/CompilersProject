@@ -35,10 +35,13 @@ function: (type | pointer) IDENTIFIER LPAREN functionParams? RPAREN scope
 structDefinition: 'struct' IDENTIFIER '{' (((type identifier) | arrayDeclaration) SEMICOLON)* '}';
 
 structStatement: structVariable
+               | structVariableDefinition
                | structAssignment
                ;
 
 structVariable: 'struct' IDENTIFIER IDENTIFIER;
+
+structVariableDefinition: 'struct' IDENTIFIER IDENTIFIER '=' '{' (rvalue | structMember) (',' (rvalue | structMember))* '}';
 
 structMember: IDENTIFIER '.' IDENTIFIER ('[' rvalue ']')*;
 
@@ -87,7 +90,6 @@ lvalue: identifier
       | pointer identifier
       | deref
       | LPAREN lvalue RPAREN
-//      | arrayElement
       ;
 
 rvalue: unaryExpression
@@ -124,6 +126,7 @@ rvalue: unaryExpression
       | jumpStatement
       | arrayElement
       | string
+      | structMember
       ;
 
 jumpStatement: 'break'
