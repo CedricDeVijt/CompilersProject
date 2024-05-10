@@ -643,6 +643,19 @@ class LLVMVisitor:
         self.assign_array_values(node.rvalue, array_ptr)
         return
 
+    def visit_StructDefinitionNode(self, node):
+        var_name = node.lvalue.value
+        struct_type = self.structs[node.type.value][0]
+        struct_ptr = self.builder.alloca(struct_type, name=var_name)
+        symbol = Symbol(name=var_name, var_type=struct_type)
+        symbol.alloca = struct_ptr
+        symbol.vars = self.structs[node.type.value][1]
+        for i in range(len(node.rvalue)):
+            self.builder.store(self.visit(node.rvalue[i]), self.builder.gep(struct_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)]))
+        if self.scope.get_symbol(name=var_name) is None:
+            self.scope.add_symbol(symbol)
+        return
+
     def visit_DeclarationNode(self, node):
         # Get the type and name of the variable being declared
         var_name = node.lvalue.value
