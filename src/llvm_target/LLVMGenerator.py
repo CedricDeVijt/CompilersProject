@@ -224,8 +224,13 @@ class LLVMVisitor:
                 arg = self.builder.load(arg)
             else:
                 if isinstance(arg, IdentifierNode):
-                    arg = self.get_c_string(arg)
-                arg = self.visit(arg)
+                    symbol = self.scope.lookup(arg.value)
+                    if hasattr(symbol, 'cString') and symbol.cString:
+                        arg = self.get_c_string(arg)
+                    else:
+                        arg = self.visit(arg)
+                else:
+                    arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
@@ -630,11 +635,14 @@ class LLVMVisitor:
     def visit_ArrayDefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
+        cString = False
         if isinstance(node.type, TypeNode):
             c_type = node.type.value
             node.rvalue.value += "\00"
+            cString = True
         else:
             c_type = 'char'
+            cString = True
         node.rvalue.value += "\00"
         node.rvalue.value = node.rvalue.value.replace('"', '')
         array_types = self.get_array_type(node.rvalue, c_type)
@@ -647,6 +655,7 @@ class LLVMVisitor:
         symbol = Symbol(name=var_name, var_type=array_types)
         symbol.alloca = array_ptr
         symbol.string = rvalue
+        symbol.cString = cString
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
