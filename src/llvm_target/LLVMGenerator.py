@@ -810,6 +810,19 @@ class LLVMVisitor:
         value = 1
         if node.op == 'dec':
             value = -1
+        if isinstance(identifier, ArrayIdentifierNode):
+            # Put pointer in ptr
+            array_symbol = self.scope.lookup(name=identifier.value)
+            ptr = array_symbol.alloca
+            for i in identifier.indices:
+                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), self.visit(i)])
+            # Increment or Decrement
+            if isinstance(original.type, ir.FloatType):
+                new_value = self.builder.fadd(original, ir.Constant(ir.FloatType(), value))
+            else:
+                new_value = self.builder.add(original, ir.Constant(original.type, value))
+            self.builder.store(new_value, ptr)
+            return original
         # Pointer
         if isinstance(original.type, ir.PointerType) and isinstance(original.type.pointee, ir.PointerType):
             if original.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.IntType(32)))):
@@ -846,6 +859,19 @@ class LLVMVisitor:
         value = 1
         if node.op == 'dec':
             value = -1
+        if isinstance(identifier, ArrayIdentifierNode):
+            # Put pointer in ptr
+            array_symbol = self.scope.lookup(name=identifier.value)
+            ptr = array_symbol.alloca
+            for i in identifier.indices:
+                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), self.visit(i)])
+            # Increment or Decrement
+            if isinstance(original.type, ir.FloatType):
+                new_value = self.builder.fadd(original, ir.Constant(ir.FloatType(), value))
+            else:
+                new_value = self.builder.add(original, ir.Constant(original.type, value))
+            self.builder.store(new_value, ptr)
+            return new_value
         # Pointer
         if isinstance(original.type, ir.PointerType) and isinstance(original.type.pointee, ir.PointerType):
             if original.type == ir.PointerType(ir.PointerType(ir.PointerType(ir.IntType(32)))):
