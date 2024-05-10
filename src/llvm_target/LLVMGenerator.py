@@ -217,7 +217,9 @@ class LLVMVisitor:
         # Call Printf Function.
         args = [self.builder.bitcast(format_string_global, ir.PointerType(ir.IntType(8)))]
         for arg in node.children:
-            if isinstance(arg, DerefNode):
+            if isinstance(arg, StringNode):
+                pass
+            elif isinstance(arg, DerefNode):
                 arg = self.visit(arg)
                 arg = self.builder.load(arg)
             elif isinstance(arg, IdentifierNode):
