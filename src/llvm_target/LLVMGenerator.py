@@ -225,9 +225,9 @@ class LLVMVisitor:
             else:
                 #symbol = self.scope.lookup(arg.value)
                 #if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
-                #    arg = self.get_c_string(arg)
+                arg = self.get_c_string(arg)
                 #else:
-                arg = self.visit(arg)
+                #arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
@@ -253,14 +253,14 @@ class LLVMVisitor:
         self.scanf_string += 1
 
     def get_c_string(self, node):
-        string = "test"
-        c_string_type = ir.ArrayType(ir.IntType(8), len(string))
+        symbol = self.scope.lookup(node.value)
+        ptr = symbol.string
+        c_string_type = ir.ArrayType(ir.IntType(8), len(ptr.constant))
         string_global = ir.GlobalVariable(self.module, c_string_type, name=f'string_{self.printf_string}')
         string_global.global_constant = True
-        string_global.initializer = ir.Constant(c_string_type, bytearray(string, 'utf8'))
+        string_global.initializer = ptr
         self.printf_string += 1
         return self.builder.bitcast(string_global, ir.PointerType(ir.IntType(8)))
-
     def visit_FunctionNode(self, node):
         # Add symbol if not exist
         const = False
@@ -479,7 +479,8 @@ class LLVMVisitor:
         if isinstance(node, StringNode):
             array_constants = []
             for i in range(len(node.value)):
-                array_constants.append(ir.Constant(ir.IntType(8), 0))
+                #array_constants.append(ir.Constant(ir.IntType(8), 0))
+                array_constants.append(ir.Constant(ir.IntType(8), ord(node.value[i])))
             return array_constants
         if isinstance(node.array[0], ArrayNode):
             array_constants = []
@@ -639,6 +640,7 @@ class LLVMVisitor:
         # create and store symbol for symbol table
         symbol = Symbol(name=var_name, var_type=array_types)
         symbol.alloca = array_ptr
+        symbol.string = rvalue
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
