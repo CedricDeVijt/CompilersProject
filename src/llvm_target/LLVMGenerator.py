@@ -536,6 +536,8 @@ class LLVMVisitor:
                 self.builder.store(self.visit(node.array[i]), ptr)
 
     def visit_DefinitionNode(self, node):
+        if isinstance(node.rvalue, StringNode):
+            return self.visit_ArrayDefinitionNode(node)
         # definition vars
         var_name = node.lvalue.value
         rvalue = self.visit(node.rvalue)
@@ -630,7 +632,13 @@ class LLVMVisitor:
     def visit_ArrayDefinitionNode(self, node):
         # definition vars
         var_name = node.lvalue.value
-        c_type = node.type.value
+        if isinstance(node.type, TypeNode):
+            c_type = node.type.value
+            node.rvalue.value += "\00"
+        else:
+            c_type = 'char'
+        node.rvalue.value += "\00"
+        node.rvalue.value = node.rvalue.value.replace('"', '')
         array_types = self.get_array_type(node.rvalue, c_type)
         array_ptr = ir.GlobalVariable(self.module, array_types, name=str(self.global_var))
         array_ptr.linkage = 'internal'
