@@ -8,6 +8,11 @@ def test_p7_struct():
     llvm_output_compare(root, source_file)
 
 
+def test_p7_struct_2():
+    source_file = "p7_struct_2.c"
+    llvm_output_compare(root, source_file)
+
+
 def test_p7_struct_assignment():
     source_file = "p7_struct_assignment.c"
     llvm_output_compare(root, source_file)
