@@ -1309,7 +1309,7 @@ class LLVMVisitor:
         ptr = array_symbol.alloca
         # Use gep to get a pointer to the specific element in the array
         for i in index:
-            ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+            ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), self.visit(i)])
         # Load and return the value from the pointer
         return self.builder.load(ptr)
 
