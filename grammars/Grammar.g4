@@ -169,7 +169,7 @@ preFixIncrement: INCREMENT lvalue;
 preFixDecrement: DECREMENT lvalue;
 
 arrayStatement: arrayDeclaration
-              | arrayAssignment
+//              | arrayAssignment
               | arrayDefinition
               ;
 

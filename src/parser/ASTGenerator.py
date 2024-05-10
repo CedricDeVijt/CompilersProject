@@ -355,7 +355,6 @@ class ASTGenerator(Visitor):
 
         return True
 
-
     def visitProgram(self, ctx):
         children = []
         for line in ctx.getChildren():
@@ -739,6 +738,8 @@ class ASTGenerator(Visitor):
                         if int(rval_ptr[0]) != int(lval_ptr):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Pointer type mismatch!")
                             return None
+                    if lval.symbol_type == 'array':
+                        return self.visitArrayAssignmentFromCTX(ctx=ctx)
                     self.scope.lookup(identifier).defined = True
                     node = AssignmentNode(line=ctx.start.line, column=ctx.start.column, original=original, lvalue=children[0], rvalue=children[2])
                     return node
@@ -1828,6 +1829,66 @@ class ASTGenerator(Visitor):
                 # Create assignment node
                 lvalue = ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=identifier, indices=array_sizes)
                 return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), lvalue=lvalue, rvalue=array_node)
+
+    def visitArrayAssignmentFromCTX(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        lvalue = self.visit(children[0])[0]
+
+        identifier = lvalue.value
+        array_node = self.visit(children[-1])
+
+        # Check if array is valid with the given sizes
+        id_node = self.scope.lookup(identifier)
+        if id_node is None:
+            self.errors.append(
+                f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
+            return None
+        if id_node.symbol_type != 'array':
+            self.errors.append(
+                f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' is not an array!")
+            return None
+
+        # Get array sizes
+        array_sizes = []
+        for index in lvalue.indices:
+            array_sizes.append(index.value)
+        symbol_array_sizes = id_node.arraySizes
+
+        # Check if array sizes are correct
+        if len(array_sizes) == 0:
+            # Full array assignment
+            if self.checkArraySizes(array_node, symbol_array_sizes):
+                if not self.checkArrayTypes(array_node, id_node.type):
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array type mismatch!")
+                    return None
+                lvalue = IdentifierNode(value=id_node.name, line=ctx.start.line, column=ctx.start.column,
+                                        original=identifier)
+                return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(),
+                                           lvalue=lvalue, rvalue=array_node)
+            else:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
+                return None
+        else:
+            # Partial array assignment
+            if not isinstance(array_node, ArrayNode):
+                return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(),
+                                           lvalue=lvalue, rvalue=array_node)
+            else:
+                # If array is an array node, it is an array
+                if not self.checkArraySizes(array_node, symbol_array_sizes[len(array_sizes):]):
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
+                    return None
+                # Check if array types are the same
+                if not self.checkArrayTypes(array_node, id_node.type):
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array type mismatch!")
+                    return None
+
+                # Create assignment node
+                return ArrayAssignmentNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(),
+                                           lvalue=lvalue, rvalue=array_node)
 
     def visitArray(self, ctx):
         children = []
