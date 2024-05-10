@@ -841,6 +841,21 @@ class LLVMVisitor:
         return loaded
 
     def visit_PreFixNode(self, node):
+        if isinstance(node.value, ArrayIdentifierNode):
+            # array
+            array_symbol = self.scope.lookup(name=node.value.value)
+            ptr = array_symbol.alloca
+            index = node.value.indices
+            index = [self.visit(i) for i in index]
+            for i in index:
+                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), i])
+            if node.op == 'inc':
+                value = self.builder.add(self.builder.load(ptr), ir.Constant(ir.IntType(32), 1))
+            else:
+                value = self.builder.add(self.builder.load(ptr), ir.Constant(ir.IntType(32), -1))
+            self.builder.store(value, ptr)
+            return self.builder.load(ptr)
+
         identifier = node.value
         original = self.visit(identifier)
         value = 1
