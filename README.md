@@ -8,9 +8,9 @@
 
 ## Project Description
 
-This project is a compiler for a language called `C`. The compiler is written in python and generates MIPS assembly
+This project is a compiler for `C`. The compiler is written in python and generates MIPS assembly
 code. The compiler is able to parse the input code, generate an abstract syntax tree (AST), perform semantic analysis,
-generate intermediate code, and generate MIPS assembly code. 
+generate LLVM IR code, and generate MIPS assembly code.
 
 ## Project Structure
 
@@ -20,12 +20,12 @@ The project is structured as follows:
 - `tests/` contains the test cases for the compiler
 - `test.sh` is a shell script that runs all the tests
 - `README.md` contains the project description and team members
-- `TODO.md` contains the requirements for the project
+- `TODO_AST.md` contains the requirements for the project
 
 ## ANTLR Grammar
 
-The ANTLR grammar can be found in the `src/grammar` directory. The grammar is defined in the `Grammar.g4` file. The
-grammar defines the syntax of the `C` language and is used by the ANTLR parser to generate the AST.
+The ANTLR grammar can be found in the `grammars/Grammar.g4` directory. The grammar defines the syntax of the `C`
+language and is used by the ANTLR parser to generate the AST.
 
 ## How to Run the Compiler
 
@@ -50,8 +50,8 @@ To run the tests, follow the steps below:
 
 1. Run the shell script by running `./test.sh`
 
-The shell script will run all the tests in the `tests/extra_tests` directory and print the results to the console. The tests from
-project 1 are modified to be compatible with the compiler.
+The script will run all the tests in `src/tests/test_input_files` with gcc and with our compiler and compare the output.
+If the outputs are the same, the test passes.
 
 ## Conclusion
 
