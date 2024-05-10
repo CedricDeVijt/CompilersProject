@@ -1203,8 +1203,8 @@ class LLVMVisitor:
 
     def visit_CommentNode(self, node):
         if self.scope.is_global():
-            self.module.add_metadata([str(self.global_var), node.value.replace("\n", "\\n")])
-            self.global_var += 1
+            # TODO: Create global comment
+            ...
 
     def visit_TypedefNode(self, node):
         pass
