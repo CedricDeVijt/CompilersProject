@@ -931,6 +931,8 @@ class ASTGenerator(Visitor):
             identifier = variable.value
         elif isinstance(variable, DerefNode):
             identifier = variable.identifier.value
+        elif isinstance(variable, ArrayIdentifierNode):
+            identifier = variable.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"{identifier}--"
@@ -943,6 +945,8 @@ class ASTGenerator(Visitor):
             identifier = variable.value
         elif isinstance(variable, DerefNode):
             identifier = variable.identifier.value
+        elif isinstance(variable, ArrayIdentifierNode):
+            identifier = variable.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"{identifier}++"
@@ -955,6 +959,8 @@ class ASTGenerator(Visitor):
             identifier = variable.value
         elif isinstance(variable, DerefNode):
             identifier = variable.identifier.value
+        elif isinstance(variable, ArrayIdentifierNode):
+            identifier = variable.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"--{identifier}"
@@ -967,6 +973,8 @@ class ASTGenerator(Visitor):
             identifier = variable.value
         elif isinstance(variable, DerefNode):
             identifier = variable.identifier.value
+        elif isinstance(variable, ArrayIdentifierNode):
+            identifier = variable.value
         if not self.scope.lookup(identifier):
             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + identifier + "\' not declared yet!")
         original = f"++{identifier}"

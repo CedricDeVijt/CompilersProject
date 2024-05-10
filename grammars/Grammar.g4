@@ -90,6 +90,7 @@ lvalue: identifier
       | pointer identifier
       | deref
       | LPAREN lvalue RPAREN
+      | arrayElement
       ;
 
 rvalue: unaryExpression
