@@ -104,6 +104,8 @@ class LLVMVisitor:
     def lookup_and_get_type(self, identifier):
         if isinstance(identifier, IdentifierNode):
             identifier = identifier.value
+        if isinstance(identifier, ArrayIdentifierNode):
+            identifier = identifier.value
         symbols = self.scope.lookup(identifier)
         if symbols:
             if isinstance(symbols.type, str):
@@ -113,7 +115,7 @@ class LLVMVisitor:
                     var_type = symbols.type.type[len(symbols.type.type) - 1].value
                 else:
                     var_type = symbols.type.type.value
-                if var_type == 'char' and symbols.type.value == 1:
+                if var_type == 'char' and int(symbols.type.value) == 1:
                     return 'string'
                 return var_type
             if symbols.symbol_type == 'array' and symbols.type.value == 'char':
