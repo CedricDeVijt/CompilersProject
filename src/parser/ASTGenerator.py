@@ -106,9 +106,9 @@ class ASTGenerator(Visitor):
 
     def get_highest_type(self, rval: Node):
         type_check_dict = {
-            DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier),
-            IdentifierNode: lambda rval: self.lookup_and_get_type(rval),
-            AddrNode: lambda rval: self.lookup_and_get_type(rval.value),
+            DerefNode: lambda rval: self.lookup_and_get_type(rval.identifier.value),
+            IdentifierNode: lambda rval: self.lookup_and_get_type(rval.value),
+            AddrNode: lambda rval: self.lookup_and_get_type(rval.value.value),
             CharNode: lambda rval: 'char',
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
@@ -125,14 +125,11 @@ class ASTGenerator(Visitor):
         return 'char'
 
     def lookup_and_get_type(self, identifier):
-        if (isinstance(identifier, PreFixNode) or isinstance(identifier, PostFixNode)) and isinstance(identifier.value, ArrayIdentifierNode):
+        if isinstance(identifier, IdentifierNode):
             identifier = identifier.value
-        identifier_value = identifier.value
-        if isinstance(identifier_value, IdentifierNode):
-            identifier_value = identifier_value.value
-        if isinstance(identifier_value, ArrayIdentifierNode):
-            identifier_value = identifier_value.value
-        symbols = self.scope.lookup(identifier_value)
+        if isinstance(identifier, ArrayIdentifierNode):
+            identifier = identifier.value
+        symbols = self.scope.lookup(identifier)
         if symbols:
             if isinstance(symbols.type, str):
                 return symbols.type
@@ -144,14 +141,9 @@ class ASTGenerator(Visitor):
                 if var_type == 'char' and int(symbols.type.value) == 1:
                     return 'string'
                 return var_type
-            if symbols.type.value == 'char' and len(identifier.indices) == 0:
+            if symbols.symbol_type == 'array' and symbols.type.value == 'char':
                 return 'string'
-            if symbols.symbol_type == 'array':
-                if len(symbols.arraySizes) == len(identifier.indices):
-                    return symbols.type.value
-                if len(symbols.arraySizes) == (len(identifier.indices)-1) and symbols.type.value == 'char':
-                    return 'string'
-                return 'array'
+            return symbols.type.value
 
     def handle_node_type(self, rval):
         if isinstance(rval, PointerNode):
@@ -159,11 +151,11 @@ class ASTGenerator(Visitor):
                 return rval.type[len(rval.type) - 1].value
             return self.get_highest_type(rval.type)
         if isinstance(rval, AddrNode):
-            return self.lookup_and_get_type(rval.value)
+            return self.lookup_and_get_type(rval.value.value)
         if isinstance(rval, ExplicitConversionNode):
             return rval.type
         if isinstance(rval, (PreFixNode, PostFixNode)):
-            return self.lookup_and_get_type(rval)
+            return self.lookup_and_get_type(rval.value)
         if isinstance(rval, FunctionCallNode):
             return self.handle_function_call(rval)
         if isinstance(rval, TypeNode):
@@ -173,7 +165,7 @@ class ASTGenerator(Visitor):
             if symbols is not None and isinstance(symbols, Symbol):
                 return self.get_highest_type(symbols.type)
         if isinstance(rval, ArrayIdentifierNode):
-            return self.lookup_and_get_type(rval)
+            return self.lookup_and_get_type(rval.value)
         if isinstance(rval, StructMemberNode):
             return self.get_highest_type(rval.type)
         type1 = self.get_highest_type(rval.children[0])
@@ -1303,16 +1295,21 @@ class ASTGenerator(Visitor):
                         else:
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + children[specifiers].identifier.value + "\' not declared yet!")
                         return None
-                    if char == 'd' and format_type != 'int':
-                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
-                    if char == 'x' and format_type != 'int':
-                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
+                    if char == 'd' and format_type not in [ 'int', 'float']:
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
+                        return None
+                    if  char == 'x' and format_type not in ['int', 'float']:
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
+                        return None
                     elif char == 's' and format_type != 'string':
-                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %s but got {format_type}")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %s but got {format_type}")
+                        return None
                     elif char == 'f' and format_type != 'float':
-                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %f but got {format_type}")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %f but got {format_type}")
+                        return None
                     elif char == 'c' and format_type != 'char':
-                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %c but got {format_type}")
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %c but got {format_type}")
+                        return None
                 else:
                     copy_specifier = copy_specifier[:i] + copy_specifier[i + 1:]
                     continue
