@@ -223,11 +223,9 @@ class LLVMVisitor:
                 arg = self.visit(arg)
                 arg = self.builder.load(arg)
             else:
-                #symbol = self.scope.lookup(arg.value)
-                #if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
-                arg = self.get_c_string(arg)
-                #else:
-                #arg = self.visit(arg)
+                if isinstance(arg, IdentifierNode):
+                    arg = self.get_c_string(arg)
+                arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
