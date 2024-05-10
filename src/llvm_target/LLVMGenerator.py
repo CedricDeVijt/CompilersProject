@@ -551,7 +551,11 @@ class LLVMVisitor:
         if not enum and isinstance(node.type[0], PointerNode):
             # C-String
             if var_type == 'char' and int(node.type[0].value) == 1:
-                print()
+                # Create Global Variable For Format String.
+                c_string_type = ir.ArrayType(ir.IntType(8), 1)
+                format_string_global = ir.GlobalVariable(self.module, c_string_type, name=f'printf_string_{self.printf_string}')
+                format_string_global.global_constant = True
+                format_string_global.initializer = ir.Constant(c_string_type, bytearray([0]))
             # Other Pointers
             if var_type == 'float':
                 pointer_type = ir.PointerType(ir.FloatType())
