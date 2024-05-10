@@ -761,8 +761,9 @@ class LLVMVisitor:
         ptr = array_symbol.alloca
         if isinstance(node.lvalue, ArrayIdentifierNode):
             index = node.lvalue.indices
+            index = [self.visit(i) for i in index]
             for i in index:
-                ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                ptr = self.builder.gep(ptr, [i])
         self.assign_array_values(node.rvalue, ptr)
         return
 

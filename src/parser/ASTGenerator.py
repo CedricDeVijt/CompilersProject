@@ -1782,7 +1782,10 @@ class ASTGenerator(Visitor):
                 continue
             if child.getText() == "]":
                 continue
-            array_sizes.append(int(child.getText()))
+            if isinstance(child, Parser.RvalueContext):
+                array_sizes.append(self.visit(child))
+            else:
+                array_sizes.append(int(child.getText()))
 
         symbol_array_sizes = id_node.arraySizes
 
@@ -1870,7 +1873,10 @@ class ASTGenerator(Visitor):
                 continue
             if child.getText() == "]":
                 continue
-            array_sizes.append(int(child.getText()))
+            if isinstance(child, Parser.RvalueContext):
+                array_sizes.append(self.visit(child))
+            else:
+                array_sizes.append(int(child.getText()))
 
         # for i in range(len(array_sizes)):
         #     if array_sizes[i] > id_node.arraySizes[i]:
