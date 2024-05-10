@@ -220,11 +220,11 @@ class LLVMVisitor:
                 arg = self.visit(arg)
                 arg = self.builder.load(arg)
             else:
-                symbol = self.scope.lookup(arg.value)
-                if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
-                    arg = self.get_c_string(arg)
-                else:
-                    arg = self.visit(arg)
+                #symbol = self.scope.lookup(arg.value)
+                #if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
+                #    arg = self.get_c_string(arg)
+                #else:
+                arg = self.visit(arg)
             if arg.type == ir.FloatType():
                 # Convert to double
                 arg = self.builder.fpext(arg, ir.DoubleType())
@@ -250,8 +250,8 @@ class LLVMVisitor:
         self.scanf_string += 1
 
     def get_c_string(self, node):
-        symbol = self.scope.lookup(node.value)
-        string = symbol.string
+        #symbol = self.scope.lookup(node.value)
+        string = "test"
         c_string_type = ir.ArrayType(ir.IntType(8), len(string))
         string_global = ir.GlobalVariable(self.module, c_string_type, name=f'string_{self.printf_string}')
         string_global.global_constant = True
@@ -631,8 +631,8 @@ class LLVMVisitor:
         # create and store symbol for symbol table
         symbol = Symbol(name=var_name, var_type=array_types)
         symbol.alloca = array_ptr
-        if isinstance(node.rvalue, StringNode):
-            symbol.string = node.rvalue.value
+        #if isinstance(node.rvalue, StringNode):
+        #    symbol.string = node.rvalue.value
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
@@ -763,9 +763,6 @@ class LLVMVisitor:
             for i in index:
                 ptr = self.builder.gep(ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
         self.assign_array_values(node.rvalue, ptr)
-        if isinstance(node.rvalue, StringNode):
-            array_symbol.string = node.rvalue.value
-        self.scope.add_symbol(array_symbol)
         return
 
     def visit_StructAssignmentNode(self, node):
