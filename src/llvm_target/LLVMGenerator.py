@@ -16,6 +16,7 @@ class LLVMVisitor:
         self.scope = SymbolTableTree()
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
+        self.global_comment = 0
         self.printf_string = 0
         self.scanf_string = 0
         self.global_var = 0
@@ -1203,8 +1204,13 @@ class LLVMVisitor:
 
     def visit_CommentNode(self, node):
         if self.scope.is_global():
-            # TODO: Create global comment
-            ...
+            comment = node.value.replace("\n", "\\n")
+            comment_type = ir.ArrayType(ir.IntType(8), len(comment) + 1)  # +1 for the null terminator
+            comment_global = ir.GlobalVariable(self.module, comment_type, name="global_comment" + str(self.global_comment))
+            self.global_comment += 1
+            comment_global.linkage = 'internal'
+            comment_global.global_constant = True
+            comment_global.initializer = ir.Constant(comment_type, bytearray(comment + "\0", 'utf8'))
 
     def visit_TypedefNode(self, node):
         pass
