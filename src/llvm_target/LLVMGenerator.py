@@ -16,12 +16,13 @@ class LLVMVisitor:
         self.scope = SymbolTableTree()
         self.module = ir.Module()
         self.module.triple = f"{platform.machine()}-pc-{platform.system().lower()}"
+        self.global_comment = 0
         self.printf_string = 0
         self.scanf_string = 0
+        self.global_var = 0
         self.enums = {}
         self.break_blocks = []
         self.continue_blocks = []
-        self.global_var = 0
         self.structs = {}
 
         # Add printf and scanf function
@@ -1202,7 +1203,9 @@ class LLVMVisitor:
             return self.builder.trunc(value, ir.IntType(8))
 
     def visit_CommentNode(self, node):
-        pass
+        if self.scope.is_global():
+            self.module.add_metadata([str(self.global_comment), node.value.replace("\n", "\\n")])
+            self.global_comment += 1
 
     def visit_TypedefNode(self, node):
         pass
