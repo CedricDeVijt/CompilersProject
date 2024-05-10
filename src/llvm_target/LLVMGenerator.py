@@ -220,7 +220,7 @@ class LLVMVisitor:
                 arg = self.visit(arg)
                 arg = self.builder.load(arg)
             else:
-                symbol = self.scope.lookup(arg.value)
+                #symbol = self.scope.lookup(arg.value)
                 #if hasattr(symbol, "type") and hasattr(symbol.type, "count"):
                 #    arg = self.get_c_string(arg)
                 #else:
@@ -250,8 +250,7 @@ class LLVMVisitor:
         self.scanf_string += 1
 
     def get_c_string(self, node):
-        symbol = self.scope.lookup(node.value)
-        string = symbol.string
+        string = "test"
         c_string_type = ir.ArrayType(ir.IntType(8), len(string))
         string_global = ir.GlobalVariable(self.module, c_string_type, name=f'string_{self.printf_string}')
         string_global.global_constant = True
@@ -631,8 +630,6 @@ class LLVMVisitor:
         # create and store symbol for symbol table
         symbol = Symbol(name=var_name, var_type=array_types)
         symbol.alloca = array_ptr
-        if isinstance(node.rvalue, StringNode):
-            symbol.string = node.rvalue.value
         if self.scope.get_symbol(name=var_name) is None:
             self.scope.add_symbol(symbol)
         # store the zero array
