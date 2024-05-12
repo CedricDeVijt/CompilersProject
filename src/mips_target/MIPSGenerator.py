@@ -278,7 +278,7 @@ class MIPSVisitor:
 
     def visit_PostFixNode(self, node):
         symbol = self.scope.lookup(name=node.value.value)
-        # change to post
+        # fix to post
         if node.op == 'inc':
             self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, 1")
         elif node.op == 'dec':
