@@ -84,7 +84,7 @@ def mips_output_compare(root: str, input_file: str):
 
     # compile to mips and run mips file with Spim
     compile_mips(input_file=file_dir + source_file, visitor=visitor, output_file=file_dir + mips_code, run_code=False)
-    os.system("spim -file " + file_dir + mips_code + " > " + file_dir + mips_output)
+    os.system("spim -quiet -file " + file_dir + mips_code + " > " + file_dir + mips_output)
 
     # compare the output files
     with open(file_dir + gcc_output, 'r') as f:
@@ -113,7 +113,7 @@ def mips_output_compare_with_expected_output(root: str, input_file: str, expecte
     # compile to mips and run with our compiler
     compile_mips(input_file=file_dir + source_file, visitor=visitor, output_file=file_dir + mips_code,
                  run_code=False)
-    os.system("spim -file " + file_dir + mips_code + " > " + file_dir + mips_output)
+    os.system("spim -quiet -file " + file_dir + mips_code + " > " + file_dir + mips_output)
 
     # compare the output with the expected output
     with open(file_dir + mips_output, 'r') as f:
