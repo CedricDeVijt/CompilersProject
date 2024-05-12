@@ -16,7 +16,8 @@ class MIPSVisitor:
         self.scope = SymbolTableTree()
         self.printf_string = 0
         self.scanf_string = 0
-        self.global_var = 0
+        self.float_reg = 0
+        self.int_reg = 0
         self.enums = {}
         self.structs = {}
         self.break_blocks = []
@@ -80,7 +81,8 @@ class MIPSVisitor:
             IntNode: lambda rval: 'int',
             FloatNode: lambda rval: 'float',
             StringNode: lambda rval: 'string',
-            Node: self.handle_node_type
+            Node: self.handle_node_type,
+            str: lambda rval: rval,
         }
         for key, value in type_check_dict.items():
             if isinstance(rval, key):
@@ -160,18 +162,46 @@ class MIPSVisitor:
             self.visit(child)
 
     def visit_FunctionNode(self, node):
+        self.scope.open_scope()
         self.code.append(f"{node.value}:")
         self.code.append(f"li $sp, 0x7ffffffc")
         for statement in node.body:
             self.visit(statement)
+        self.scope.close_scope()
 
     def visit_ReturnNode(self, node):
         self.code.append(f"jr $ra")
+
+    def visit_DefinitionNode(self, node):
+        symbol = Symbol(node.lvalue.value, self.get_highest_type(node.rvalue), 'variable')
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
+
+        if symbol.type == 'float':
+            self.code.append(f"li.s $f{self.float_reg}, {self.visit(node.rvalue)}")
+            symbol.varname = f'$f{self.float_reg}'
+            self.float_reg += 1
+            return
+        if symbol.type == 'int':
+            self.code.append(f"li $t{self.int_reg}, {self.visit(node.rvalue)}")
+            symbol.varname = f'$t{self.int_reg}'
+            self.int_reg += 1
+            return
+        if symbol.type == 'char':
+            self.code.append(f"li $t{self.int_reg}, {ord(self.visit(node.rvalue))}")
+            symbol.varname = f'$t{self.int_reg}'
+            self.int_reg += 1
+            return
 
     def visit_AssignmentNode(self, node):
         # Assuming only integer assignments for simplicity
         self.code.append(f"li $t0, {node.rvalue.value}")
         self.code.append(f"sw $t0, {node.lvalue.value}")
+
+    def visit_IdentifierNode(self, node):
+        symbol = self.scope.lookup(name=node.value)
+        if symbol is not None:
+            return [symbol.varname]
 
     def visit_PlusNode(self, node):
         # Assuming only integer addition for simplicity
@@ -191,7 +221,7 @@ class MIPSVisitor:
                 if nextChar == '%':
                     i += 1
                     continue
-                args.append(self.visit(node.children[amtSpec]))
+                args.append(node.children[amtSpec])
                 amtSpec += 1
                 specifiers = specifiers[2:]
                 i = 0
@@ -207,18 +237,29 @@ class MIPSVisitor:
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append(f"syscall")
                 self.printf_string += 1
-            elif isinstance(arg, int):
+            elif isinstance(self.visit(arg), int):
                 self.code.append(f"li $v0, 1")
-                self.code.append(f"li $a0, {arg}")
+                self.code.append(f"li $a0, {self.visit(arg)}")
                 self.code.append(f"syscall")
-            elif isinstance(arg, float):
+            elif isinstance(self.visit(arg), float):
                 self.code.append(f"li $v0, 2")
-                self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', arg))[0])}")
+                self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', self.visit(arg)))[0])}")
                 self.code.append(f"mtc1 $t0, $f12")
                 self.code.append(f"syscall")
             else:
-                # TODO: implement for registers
-                raise Exception("NOT YET IMPLEMENTED!")
+                register = self.visit(arg)[0]
+                if self.get_highest_type(arg) == 'char':
+                    self.code.append(f"li $v0, 11")
+                    self.code.append(f"move $a0, {register}")
+                    self.code.append(f"syscall")
+                elif self.get_highest_type(arg) == 'int':
+                    self.code.append(f"li $v0, 1")
+                    self.code.append(f"move $a0, {register}")
+                    self.code.append(f"syscall")
+                elif self.get_highest_type(arg) == 'float':
+                    self.code.append(f"li $v0, 2")
+                    self.code.append(f"mov.s $f12, {register}")
+                    self.code.append(f"syscall")
 
     # def visit_ScanfNode(self, node):
     #    ...
@@ -351,7 +392,7 @@ class MIPSVisitor:
 
     @staticmethod
     def visit_CharNode(node):
-        return chr(node.value)
+        return chr(int(node.value))
 
     @staticmethod
     def visit_FloatNode(node):
