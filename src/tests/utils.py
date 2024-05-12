@@ -92,15 +92,7 @@ def mips_output_compare(root: str, input_file: str):
     with open(file_dir + mips_output, 'r') as f:
         mips_output_text = f.read()
 
-    # remove extra lines from mips output
-    remove_lines = ["SPIM Version 8.0 of January 8, 2010",
-                    "Copyright 1990-2010, James R. Larus."
-                    "All RightsReserved."
-                    "See the file README for a full copyright notice.",
-                    "Loaded: /usr/local/share/spim/exceptions.s"]
-    if mips_output_text.startswith("SPIM Version 8.0 of January 8, 2010"):
-        for line in remove_lines:
-            mips_output_text = mips_output_text.replace(line, "")
+    print(mips_output_text)
 
     # assert that the outputs are the same
     assert gcc_output_text == mips_output_text
