@@ -182,14 +182,13 @@ class MIPSVisitor:
         self.code.append(f"add $t0, {node.children[0].value}, {node.children[1].value}")
 
     def visit_PrintfNode(self, node):
+        loadprint = 1
         for i in node.children:
-            #if isinstance(i, StringNode):
-            #    self.code.append(f"    li $v0, 4")
-            #    self.code.append(f"    la $a0, str_{self.global_comment}")
-            #    self.code.append(f"    syscall")
-            #    self.global_comment += 1
-            #else:
-            self.code.append(f"    li $v0, 1")
+            if isinstance(i, FloatNode):
+                loadprint = 2
+            if isinstance(i, CharNode):
+                loadprint = 11
+            self.code.append(f"    li $v0, {loadprint}")
             self.code.append(f"    li $a0, {self.visit(i)}")
             self.code.append(f"    syscall")
 
@@ -236,11 +235,11 @@ class MIPSVisitor:
     def visit_IntNode(self, node):
         return node.value
 
-    #def visit_CharNode(self, node):
-    #    ...
+    def visit_CharNode(self, node):
+        return node.value
 
-    #def visit_FloatNode(self, node):
-    #    ...
+    def visit_FloatNode(self, node):
+        return node.value
 
     #def visit_StringNode(self, node):
     #    ...
