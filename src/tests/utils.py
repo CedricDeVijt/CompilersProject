@@ -91,11 +91,14 @@ def mips_output_compare(root: str, input_file: str):
         gcc_output_text = f.read()
     with open(file_dir + mips_output, 'r') as f:
         mips_output_text = f.read()
+        print("before")
+        print(mips_output_text)
         if mips_output_text.startswith("SPIM"):
             mips_output_lines = f.read().splitlines()
             cleaned_lines = mips_output_lines[5:]
             mips_output_text = '\n'.join(cleaned_lines)
 
+    print("after")
     print(mips_output_text)
 
     # assert that the outputs are the same
