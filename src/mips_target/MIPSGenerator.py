@@ -154,61 +154,180 @@ class MIPSVisitor:
         return 'char'
 
     def visit_ProgramNode(self, node):
+        # data and ascii formatting
+        self.code.append("    .data")
+        self.code.append("str_format:")
+        self.code.append("    .asciiz \"%d\\n\"")
+        self.code.append("    .text\n")
+        self.code.append("    .globl main\n")
         for child in node.children:
             self.visit(child)
 
     def visit_FunctionNode(self, node):
         self.code.append(f"{node.value}:")
+        self.code.append(f"    li $sp, 0x7ffffffc")
         for statement in node.body:
             self.visit(statement)
 
     def visit_ReturnNode(self, node):
         self.code.append(f"jr $ra")
 
-    # def visit_AssignmentNode(self, node):
-    #     ...
-    #
-    # def visit_PlusNode(self, node):
-    #     ...
-    #
-    # def visit_PrintfNode(self, node):
-    #     ...
-    #
-    # def visit_ScanfNode(self, node):
-    #     ...
-    #
-    # def visit_FunctionCallNode(self, node):
-    #     ...
-    #
-    # def visit_DefinitionNode(self, node):
-    #     ...
-    #
-    # def visit_ArrayDefinitionNode(self, node):
-    #     ...
-    #
-    # def visit_StructDefinitionNode(self, node):
-    #     ...
-    #
-    # def visit_DeclarationNode(self, node):
-    #     ...
-    #
-    # def visit_ArrayDeclarationNode(self, node):
-    #     ...
-    #
-    # def visit_StructDeclarationNode(self, node):
-    #     ...
-    #
-    # def visit_ArrayAssignmentNode(self, node):
-    #     ...
-    #
-    # def visit_StructAssignmentNode(self, node):
-    #     ...
-    #
-    # def visit_PostFixNode(self, node):
-    #     ...
-    #
-    # def visit_PreFixNode(self, node):
-    #     ...
+    def visit_AssignmentNode(self, node):
+        # Assuming only integer assignments for simplicity
+        self.code.append(f"li $t0, {node.rvalue.value}")
+        self.code.append(f"sw $t0, {node.lvalue.value}")
+
+    def visit_PlusNode(self, node):
+        # Assuming only integer addition for simplicity
+        self.code.append(f"add $t0, {node.children[0].value}, {node.children[1].value}")
+
+    def visit_PrintfNode(self, node):
+        for i in node.children:
+            #if isinstance(i, StringNode):
+            #    self.code.append(f"    li $v0, 4")
+            #    self.code.append(f"    la $a0, str_{self.global_comment}")
+            #    self.code.append(f"    syscall")
+            #    self.global_comment += 1
+            #else:
+            self.code.append(f"    li $v0, 1")
+            self.code.append(f"    li $a0, {self.visit(i)}")
+            self.code.append(f"    syscall")
+
+        self.code.append(f"    li $v0, 10")
+        self.code.append(f"    syscall")
+
+
+    #def visit_ScanfNode(self, node):
+    #    ...
+#
+    #def visit_FunctionCallNode(self, node):
+    #    ...
+#
+    #def visit_DefinitionNode(self, node):
+    #    ...
+#
+    #def visit_ArrayDefinitionNode(self, node):
+    #    ...
+#
+    #def visit_StructDefinitionNode(self, node):
+    #    ...
+#
+    #def visit_DeclarationNode(self, node):
+    #    ...
+#
+    #def visit_ArrayDeclarationNode(self, node):
+    #    ...
+#
+    #def visit_StructDeclarationNode(self, node):
+    #    ...
+#
+    #def visit_ArrayAssignmentNode(self, node):
+    #    ...
+#
+    #def visit_StructAssignmentNode(self, node):
+    #    ...
+#
+    #def visit_PostFixNode(self, node):
+    #    ...
+#
+    #def visit_PreFixNode(self, node):
+    #    ...
+
+    def visit_IntNode(self, node):
+        return node.value
+
+    #def visit_CharNode(self, node):
+    #    ...
+
+    #def visit_FloatNode(self, node):
+    #    ...
+
+    #def visit_StringNode(self, node):
+    #    ...
+
+    #def visit_UnaryOp(self, node):
+    #    ...
+
+    #def visit_BinaryOp(self, node, method):
+    #    ...
+
+    #def visit_MinusNode(self, node, children=[]):
+    #    ...
+
+    #def visit_MultNode(self, node, children=[]):
+    #    ...
+
+    #def visit_DivNode(self, node, children=[]):
+    #    ...
+
+    #def visit_ModNode(self, node, children=[]):
+    #    ...
+
+    #def visit_BitwiseAndNode(self, node, children=[]):
+    #    ...
+
+    #def visit_BitwiseOrNode(self, node, children=[]):
+    #    ...
+
+    #def visit_BitwiseXorNode(self, node, children=[]):
+    #    ...
+
+    #def visit_LogicalAndNode(self, node, children=[]):
+    #    ...
+
+    #def visit_LogicalOrNode(self, node, children=[]):
+    #    ...
+
+    #def visit_SRNode(self, node, children=[]):
+    #    ...
+
+    #def visit_SLNode(self, node, children=[]):
+    #    ...
+
+    #def visit_LTNode(self, node, children=[]):
+    #    ...
+
+    #def visit_GTNode(self, node, children=[]):
+    #    ...
+
+    #def visit_LTEQNode(self, node, children=[]):
+    #    ...
+
+    #def visit_GTEQNode(self, node, children=[]):
+    #    ...
+
+    #def visit_EQNode(self, node, children=[]):
+    #    ...
+
+    #def visit_NEQNode(self, node, children=[]):
+    #    ...
+
+    #def visit_IdentifierNode(self, node):
+    #    ...
+
+    #def visit_AddrNode(self, node):
+    #    ...
+
+    #def visit_DerefNode(self, node):
+    #    ...
+
+    #def visit_ExplicitConversionNode(self, node):
+    #    ...
+
+    #def visit_CommentNode(self, node):
+    #    ...
+
+    #def visit_TypedefNode(self, node):
+    #    pass
+
+    #def visit_IfStatementNode(self, node):
+    #    ...
+
+    #def visit_WhileLoopNode(self, node):
+    #    ...
+
+    #def visit_BreakNode(self, node):
+        ...
 
     @staticmethod
     def visit_IntNode(node):
@@ -225,108 +344,3 @@ class MIPSVisitor:
     @staticmethod
     def visit_StringNode(node):
         return node.value
-
-    # def visit_UnaryOp(self, node):
-    #     ...
-    #
-    # def visit_BinaryOp(self, node, method):
-    #     ...
-    #
-    # def visit_MinusNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_MultNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_DivNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_ModNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_BitwiseAndNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_BitwiseOrNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_BitwiseXorNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_LogicalAndNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_LogicalOrNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_SRNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_SLNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_LTNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_GTNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_LTEQNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_GTEQNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_EQNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_NEQNode(self, node, children=[]):
-    #     ...
-    #
-    # def visit_IdentifierNode(self, node):
-    #     ...
-    #
-    # def visit_AddrNode(self, node):
-    #     ...
-    #
-    # def visit_DerefNode(self, node):
-    #     ...
-    #
-    # def visit_ExplicitConversionNode(self, node):
-    #     ...
-    #
-    # def visit_CommentNode(self, node):
-    #     ...
-    #
-    # def visit_TypedefNode(self, node):
-    #     pass
-    #
-    # def visit_IfStatementNode(self, node):
-    #     ...
-    #
-    # def visit_WhileLoopNode(self, node):
-    #     ...
-    #
-    # def visit_BreakNode(self, node):
-    #     ...
-    #
-    # def visit_ContinueNode(self, node):
-    #     ...
-    #
-    # def visit_EnumNode(self, node):
-    #     ...
-    #
-    # def visit_ScopeNode(self, node):
-    #     ...
-    #
-    # def visit_ArrayNode(self, node):
-    #     ...
-    #
-    # def visit_ArrayIdentifierNode(self, node):
-    #     ...
-    #
-    # def visit_StructNode(self, node):
-    #     ...
-    #
-    # def visit_StructMemberNode(self, node):
-    #     ...
