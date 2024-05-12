@@ -88,12 +88,22 @@ def mips_output_compare(root: str, input_file: str):
 
     # compare the output files
     with open(file_dir + gcc_output, 'r') as f:
-        generated_output = f.read()
+        gcc_output_text = f.read()
     with open(file_dir + mips_output, 'r') as f:
-        test_output = f.read()
+        mips_output_text = f.read()
+        if mips_output_text.startswith("SPIM"):
+            mips_output_lines = mips_output_text.splitlines()
+            cleaned_lines = mips_output_lines[5:]
+            mips_output_text = '\n'.join(cleaned_lines)
+
+    print("GCC Output:")
+    print(gcc_output_text)
+
+    print("MIPS Output:")
+    print(mips_output_text)
 
     # assert that the outputs are the same
-    assert generated_output == test_output
+    assert gcc_output_text.strip().__str__() == mips_output_text.strip().__str__()
 
 
 def mips_output_compare_with_expected_output(root: str, input_file: str, expected_output: str):
