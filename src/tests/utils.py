@@ -90,9 +90,9 @@ def mips_output_compare(root: str, input_file: str):
     with open(file_dir + gcc_output, 'r') as f:
         gcc_output_text = f.read()
     with open(file_dir + mips_output, 'r') as f:
-        mips_output_text = f.read()
-
-    print(mips_output_text)
+        mips_output_lines = f.read().splitlines()
+        cleaned_lines = mips_output_lines[6:]
+        mips_output_text = '\n'.join(cleaned_lines)
 
     # assert that the outputs are the same
     assert gcc_output_text == mips_output_text
