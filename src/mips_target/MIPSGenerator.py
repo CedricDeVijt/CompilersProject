@@ -161,7 +161,7 @@ class MIPSVisitor:
 
     def visit_FunctionNode(self, node):
         self.code.append(f"{node.value}:")
-        self.code.append(f"    li $sp, 0x7ffffffc")
+        self.code.append(f"li $sp, 0x7ffffffc")
         for statement in node.body:
             self.visit(statement)
 
@@ -294,7 +294,6 @@ class MIPSVisitor:
 
     # def visit_SRNode(self, node, children=[]):
     #    ...
-
 
 
     # def visit_SLNode(self, node, children=[]):
