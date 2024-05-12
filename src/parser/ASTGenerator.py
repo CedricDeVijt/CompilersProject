@@ -217,8 +217,6 @@ class ASTGenerator(Visitor):
             self.warnings.append(f"line {rval.line}:{rval.column} Implicit type conversion from int to char!")
         elif lvalType == 'char' and rvalType == 'string':
             pass
-        else:
-            self.warnings.append(f"line {rval.line}:{rval.column} Unsupported type conversion from {rvalType} to {lvalType}!")
 
     def contains_node(self, node, node_type):
         if isinstance(node, node_type):
