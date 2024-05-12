@@ -1306,20 +1306,15 @@ class ASTGenerator(Visitor):
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + children[specifiers].identifier.value + "\' not declared yet!")
                         return None
                     if char == 'd' and format_type != 'int':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
-                        return None
+                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
                     if char == 'x' and format_type != 'int':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
-                        return None
+                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
                     elif char == 's' and format_type != 'string':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %s but got {format_type}")
-                        return None
+                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %s but got {format_type}")
                     elif char == 'f' and format_type != 'float':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %f but got {format_type}")
-                        return None
+                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %f but got {format_type}")
                     elif char == 'c' and format_type != 'char':
-                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %c but got {format_type}")
-                        return None
+                        self.warnings.append(f"line {ctx.start.line}:{ctx.start.column} use of %c but got {format_type}")
                 else:
                     copy_specifier = copy_specifier[:i] + copy_specifier[i + 1:]
                     continue
