@@ -123,7 +123,7 @@ def compile_mips(input_file, visitor, output_file, run_code):
                 mips_file.write(f"\t{line}\n")
 
     if run_code:
-        os.system(f'spim -file {output_file}')
+        os.system(f'spim -quiet -file {output_file}')
 
 
 def render_ast(input_file, output_file):

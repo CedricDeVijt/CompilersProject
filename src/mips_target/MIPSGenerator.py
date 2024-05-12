@@ -237,6 +237,12 @@ class MIPSVisitor:
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append(f"syscall")
                 self.printf_string += 1
+            elif isinstance(self.visit(arg), str):
+                self.data.append(f"printf_string_{self.printf_string}: .asciiz {self.visit(arg)}")
+                self.code.append(f"li $v0, 4")
+                self.code.append(f"la $a0, printf_string_{self.printf_string}")
+                self.code.append(f"syscall")
+                self.printf_string += 1
             elif isinstance(self.visit(arg), int):
                 self.code.append(f"li $v0, 1")
                 self.code.append(f"li $a0, {self.visit(arg)}")
