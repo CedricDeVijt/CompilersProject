@@ -166,6 +166,7 @@ class MIPSVisitor:
         self.code.append(f"{node.value}:")
         self.code.append(f"li $sp, 0x7ffffffc")
         for statement in node.body:
+            self.code.append(f"# {statement.original}")
             self.visit(statement)
         self.scope.close_scope()
 
