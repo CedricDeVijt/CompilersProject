@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   test:
-    name: Run LLVM tests
+    name: Run MIPS tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,4 +25,4 @@ jobs:
 
       - name: Run all tests
         run: |
-          python -m pytest src/tests/LLVM_tests
+          python -m pytest src/tests/MIPS_tests
