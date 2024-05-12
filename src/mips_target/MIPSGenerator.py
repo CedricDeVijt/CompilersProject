@@ -267,8 +267,26 @@ class MIPSVisitor:
     # def visit_FunctionCallNode(self, node):
     #    ...
     #
-    # def visit_DefinitionNode(self, node):
-    #    ...
+    def visit_DefinitionNode(self, node):
+        symbol = Symbol(node.lvalue.value, self.get_highest_type(node.rvalue), 'variable')
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
+
+        if symbol.type == 'float':
+            self.code.append(f"li.s $f{self.float_reg}, {self.visit(node.rvalue)}")
+            symbol.varname = f'$f{self.float_reg}'
+            self.float_reg += 1
+            return
+        if symbol.type == 'int':
+            self.code.append(f"li $t{self.int_reg}, {self.visit(node.rvalue)}")
+            symbol.varname = f'$t{self.int_reg}'
+            self.int_reg += 1
+            return
+        if symbol.type == 'char':
+            self.code.append(f"li $t{self.int_reg}, {ord(self.visit(node.rvalue))}")
+            symbol.varname = f'$t{self.int_reg}'
+            self.int_reg += 1
+            return
     #
     # def visit_ArrayDefinitionNode(self, node):
     #    ...
