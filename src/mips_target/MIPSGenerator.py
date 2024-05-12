@@ -329,23 +329,123 @@ class MIPSVisitor:
     def visit_BreakNode(self, node):
         ...
 
-    def visit_ContinueNode(self, node):
-        ...
+    @staticmethod
+    def visit_IntNode(node):
+        return int(node.value)
 
-    def visit_EnumNode(self, node):
-        ...
+    @staticmethod
+    def visit_CharNode(node):
+        return node.value
 
-    def visit_ScopeNode(self, node):
-        ...
+    @staticmethod
+    def visit_FloatNode(node):
+        return float(node.value)
 
-    def visit_ArrayNode(self, node):
-        ...
+    @staticmethod
+    def visit_StringNode(node):
+        return node.value
 
-    def visit_ArrayIdentifierNode(self, node):
-        ...
-
-    def visit_StructNode(self, node):
-        ...
-
-    def visit_StructMemberNode(self, node):
-        ...
+    # def visit_UnaryOp(self, node):
+    #     ...
+    #
+    # def visit_BinaryOp(self, node, method):
+    #     ...
+    #
+    # def visit_MinusNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_MultNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_DivNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_ModNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_BitwiseAndNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_BitwiseOrNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_BitwiseXorNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_LogicalAndNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_LogicalOrNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_SRNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_SLNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_LTNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_GTNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_LTEQNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_GTEQNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_EQNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_NEQNode(self, node, children=[]):
+    #     ...
+    #
+    # def visit_IdentifierNode(self, node):
+    #     ...
+    #
+    # def visit_AddrNode(self, node):
+    #     ...
+    #
+    # def visit_DerefNode(self, node):
+    #     ...
+    #
+    # def visit_ExplicitConversionNode(self, node):
+    #     ...
+    #
+    # def visit_CommentNode(self, node):
+    #     ...
+    #
+    # def visit_TypedefNode(self, node):
+    #     pass
+    #
+    # def visit_IfStatementNode(self, node):
+    #     ...
+    #
+    # def visit_WhileLoopNode(self, node):
+    #     ...
+    #
+    # def visit_BreakNode(self, node):
+    #     ...
+    #
+    # def visit_ContinueNode(self, node):
+    #     ...
+    #
+    # def visit_EnumNode(self, node):
+    #     ...
+    #
+    # def visit_ScopeNode(self, node):
+    #     ...
+    #
+    # def visit_ArrayNode(self, node):
+    #     ...
+    #
+    # def visit_ArrayIdentifierNode(self, node):
+    #     ...
+    #
+    # def visit_StructNode(self, node):
+    #     ...
+    #
+    # def visit_StructMemberNode(self, node):
+    #     ...
