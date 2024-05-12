@@ -7,6 +7,7 @@ from antlr4.error.ErrorListener import ErrorListener
 from src.antlr_files.GrammarLexer import GrammarLexer as Lexer
 from src.antlr_files.GrammarParser import GrammarParser as Parser
 from src.llvm_target.LLVMGenerator import LLVMVisitor
+from src.mips_target.MIPSGenerator import MIPSVisitor
 from src.parser.ASTGenerator import ASTGenerator as Generator
 from src.parser.dotGenerator import DotGenerator
 from src.parser.preprocessor import pre_processing
@@ -99,7 +100,13 @@ def compile_mips(input_file, visitor, output_file, run_code):
     # Open a file to write MIPS code
     path = f'{output_file}'
     with open(path, 'w') as mips_file:
-        ...
+        visitor = MIPSVisitor(stdio=stdio_found)
+
+        visitor.visit(ast)
+        mips_code = visitor.code
+
+        mips_file.write(str(mips_code))
+
     if run_code:
         os.system(f'spim -file {output_file}')
 
