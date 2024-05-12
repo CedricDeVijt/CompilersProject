@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 enum SYS_IO_ReceiverStatusBit {
     READY,
     BUSY,
@@ -7,4 +9,5 @@ enum SYS_IO_ReceiverStatusBit {
 int main() {
     enum SYS_IO_ReceiverStatusBit status = BUSY;
     status = READY;
+    return 0;
 }

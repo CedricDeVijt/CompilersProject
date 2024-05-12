@@ -1,10 +1,11 @@
 #include <stdio.h>
+
 int main() {
     int a = 5;
-    float b = 5.5;
-    char c = 'c';
     printf("%d", a);
+    float b = 5.5;
     printf("%f", b);
+    char c = 'c';
     printf("%c", c);
     return 0;
 }

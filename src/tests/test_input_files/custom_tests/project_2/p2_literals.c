@@ -2,10 +2,10 @@
 
 int main() {
     int a = 5 + 10;
-    float b = 5.5 + 10.5;
-    char c = 'a';
     printf("%d\n", a);
+    float b = 5.5 + 10.5;
     printf("%f\n", b);
+    char c = 'a';
     printf("%c\n", c);
     return 0;
 }

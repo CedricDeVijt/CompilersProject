@@ -7,6 +7,10 @@ int main() {
     printf("%d\n", a);
     a--;
     printf("%d\n", a);
+    ++a;
+    printf("%d\n", a);
+    --a;
+    printf("%d\n", a);
 
     return 0;
 }
