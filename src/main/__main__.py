@@ -105,7 +105,8 @@ def compile_mips(input_file, visitor, output_file, run_code):
         visitor.visit(ast)
         mips_code = visitor.code
 
-        mips_file.write(str(mips_code))
+        for line in mips_code:
+            mips_file.write(f"{line}\n")
 
     if run_code:
         os.system(f'spim -file {output_file}')
