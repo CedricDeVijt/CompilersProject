@@ -154,11 +154,18 @@ class MIPSVisitor:
         return 'char'
 
     def visit_ProgramNode(self, node):
+        # data and ascii formatting
+        self.code.append("    .data")
+        self.code.append("str_format:")
+        self.code.append("    .asciiz \"%d\\n\"")
+        self.code.append("    .text\n")
+        self.code.append("    .globl main\n")
         for child in node.children:
             self.visit(child)
 
     def visit_FunctionNode(self, node):
         self.code.append(f"{node.value}:")
+        self.code.append(f"    li $sp, 0x7ffffffc")
         for statement in node.body:
             self.visit(statement)
 
@@ -175,7 +182,20 @@ class MIPSVisitor:
         self.code.append(f"add $t0, {node.children[0].value}, {node.children[1].value}")
 
     def visit_PrintfNode(self, node):
-        ...
+        for i in node.children:
+            #if isinstance(i, StringNode):
+            #    self.code.append(f"    li $v0, 4")
+            #    self.code.append(f"    la $a0, str_{self.global_comment}")
+            #    self.code.append(f"    syscall")
+            #    self.global_comment += 1
+            #else:
+            self.code.append(f"    li $v0, 1")
+            self.code.append(f"    li $a0, {self.visit(i)}")
+            self.code.append(f"    syscall")
+
+        self.code.append(f"    li $v0, 10")
+        self.code.append(f"    syscall")
+
 
     def visit_ScanfNode(self, node):
         ...
@@ -214,7 +234,7 @@ class MIPSVisitor:
         ...
 
     def visit_IntNode(self, node):
-        ...
+        return node.value
 
     def visit_CharNode(self, node):
         ...
