@@ -171,6 +171,16 @@ class MIPSVisitor:
         self.scope.close_scope()
 
     def visit_ReturnNode(self, node):
+        if isinstance(node.return_value, IntNode):
+            self.code.append(f"li $v0, {int(node.return_value.value)}")
+        elif isinstance(node.return_value, FloatNode):
+            self.code.append(f"li $v0, {hex(struct.unpack('<I', struct.pack('<f', float(node.return_value.value)))[0])}")
+        elif isinstance(node.return_value, CharNode):
+            self.code.append(f"li $v0, {chr(node.return_value.value)}")
+        elif isinstance(node.return_value, IdentifierNode):
+            # TODO handle return value when it is an identifier
+            ...
+
         self.code.append(f"jr $ra")
 
     def visit_DefinitionNode(self, node):
@@ -283,6 +293,15 @@ class MIPSVisitor:
             self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, 1")
         elif node.op == 'dec':
             self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, -1")
+
+    def visit_ScopeNode(self, node):
+        self.scope.open_scope()
+        for statement in node.children:
+            self.visit(statement)
+        self.scope.close_scope()
+
+    def visit_EnumNode(self, node):
+        self.enums[node.enum_name] = node.enum_list
 
     # def visit_ScanfNode(self, node):
     #    ...

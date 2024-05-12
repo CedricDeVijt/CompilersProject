@@ -438,12 +438,6 @@ class LLVMVisitor:
             if similar:
                 return self.builder.call(self.module.get_global(symbol.original), args)
 
-    def visit_ifStatementNode(self, node):
-        # open scope
-        self.scope.open_scope()
-        # close scope
-        self.scope.close_scope()
-
     def get_array_type(self, node, c_type):
         if isinstance(node, StringNode):
             return ir.ArrayType(ir.IntType(8), len(node.value))
