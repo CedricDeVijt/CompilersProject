@@ -3,6 +3,6 @@
 #include <stdio.h>
 
 int main(){
-    printf("PI: %f\n", PI);
+    printf("value of pi: %f\n", PI);
     return 0;
 }

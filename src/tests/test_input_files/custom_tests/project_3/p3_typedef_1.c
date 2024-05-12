@@ -11,4 +11,5 @@ int main() {
     printf("%f", b);
     myChar c = 'c';
     printf("%c", c);
+    return 0;
 }
