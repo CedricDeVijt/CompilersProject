@@ -311,12 +311,7 @@ class MIPSVisitor:
     # def visit_StructAssignmentNode(self, node):
     #    ...
     #
-    # def visit_PostFixNode(self, node):
-    #    ...
-    #
-    # def visit_PreFixNode(self, node):
-    #    ...
-    #
+
     # def visit_StringNode(self, node):
     #    ...
 
