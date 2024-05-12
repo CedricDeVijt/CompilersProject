@@ -162,7 +162,7 @@ class MIPSVisitor:
 
     def visit_FunctionNode(self, node):
         self.code.append(f"{node.value}:")
-        self.code.append(f"    li $sp, 0x7ffffffc")
+        self.code.append(f"li $sp, 0x7ffffffc")
         for statement in node.body:
             self.visit(statement)
 
@@ -220,7 +220,6 @@ class MIPSVisitor:
             else:
                 # TODO: implement for registers
                 raise Exception("NOT YET IMPLEMENTED!")
-
 
     def visit_ScanfNode(self, node):
        ...
