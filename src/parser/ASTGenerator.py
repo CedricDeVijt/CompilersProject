@@ -1295,10 +1295,10 @@ class ASTGenerator(Visitor):
                         else:
                             self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + children[specifiers].identifier.value + "\' not declared yet!")
                         return None
-                    if char == 'd' and format_type not in [ 'int', 'float']:
+                    if char == 'd' and format_type != 'int':
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
                         return None
-                    if  char == 'x' and format_type not in ['int', 'float']:
+                    if char == 'x' and format_type != 'int':
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} use of %{char} but got {format_type}")
                         return None
                     elif char == 's' and format_type != 'string':
