@@ -9,7 +9,6 @@ def llvm_output_compare(root: str, input_file: str):
     # remove the file extension
     filename = source_file.split(".")[0]
 
-    llvm_generated_code = filename + "_generated.ll"
     llvm_test_code = filename + "_test.ll"
     llvm_generated_output = filename + "_generated_output.txt"
     llvm_test_output = filename + "_test_output.txt"
@@ -59,4 +58,69 @@ def llvm_output_compare_with_expected_output(root: str, input_file: str, expecte
     with open(expected_output, 'r') as f:
         expected_output = f.read()
 
+    assert generated_output == expected_output
+
+
+def mips_output_compare(root: str, input_file: str):
+    import os
+    from src.main.__main__ import compile_mips, Generator
+
+    visitor = Generator()
+    file_dir = root
+    source_file = input_file
+
+    # remove the file extension
+    filename = source_file.split(".")[0]
+
+    # create the file names
+    mips_code = filename + "_test.mips"
+    mips_output = filename + "_test_output.txt"
+    gcc_output = filename + "_generated_output.txt"
+
+    # compile the .c file using gcc
+    os.system("gcc " + file_dir + source_file + " -o " + file_dir + filename)
+    # run the executable and save the output to the text file
+    os.system(file_dir + filename + " > " + file_dir + gcc_output)
+
+    # compile to mips and run mips file with Spim
+    compile_mips(input_file=file_dir + source_file, visitor=visitor, output_file=file_dir + mips_code, run_code=False)
+    os.system("spim -file " + file_dir + mips_code + " > " + file_dir + mips_output)
+
+    # compare the output files
+    with open(file_dir + gcc_output, 'r') as f:
+        generated_output = f.read()
+    with open(file_dir + mips_output, 'r') as f:
+        test_output = f.read()
+
+    # assert that the outputs are the same
+    assert generated_output == test_output
+
+
+def mips_output_compare_with_expected_output(root: str, input_file: str, expected_output: str):
+    import os
+    from src.main.__main__ import compile_mips, Generator
+
+    visitor = Generator()
+    file_dir = root
+    source_file = input_file
+
+    # remove the file extension
+    filename = source_file.split(".")[0]
+
+    mips_code = filename + "_test.mips"
+    mips_output = filename + "_test_output.txt"
+
+    # compile to mips and run with our compiler
+    compile_mips(input_file=file_dir + source_file, visitor=visitor, output_file=file_dir + mips_code,
+                 run_code=False)
+    os.system("spim -file " + file_dir + mips_code + " > " + file_dir + mips_output)
+
+    # compare the output with the expected output
+    with open(file_dir + mips_output, 'r') as f:
+        generated_output = f.read()
+
+    with open(expected_output, 'r') as f:
+        expected_output = f.read()
+
+    # assert that the outputs are the same
     assert generated_output == expected_output
