@@ -103,10 +103,24 @@ def compile_mips(input_file, visitor, output_file, run_code):
         visitor = MIPSVisitor(stdio=stdio_found)
 
         visitor.visit(ast)
+        mips_data = visitor.data
         mips_code = visitor.code
 
+        if len(mips_data) > 0:
+            mips_file.write(".data\n")
+
+        for line in mips_data:
+            mips_file.write(f"\t{line}\n")
+
+        if len(mips_data) > 0:
+            mips_file.write("\n\t.text\n")
+            mips_file.write("\t.globl main\n")
+
         for line in mips_code:
-            mips_file.write(f"{line}\n")
+            if line.endswith(":"):
+                mips_file.write(f"{line}\n")
+            else:
+                mips_file.write(f"\t{line}\n")
 
     if run_code:
         os.system(f'spim -file {output_file}')
