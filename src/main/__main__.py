@@ -91,8 +91,17 @@ def compile_llvm(input_file, visitor, output_file, run_code):
 
 
 def compile_mips(input_file, visitor, output_file, run_code):
-    # Implement MIPS compilation
-    pass
+    ast, symbol_table, stdio_found = generate_ast(input_file, visitor)
+    if ast is None:
+        print("Failed to generate AST.")
+        return
+
+    # Open a file to write MIPS code
+    path = f'{output_file}'
+    with open(path, 'w') as mips_file:
+        ...
+    if run_code:
+        os.system(f'spim -file {output_file}')
 
 
 def render_ast(input_file, output_file):
