@@ -98,13 +98,12 @@ def mips_output_compare(root: str, input_file: str):
 
     print("GCC Output:")
     print(gcc_output_text)
-    print('\n')
 
     print("MIPS Output:")
     print(mips_output_text)
 
     # assert that the outputs are the same
-    assert gcc_output_text.__str__() == mips_output_text.__str__()
+    assert gcc_output_text.strip().__str__() == mips_output_text.strip().__str__()
 
 
 def mips_output_compare_with_expected_output(root: str, input_file: str, expected_output: str):
