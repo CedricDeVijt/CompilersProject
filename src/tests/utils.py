@@ -29,6 +29,12 @@ def llvm_output_compare(root: str, input_file: str):
     with open(file_dir + llvm_test_output, 'r') as f:
         test_output = f.read()
 
+    print("GCC Output:")
+    print(generated_output)
+
+    print("LLVM Output:")
+    print(test_output)
+
     assert generated_output == test_output
 
 
