@@ -174,23 +174,30 @@ class MIPSVisitor:
 
     def visit_DefinitionNode(self, node):
         symbol = Symbol(node.lvalue.value, self.get_highest_type(node.rvalue), 'variable')
-        if self.scope.get_symbol(name=node.lvalue.value) is None:
-            self.scope.add_symbol(symbol)
 
         if symbol.type == 'float':
             self.code.append(f"li.s $f{self.float_reg}, {self.visit(node.rvalue)}")
             symbol.varname = f'$f{self.float_reg}'
+            symbol.float_reg = self.float_reg
             self.float_reg += 1
+            if self.scope.get_symbol(name=node.lvalue.value) is None:
+                self.scope.add_symbol(symbol)
             return
         if symbol.type == 'int':
             self.code.append(f"li $t{self.int_reg}, {self.visit(node.rvalue)}")
             symbol.varname = f'$t{self.int_reg}'
+            symbol.int_reg = self.int_reg
             self.int_reg += 1
+            if self.scope.get_symbol(name=node.lvalue.value) is None:
+                self.scope.add_symbol(symbol)
             return
         if symbol.type == 'char':
             self.code.append(f"li $t{self.int_reg}, {ord(self.visit(node.rvalue))}")
             symbol.varname = f'$t{self.int_reg}'
+            symbol.int_reg = self.int_reg
             self.int_reg += 1
+            if self.scope.get_symbol(name=node.lvalue.value) is None:
+                self.scope.add_symbol(symbol)
             return
 
     def visit_AssignmentNode(self, node):
@@ -237,12 +244,6 @@ class MIPSVisitor:
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append(f"syscall")
                 self.printf_string += 1
-            elif isinstance(self.visit(arg), str):
-                self.data.append(f"printf_string_{self.printf_string}: .asciiz {self.visit(arg)}")
-                self.code.append(f"li $v0, 4")
-                self.code.append(f"la $a0, printf_string_{self.printf_string}")
-                self.code.append(f"syscall")
-                self.printf_string += 1
             elif isinstance(self.visit(arg), int):
                 self.code.append(f"li $v0, 1")
                 self.code.append(f"li $a0, {self.visit(arg)}")
@@ -266,6 +267,21 @@ class MIPSVisitor:
                     self.code.append(f"li $v0, 2")
                     self.code.append(f"mov.s $f12, {register}")
                     self.code.append(f"syscall")
+
+    def visit_PreFixNode(self, node):
+        symbol = self.scope.lookup(name=node.value.value)
+        if node.op == 'inc':
+            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, 1")
+        elif node.op == 'dec':
+            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, -1")
+
+    def visit_PostFixNode(self, node):
+        symbol = self.scope.lookup(name=node.value.value)
+        # change to post
+        if node.op == 'inc':
+            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, 1")
+        elif node.op == 'dec':
+            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, -1")
 
     # def visit_ScanfNode(self, node):
     #    ...
