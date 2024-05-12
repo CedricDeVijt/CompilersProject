@@ -14,10 +14,9 @@ class MIPSVisitor:
         self.code = []
         self.data = []
         self.scope = SymbolTableTree()
+        self.variableAddress = 0
         self.printf_string = 0
         self.scanf_string = 0
-        self.float_reg = 0
-        self.int_reg = 0
         self.enums = {}
         self.structs = {}
         self.break_blocks = []
@@ -183,43 +182,177 @@ class MIPSVisitor:
 
         self.code.append(f"jr $ra")
 
-    def visit_DefinitionNode(self, node):
-        symbol = Symbol(node.lvalue.value, self.get_highest_type(node.rvalue), 'variable')
+    def visit_DeclarationNode(self, node):
+        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+        symbol = Symbol(node.lvalue.value, var_type, 'variable')
+        symbol.memAddress = self.variableAddress
+        if var_type == 'float':
+            # Store 0 in variable
+            self.code.append(f"li.s $f0, 0.0")
+            # Save to memory
+            self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+            # Increment address by 4 bytes
+            self.variableAddress += 4
+        else:
+            # Store 0 in variable
+            self.code.append(f"li $t0, 0")
+            # Save to memory
+            self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+            # Increment address by 4 bytes
+            self.variableAddress += 4
 
-        if symbol.type == 'float':
-            self.code.append(f"li.s $f{self.float_reg}, {self.visit(node.rvalue)}")
-            symbol.varname = f'$f{self.float_reg}'
-            symbol.float_reg = self.float_reg
-            self.float_reg += 1
-            if self.scope.get_symbol(name=node.lvalue.value) is None:
-                self.scope.add_symbol(symbol)
-            return
-        if symbol.type == 'int':
-            self.code.append(f"li $t{self.int_reg}, {self.visit(node.rvalue)}")
-            symbol.varname = f'$t{self.int_reg}'
-            symbol.int_reg = self.int_reg
-            self.int_reg += 1
-            if self.scope.get_symbol(name=node.lvalue.value) is None:
-                self.scope.add_symbol(symbol)
-            return
-        if symbol.type == 'char':
-            self.code.append(f"li $t{self.int_reg}, {ord(self.visit(node.rvalue))}")
-            symbol.varname = f'$t{self.int_reg}'
-            symbol.int_reg = self.int_reg
-            self.int_reg += 1
-            if self.scope.get_symbol(name=node.lvalue.value) is None:
-                self.scope.add_symbol(symbol)
-            return
+    def visit_DefinitionNode(self, node):
+        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+        symbol = Symbol(node.lvalue.value, var_type, 'variable')
+        symbol.memAddress = self.variableAddress
+        rvalue = self.visit(node.rvalue)
+        if isinstance(rvalue, str):
+            rvalue = ord(rvalue)
+        if isinstance(rvalue, int):
+            # Load int
+            self.code.append(f"li $t0, {rvalue}")
+            if symbol.type == 'float':
+                # Move to $f0
+                self.code.append(f"mtc1 $t0, $f0")
+                # Convert to float
+                self.code.append(f"cvt.s.w $f0, $f0")
+                # Save to memory
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+            else:
+                # Save to memory
+                self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+        elif isinstance(rvalue, float):
+            # Load float
+            self.code.append(f"li.s $f0, {rvalue}")
+            if symbol.type == 'int' or symbol.type == 'char':
+                # Convert to int
+                self.code.append("cvt.w.s $f0, $f0")
+                # Move
+                self.code.append("mfc1 $t0, $f0")
+                # Save to memory
+                self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+            else:
+                # Save to memory
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+            # Increment address by 4 bytes
+            self.variableAddress += 4
+        elif isinstance(rvalue, list):
+            address = rvalue[0]
+            if var_type == 'char' or var_type == 'int':
+                if self.get_highest_type(node.rvalue) == 'float':
+                    # Load as float
+                    self.code.append(f"l.s $f0, -{address}($sp)")
+                    # Convert to int
+                    self.code.append("cvt.w.s $f0, $f0")
+                    # Move
+                    self.code.append("mfc1 $t0, $f0")
+                else:
+                    # Load as int
+                    self.code.append(f"lw $t0, -{address}($sp)")
+                # Save to memory
+                self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+            elif var_type == 'float':
+                if self.get_highest_type(node.rvalue) != 'float':
+                    # Load as int
+                    self.code.append(f"lw $t0, -{address}($sp)")
+                    # Move to $f0
+                    self.code.append("mtc1 $t0, $f0")
+                    # Convert to float
+                    self.code.append("cvt.s.w $f0, $f0")
+                else:
+                    # Load as float
+                    self.code.append(f"l.s $f0, -{address}($sp)")
+                # Save to memory
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
 
     def visit_AssignmentNode(self, node):
-        # Assuming only integer assignments for simplicity
-        self.code.append(f"li $t0, {node.rvalue.value}")
-        self.code.append(f"sw $t0, {node.lvalue.value}")
+        if isinstance(node.lvalue, IdentifierNode):
+            symbol = self.scope.lookup(name=node.lvalue.value)
+            if symbol is not None:
+                rvalue = self.visit(node.rvalue)
+                var_type = self.get_highest_type(symbol.type)
+                if isinstance(rvalue, str):
+                    rvalue = ord(rvalue)
+                if isinstance(rvalue, int):
+                    # Load int
+                    self.code.append(f"li $t0, {rvalue}")
+                    if symbol.type == 'float':
+                        # Move to $f0
+                        self.code.append(f"mtc1 $t0, $f0")
+                        # Convert to float
+                        self.code.append(f"cvt.s.w $f0, $f0")
+                        # Save to memory
+                        self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                        # Increment address by 4 bytes
+                        self.variableAddress += 4
+                    else:
+                        # Save to memory
+                        self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                        # Increment address by 4 bytes
+                        self.variableAddress += 4
+                elif isinstance(rvalue, float):
+                    # Load float
+                    self.code.append(f"li.s $f0, {rvalue}")
+                    if symbol.type == 'int' or symbol.type == 'char':
+                        # Convert to int
+                        self.code.append("cvt.w.s $f0, $f0")
+                        # Move
+                        self.code.append("mfc1 $t0, $f0")
+                        # Save to memory
+                        self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                    else:
+                        # Save to memory
+                        self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                    # Increment address by 4 bytes
+                    self.variableAddress += 4
+                elif isinstance(rvalue, list):
+                    address = rvalue[0]
+                    if var_type == 'char' or var_type == 'int':
+                        if self.get_highest_type(node.rvalue) == 'float':
+                            # Load as float
+                            self.code.append(f"l.s $f0, -{address}($sp)")
+                            # Convert to int
+                            self.code.append("cvt.w.s $f0, $f0")
+                            # Move
+                            self.code.append("mfc1 $t0, $f0")
+                        else:
+                            # Load as int
+                            self.code.append(f"lw $t0, -{address}($sp)")
+                        # Save to memory
+                        self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                        # Increment address by 4 bytes
+                        self.variableAddress += 4
+                    elif var_type == 'float':
+                        if self.get_highest_type(node.rvalue) != 'float':
+                            # Load as int
+                            self.code.append(f"lw $t0, -{address}($sp)")
+                            # Move to $f0
+                            self.code.append("mtc1 $t0, $f0")
+                            # Convert to float
+                            self.code.append("cvt.s.w $f0, $f0")
+                        else:
+                            # Load as float
+                            self.code.append(f"l.s $f0, -{address}($sp)")
+                        # Save to memory
+                        self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                        # Increment address by 4 bytes
+                        self.variableAddress += 4
 
     def visit_IdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
         if symbol is not None:
-            return [symbol.varname]
+            return [symbol.memAddress]
 
     def visit_PlusNode(self, node):
         # Assuming only integer addition for simplicity
@@ -229,6 +362,7 @@ class MIPSVisitor:
         args = []
         specifiers = node.specifier
         amtSpec = 0
+        arguments = []
         i = 0
         while i < len(specifiers):
             if specifiers[i] == '%':
@@ -255,15 +389,43 @@ class MIPSVisitor:
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append(f"syscall")
                 self.printf_string += 1
+            elif isinstance(self.visit(arg), list):
+                memAddress = self.visit(arg)[0]
+                if self.get_highest_type(arg) == 'char' or self.get_highest_type(arg) == 'int':
+                    # Load from memory
+                    self.code.append(f"lw $t0, -{memAddress}($sp)")
+                    # Put in $a0
+                    self.code.append(f"move $a0, $t0")
+                    if self.get_highest_type(arg) == 'char':
+                        # Print string
+                        self.code.append("li $v0, 11")
+                    else:
+                        # Print int
+                        self.code.append("li $v0, 1")
+                    self.code.append("syscall")
+                elif self.get_highest_type(arg) == 'float':
+                    # Load from memory
+                    self.code.append(f"l.s $f0, -{memAddress}($sp)")
+                    # Move float to $f12
+                    self.code.append("mov.s $f12, $f0")
+                    # Print float
+                    self.code.append("li $v0, 2")
+                    self.code.append("syscall")
+            elif isinstance(self.visit(arg), str):
+                self.data.append(f"printf_string_{self.printf_string}: .asciiz {self.visit(arg)}")
+                self.code.append("li $v0, 4")
+                self.code.append(f"la $a0, printf_string_{self.printf_string}")
+                self.code.append("syscall")
+                self.printf_string += 1
             elif isinstance(self.visit(arg), int):
-                self.code.append(f"li $v0, 1")
+                self.code.append("li $v0, 1")
                 self.code.append(f"li $a0, {self.visit(arg)}")
-                self.code.append(f"syscall")
+                self.code.append("syscall")
             elif isinstance(self.visit(arg), float):
-                self.code.append(f"li $v0, 2")
+                self.code.append("li $v0, 2")
                 self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', self.visit(arg)))[0])}")
-                self.code.append(f"mtc1 $t0, $f12")
-                self.code.append(f"syscall")
+                self.code.append("mtc1 $t0, $f12")
+                self.code.append("syscall")
             else:
                 register = self.visit(arg)[0]
                 if self.get_highest_type(arg) == 'char':
