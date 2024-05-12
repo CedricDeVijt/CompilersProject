@@ -235,8 +235,7 @@ class MIPSVisitor:
        ...
 
     def visit_DefinitionNode(self, node):
-       ...
-
+       pass
     def visit_ArrayDefinitionNode(self, node):
        ...
 
