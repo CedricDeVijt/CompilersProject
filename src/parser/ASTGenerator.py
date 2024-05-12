@@ -1098,10 +1098,22 @@ class ASTGenerator(Visitor):
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                     node = SRNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "&":
+                    type0 = self.get_highest_type(child0)
+                    type2 = self.get_highest_type(child2)
+                    if type0 == 'float' or type2 == 'float':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                     node = BitwiseAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "|":
+                    type0 = self.get_highest_type(child0)
+                    type2 = self.get_highest_type(child2)
+                    if type0 == 'float' or type2 == 'float':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                     node = BitwiseOrNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "^":
+                    type0 = self.get_highest_type(child0)
+                    type2 = self.get_highest_type(child2)
+                    if type0 == 'float' or type2 == 'float':
+                        self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                     node = BitwiseXorNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
                 case "&&":
                     node = LogicalAndNode(line=ctx.start.line, column=ctx.start.column, original=original, children=[child0, child2])
