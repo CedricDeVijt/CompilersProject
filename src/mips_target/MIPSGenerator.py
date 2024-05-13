@@ -22,9 +22,16 @@ class MIPSVisitor:
         self.break_blocks = []
         self.continue_blocks = []
 
+    def __setattr__(self, name, value):
+        if name == "variableAddress":
+            self.__dict__["temporaryAddress"] = value
+        self.__dict__[name] = value
+
     def visit(self, node):
         method_name = "visit_" + node.__class__.__name__
         _visitor = getattr(self, method_name, self.generic_visit)
+        if node.__class__.__name__ in binary_ops:
+            return self.visit_BinaryOp(node, _visitor)
         return _visitor(node)
 
     def generic_visit(self, node):
@@ -354,10 +361,6 @@ class MIPSVisitor:
         if symbol is not None:
             return [symbol.memAddress]
 
-    def visit_PlusNode(self, node):
-        # Assuming only integer addition for simplicity
-        self.code.append(f"add $t0, {node.children[0].value}, {node.children[1].value}")
-
     def visit_PrintfNode(self, node):
         args = []
         specifiers = node.specifier
@@ -496,62 +499,293 @@ class MIPSVisitor:
     # def visit_StringNode(self, node):
     #    ...
 
-    # def visit_UnaryOp(self, node):
+    def visit_BinaryOp(self, node, visitor):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+        left = self.visit(node.children[0])
+        right = self.visit(node.children[1])
+
+        # Left
+        if isinstance(left, list):
+            address = left[0]
+            if type1 == 'char' or type1 == 'int':
+                # Load the value as an int
+                self.code.append(f"lw $t0, -{address}($sp)")
+                if type2 == 'float':
+                    # Move to $f0
+                    self.code.append("mtc1 $t0, $f0")
+                    # Convert to float
+                    self.code.append("cvt.s.w $f0, $f0")
+        elif isinstance(left, str) or isinstance(left, int):
+            if isinstance(left, str):
+                left = ord(left)
+            # Load the value as an int
+            self.code.append(f"li $t0, {left}")
+        elif isinstance(left, float):
+            # Load the value as a float
+            self.code.append(f"li.s $f0, {left}")
+
+        # Right
+        if isinstance(right, list):
+            address = right[0]
+            if type2 == 'char' or type2 == 'int':
+                # Load the value as an int
+                self.code.append(f"lw $t1, -{address}($sp)")
+                if type1 == 'float':
+                    # Move to $f1
+                    self.code.append("mtc1 $t1, $f1")
+                    # Convert to float
+                    self.code.append("cvt.s.w $f1, $f1")
+        elif isinstance(right, str) or isinstance(right, int):
+            if isinstance(right, str):
+                right = ord(right)
+            # Load the value as an int
+            self.code.append(f"li $t1, {right}")
+        elif isinstance(right, float):
+            # Load the value as a float
+            self.code.append(f"li.s $f1, {right}")
+
+        return visitor(node)
+
+    def visit_PlusNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Add
+        if type1 == 'float' or type2 == 'float':
+            self.code.append("add.s $f0, $f0, $f1")
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+        else:
+            self.code.append("add $t0, $t0, $t1")
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_MinusNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Subtract
+        if type1 == 'float' or type2 == 'float':
+            self.code.append("sub.s $f0, $f0, $f1")
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+        else:
+            self.code.append("sub $t0, $t0, $t1")
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_MultNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Mul
+        if type1 == 'float' or type2 == 'float':
+            self.code.append("mul.s $f0, $f0, $f1")
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+        else:
+            self.code.append("mul $t0, $t0, $t1")
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_DivNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Div
+        if type1 == 'float' or type2 == 'float':
+            self.code.append("div.s $f0, $f0, $f1")
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+        else:
+            self.code.append("div $t0, $t0, $t1")
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_ModNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Div
+        self.code.append("div $t0, $t1")
+        # Get remainder
+        self.code.append("mfhi $t2")
+        # Save to temporary address
+        self.code.append(f"sw $t2, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_BitwiseAndNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # And
+        self.code.append("and $t0, $t0, $t1")
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_BitwiseOrNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Or
+        self.code.append("or $t0, $t0, $t1")
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_BitwiseXorNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Xor
+        self.code.append("xor $t0, $t0, $t1")
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_LogicalAndNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # We can check whether the value is 0 or not
+        # We do this by checking if the registers are neither less than or greater than 0
+
+        # And
+        if type1 == 'float' or type2 == 'float':
+            # Load 0 into $f2
+            self.code.append("li.s $f2, 0.0")
+            # Load 1 into $f3
+            self.code.append("li.s $f3, 1.0")
+            # Check if $f0 < 0
+            self.code.append("c.lt.s $f0, $f2")
+            # Put 1.0 in $f4 if c.lt.s returned true
+            self.code.append("movt.s $f4, $f2, 1")
+            # Put 0.0 in $f4 if c.lt.s returned false
+            self.code.append("movf.s $f4, $f3, 1")
+
+            # Check if 0 < $f0
+            self.code.append("c.lt.s $f2, $f0")
+            # Put 1.0 in $f4 if c.lt.s returned true
+            self.code.append("movt.s $f5, $f2, 1")
+            # Put 0.0 in $f4 if c.lt.s returned false
+            self.code.append("movf.s $f5, $f3, 1")
+
+            # Check if $f1 < 0
+            self.code.append("c.lt.s $f1, $f2")
+            # Put 1.0 in $f4 if c.lt.s returned true
+            self.code.append("movt.s $f6, $f2, 1")
+            # Put 0.0 in $f4 if c.lt.s returned false
+            self.code.append("movf.s $f6, $f3, 1")
+
+            # Check if 0 < $f1
+            self.code.append("c.lt.s $f2, $f1")
+            # Put 1.0 in $f4 if c.lt.s returned true
+            self.code.append("movt.s $f7, $f2, 1")
+            # Put 0.0 in $f4 if c.lt.s returned false
+            self.code.append("movf.s $f7, $f3, 1")
+
+            # Convert to integers
+            self.code.append("cvt.w.s $f4, $f4")
+            self.code.append("cvt.w.s $f5, $f5")
+            self.code.append("cvt.w.s $f6, $f6")
+            self.code.append("cvt.w.s $f7, $f7")
+            # Move to $t0, $t1, $t2 and $t3
+            self.code.append("mfc1 $t0, $f4")
+            self.code.append("mfc1 $t1, $f5")
+            self.code.append("mfc1 $t2, $f6")
+            self.code.append("mfc1 $t3, $f7")
+            # Check if one is true, if one is true then it does not equal 0
+            self.code.append("or $t0, $t0, $t1")
+            self.code.append("or $t1, $t2, $t3")
+            # Check if both are 1
+            self.code.append("and $t0, $t0, $t1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
+        else:
+            # Check if $t0 is 0
+            self.code.append("slt $t2, $t0, $zero")
+            self.code.append("slt $t3, $zero, $t0")
+            # 0 if $t0 is 0
+            self.code.append("or $t0, $t2, $t3")
+
+            # Check if $t1 is 0
+            self.code.append("slt $t2, $t1, $zero")
+            self.code.append("slt $t3, $zero, $t1")
+            # 0 if $t1 is 0
+            self.code.append("or $t1, $t2, $t3")
+
+            # And
+            self.code.append("and $t0, $t0, $t1")
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    # def visit_LogicalOrNode(self, node):
     #    ...
 
-    # def visit_BinaryOp(self, node, method):
-    #    ...
-
-    # def visit_MinusNode(self, node, children=[]):
-    #    ...
-
-    # def visit_MultNode(self, node, children=[]):
-    #    ...
-
-    # def visit_DivNode(self, node, children=[]):
-    #    ...
-
-    # def visit_ModNode(self, node, children=[]):
-    #    ...
-
-    # def visit_BitwiseAndNode(self, node, children=[]):
-    #    ...
-
-    # def visit_BitwiseOrNode(self, node, children=[]):
-    #    ...
-
-    # def visit_BitwiseXorNode(self, node, children=[]):
-    #    ...
-
-    # def visit_LogicalAndNode(self, node, children=[]):
-    #    ...
-
-    # def visit_LogicalOrNode(self, node, children=[]):
-    #    ...
-
-    # def visit_SRNode(self, node, children=[]):
+    # def visit_SRNode(self, node):
     #    ...
 
 
-    # def visit_SLNode(self, node, children=[]):
+    # def visit_SLNode(self, node):
     #    ...
 
-    # def visit_LTNode(self, node, children=[]):
+    # def visit_LTNode(self, node):
     #    ...
 
-    # def visit_GTNode(self, node, children=[]):
+    # def visit_GTNode(self, node):
     #    ...
 
-    # def visit_LTEQNode(self, node, children=[]):
+    # def visit_LTEQNode(self, node):
     #    ...
 
-    # def visit_GTEQNode(self, node, children=[]):
+    # def visit_GTEQNode(self, node):
     #    ...
 
-    # def visit_EQNode(self, node, children=[]):
+    # def visit_EQNode(self, node):
     #    ...
 
-    # def visit_NEQNode(self, node, children=[]):
+    # def visit_NEQNode(self, node):
     #    ...
 
     # def visit_IdentifierNode(self, node):
