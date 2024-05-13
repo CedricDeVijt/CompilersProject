@@ -197,14 +197,14 @@ class MIPSVisitor:
             # Store 0 in variable
             self.code.append(f"li.s $f0, 0.0")
             # Save to memory
-            self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+            self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
             # Increment address by 4 bytes
             self.variableAddress += 4
         else:
             # Store 0 in variable
             self.code.append(f"li $t0, 0")
             # Save to memory
-            self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+            self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
             # Increment address by 4 bytes
             self.variableAddress += 4
 
@@ -224,12 +224,12 @@ class MIPSVisitor:
                 # Convert to float
                 self.code.append(f"cvt.s.w $f0, $f0")
                 # Save to memory
-                self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                 # Increment address by 4 bytes
                 self.variableAddress += 4
             else:
                 # Save to memory
-                self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                 # Increment address by 4 bytes
                 self.variableAddress += 4
         elif isinstance(rvalue, float):
@@ -241,10 +241,10 @@ class MIPSVisitor:
                 # Move
                 self.code.append("mfc1 $t0, $f0")
                 # Save to memory
-                self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
             else:
                 # Save to memory
-                self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
             # Increment address by 4 bytes
             self.variableAddress += 4
         elif isinstance(rvalue, list):
@@ -252,31 +252,31 @@ class MIPSVisitor:
             if var_type == 'char' or var_type == 'int':
                 if self.get_highest_type(node.rvalue) == 'float':
                     # Load as float
-                    self.code.append(f"l.s $f0, -{address}($sp)")
+                    self.code.append(f"l.s $f0, -{address}($gp)")
                     # Convert to int
                     self.code.append("cvt.w.s $f0, $f0")
                     # Move
                     self.code.append("mfc1 $t0, $f0")
                 else:
                     # Load as int
-                    self.code.append(f"lw $t0, -{address}($sp)")
+                    self.code.append(f"lw $t0, -{address}($gp)")
                 # Save to memory
-                self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                 # Increment address by 4 bytes
                 self.variableAddress += 4
             elif var_type == 'float':
                 if self.get_highest_type(node.rvalue) != 'float':
                     # Load as int
-                    self.code.append(f"lw $t0, -{address}($sp)")
+                    self.code.append(f"lw $t0, -{address}($gp)")
                     # Move to $f0
                     self.code.append("mtc1 $t0, $f0")
                     # Convert to float
                     self.code.append("cvt.s.w $f0, $f0")
                 else:
                     # Load as float
-                    self.code.append(f"l.s $f0, -{address}($sp)")
+                    self.code.append(f"l.s $f0, -{address}($gp)")
                 # Save to memory
-                self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                 # Increment address by 4 bytes
                 self.variableAddress += 4
 
@@ -300,12 +300,12 @@ class MIPSVisitor:
                         # Convert to float
                         self.code.append(f"cvt.s.w $f0, $f0")
                         # Save to memory
-                        self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                        self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                         # Increment address by 4 bytes
                         self.variableAddress += 4
                     else:
                         # Save to memory
-                        self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                        self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                         # Increment address by 4 bytes
                         self.variableAddress += 4
                 elif isinstance(rvalue, float):
@@ -317,10 +317,10 @@ class MIPSVisitor:
                         # Move
                         self.code.append("mfc1 $t0, $f0")
                         # Save to memory
-                        self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                        self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                     else:
                         # Save to memory
-                        self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                        self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                     # Increment address by 4 bytes
                     self.variableAddress += 4
                 elif isinstance(rvalue, list):
@@ -328,31 +328,31 @@ class MIPSVisitor:
                     if var_type == 'char' or var_type == 'int':
                         if self.get_highest_type(node.rvalue) == 'float':
                             # Load as float
-                            self.code.append(f"l.s $f0, -{address}($sp)")
+                            self.code.append(f"l.s $f0, -{address}($gp)")
                             # Convert to int
                             self.code.append("cvt.w.s $f0, $f0")
                             # Move
                             self.code.append("mfc1 $t0, $f0")
                         else:
                             # Load as int
-                            self.code.append(f"lw $t0, -{address}($sp)")
+                            self.code.append(f"lw $t0, -{address}($gp)")
                         # Save to memory
-                        self.code.append(f"sw $t0, -{symbol.memAddress}($sp)")
+                        self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                         # Increment address by 4 bytes
                         self.variableAddress += 4
                     elif var_type == 'float':
                         if self.get_highest_type(node.rvalue) != 'float':
                             # Load as int
-                            self.code.append(f"lw $t0, -{address}($sp)")
+                            self.code.append(f"lw $t0, -{address}($gp)")
                             # Move to $f0
                             self.code.append("mtc1 $t0, $f0")
                             # Convert to float
                             self.code.append("cvt.s.w $f0, $f0")
                         else:
                             # Load as float
-                            self.code.append(f"l.s $f0, -{address}($sp)")
+                            self.code.append(f"l.s $f0, -{address}($gp)")
                         # Save to memory
-                        self.code.append(f"s.s $f0, -{symbol.memAddress}($sp)")
+                        self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                         # Increment address by 4 bytes
                         self.variableAddress += 4
 
@@ -396,7 +396,7 @@ class MIPSVisitor:
                 memAddress = self.visit(arg)[0]
                 if self.get_highest_type(arg) == 'char' or self.get_highest_type(arg) == 'int':
                     # Load from memory
-                    self.code.append(f"lw $t0, -{memAddress}($sp)")
+                    self.code.append(f"lw $t0, -{memAddress}($gp)")
                     # Put in $a0
                     self.code.append(f"move $a0, $t0")
                     if self.get_highest_type(arg) == 'char':
@@ -408,7 +408,7 @@ class MIPSVisitor:
                     self.code.append("syscall")
                 elif self.get_highest_type(arg) == 'float':
                     # Load from memory
-                    self.code.append(f"l.s $f0, -{memAddress}($sp)")
+                    self.code.append(f"l.s $f0, -{memAddress}($gp)")
                     # Move float to $f12
                     self.code.append("mov.s $f12, $f0")
                     # Print float
@@ -510,7 +510,7 @@ class MIPSVisitor:
             address = left[0]
             if type1 == 'char' or type1 == 'int':
                 # Load the value as an int
-                self.code.append(f"lw $t0, -{address}($sp)")
+                self.code.append(f"lw $t0, -{address}($gp)")
                 if type2 == 'float':
                     # Move to $f0
                     self.code.append("mtc1 $t0, $f0")
@@ -530,7 +530,7 @@ class MIPSVisitor:
             address = right[0]
             if type2 == 'char' or type2 == 'int':
                 # Load the value as an int
-                self.code.append(f"lw $t1, -{address}($sp)")
+                self.code.append(f"lw $t1, -{address}($gp)")
                 if type1 == 'float':
                     # Move to $f1
                     self.code.append("mtc1 $t1, $f1")
@@ -555,11 +555,11 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("add.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
         else:
             self.code.append("add $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -573,11 +573,11 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("sub.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
         else:
             self.code.append("sub $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -591,11 +591,11 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("mul.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
         else:
             self.code.append("mul $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -609,11 +609,11 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("div.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
         else:
             self.code.append("div $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -628,7 +628,7 @@ class MIPSVisitor:
         # Get remainder
         self.code.append("mfhi $t2")
         # Save to temporary address
-        self.code.append(f"sw $t2, -{self.temporaryAddress}($sp)")
+        self.code.append(f"sw $t2, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -641,7 +641,7 @@ class MIPSVisitor:
         # And
         self.code.append("and $t0, $t0, $t1")
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -654,7 +654,7 @@ class MIPSVisitor:
         # Or
         self.code.append("or $t0, $t0, $t1")
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -667,7 +667,7 @@ class MIPSVisitor:
         # Xor
         self.code.append("xor $t0, $t0, $t1")
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
@@ -677,8 +677,68 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # We can check whether the value is 0 or not
-        # We do this by checking if the registers are neither less than or greater than 0
+        # And
+        if type1 == 'float' or type2 == 'float':
+            # Load 0 into $f2
+            self.code.append("li.s $f2, 0.0")
+            # Load 1 into $f3
+            self.code.append("li.s $f3, 1.0")
+            # Check if $f0 == 0
+            self.code.append("c.eq.s $f0, $f2")
+            # Put 0.0 in $f4 if c.eq.s returned true
+            self.code.append("movt.s $f4, $f2, 1")
+            # Put 1.0 in $f4 if c.eq.s returned false
+            self.code.append("movf.s $f4, $f3, 1")
+
+            # Check if $f1 == 0
+            self.code.append("c.eq.s $f1, $f2")
+            # Put 0.0 in $f4 if c.eq.s returned true
+            self.code.append("movt.s $f5, $f2, 1")
+            # Put 1.0 in $f4 if c.eq.s returned false
+            self.code.append("movf.s $f5, $f3, 1")
+
+            # Convert to integers
+            self.code.append("cvt.w.s $f4, $f4")
+            self.code.append("cvt.w.s $f5, $f5")
+            # Move to $t0 and $t1
+            self.code.append("mfc1 $t0, $f4")
+            self.code.append("mfc1 $t1, $f5")
+            # And
+            self.code.append("and $t0, $t0, $t1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
+        else:
+            # Check if $t0 is 0
+            self.code.append("slt $t2, $t0, $zero")
+            self.code.append("slt $t3, $zero, $t0")
+            # 0 if $t0 is 0
+            self.code.append("or $t0, $t2, $t3")
+
+            # Check if $t1 is 0
+            self.code.append("slt $t2, $t1, $zero")
+            self.code.append("slt $t3, $zero, $t1")
+            # 0 if $t1 is 0
+            self.code.append("or $t1, $t2, $t3")
+
+            # And
+            self.code.append("and $t0, $t0, $t1")
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_LogicalOrNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
 
         # And
         if type1 == 'float' or type2 == 'float':
@@ -703,15 +763,157 @@ class MIPSVisitor:
             # Convert to integers
             self.code.append("cvt.w.s $f4, $f4")
             self.code.append("cvt.w.s $f5, $f5")
-            # Move to $t0, $t1, $t2 and $t3
+            # Move to $t0 and $t1
             self.code.append("mfc1 $t0, $f4")
             self.code.append("mfc1 $t1, $f5")
-            # Check if both are 1
-            self.code.append("and $t0, $t0, $t1")
+            # Or
+            self.code.append("or $t0, $t0, $t1")
             # Move to $f0
             self.code.append("mtc1 $t0, $f0")
             # Convert to float
             self.code.append("cvt.s.w $f0, $f0")
+        else:
+            # Check if $t0 is 0
+            self.code.append("slt $t2, $t0, $zero")
+            self.code.append("slt $t3, $zero, $t0")
+            # 0 if $t0 is 0
+            self.code.append("or $t0, $t2, $t3")
+
+            # Check if $t1 is 0
+            self.code.append("slt $t2, $t1, $zero")
+            self.code.append("slt $t3, $zero, $t1")
+            # 0 if $t1 is 0
+            self.code.append("or $t1, $t2, $t3")
+
+            # Or
+            self.code.append("or $t0, $t0, $t1")
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_LogicalNotNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+
+        # And
+        if type1 == 'float':
+            # Load 0 into $f1
+            self.code.append("li.s $f1, 0.0")
+            # Load 1 into $f2
+            self.code.append("li.s $f2, 1.0")
+            # Check if $f0 == 0
+            self.code.append("c.eq.s $f0, $f1")
+            # Put 0.0 in $f3 if c.lt.s returned true
+            self.code.append("movt.s $f3, $f1, 1")
+            # Put 1.0 in $f3 if c.lt.s returned false
+            self.code.append("movf.s $f3, $f2, 1")
+        else:
+            # Check if $t0 is 0
+            self.code.append("slt $t1, $t0, $zero")
+            self.code.append("slt $t2, $zero, $t0")
+            # 0 if $t0 is 0
+            self.code.append("or $t0, $t1, $t2")
+
+            # And
+            self.code.append("and $t0, $t0, $t1")
+
+        if type1 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_LTNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # And
+        if type1 == 'float' or type2 == 'float':
+            # Load 0 into $f2
+            self.code.append("li.s $f2, 0.0")
+            # Load 1 into $f3
+            self.code.append("li.s $f3, 1.0")
+            # Check if $f0 < $f1
+            self.code.append("c.lt.s $f0, $f1")
+            # Put 0.0 in $f0 if c.lt.s returned true
+            self.code.append("movt.s $f0, $f3, 1")
+            # Put 1.0 in $f0 if c.lt.s returned false
+            self.code.append("movf.s $f0, $f2, 1")
+        else:
+            # Check if $t0 < $t1
+            self.code.append("slt $t0, $t0, $t1")
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_GTNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # And
+        if type1 == 'float' or type2 == 'float':
+            # Load 0 into $f2
+            self.code.append("li.s $f2, 0.0")
+            # Load 1 into $f3
+            self.code.append("li.s $f3, 1.0")
+            # Check if $f1 <= $f0
+            self.code.append("c.le.s $f1, $f0")
+            # Put 0.0 in $f0 if c.le.s returned true
+            self.code.append("movt.s $f0, $f3, 0")
+            # Put 1.0 in $f0 if c.le.s returned false
+            self.code.append("movf.s $f0, $f2, 0")
+        else:
+            # Check if $t1 < $t0
+            self.code.append("slt $t0, $t1, $t0")
+
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_EQNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Equals
+        if type1 == 'float' or type2 == 'float':
+            # Load 0 into $f2
+            self.code.append("li.s $f2, 0.0")
+            # Load 1 into $f3
+            self.code.append("li.s $f3, 1.0")
+            # Check if $f0 == $f1
+            self.code.append("c.eq.s $f0, $f1")
+            # Put 1.0 in $f0 if c.eq.s returned true
+            self.code.append("movt.s $f0, $f3, 1")
+            # Put 0.0 in $f0 if c.eq.s returned false
+            self.code.append("movf.s $f0, $f2, 1")
         else:
             # Check if $t0 is 0
             self.code.append("slt $t2, $t0, $zero")
@@ -730,30 +932,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($sp)")
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
         self.temporaryAddress += 4
         # Return temporary address
         return [self.temporaryAddress - 4]
-
-    # def visit_LogicalOrNode(self, node):
-    #    ...
-
-    # def visit_SRNode(self, node):
-    #    ...
-
-
-    # def visit_SLNode(self, node):
-    #    ...
-
-    # def visit_LTNode(self, node):
-    #    ...
-
-    # def visit_GTNode(self, node):
-    #    ...
 
     # def visit_LTEQNode(self, node):
     #    ...
