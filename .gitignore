@@ -167,6 +167,7 @@ output
 src/tests/example.c
 /src/tests/example.ll
 /src/tests/example.png
+/src/tests/example.mips
 src/tests/example1.c
 src/llvm_target/output.ll
 !/src/tests/test_input_files/example.c
