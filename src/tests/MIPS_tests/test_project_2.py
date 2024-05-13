@@ -58,6 +58,11 @@ def test_p2_parenthesis():
     mips_output_compare(root, source_file)
 
 
+def test_p2_pointer_arithmetic():
+    source_file = "p2_pointer_arithmetic.c"
+    mips_output_compare(root, source_file)
+
+
 def test_p2_pointers():
     source_file = "p2_pointers.c"
     mips_output_compare(root, source_file)
