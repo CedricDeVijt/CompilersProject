@@ -686,47 +686,26 @@ class MIPSVisitor:
             self.code.append("li.s $f2, 0.0")
             # Load 1 into $f3
             self.code.append("li.s $f3, 1.0")
-            # Check if $f0 < 0
-            self.code.append("c.lt.s $f0, $f2")
-            # Put 1.0 in $f4 if c.lt.s returned true
+            # Check if $f0 == 0
+            self.code.append("c.eq.s $f0, $f2")
+            # Put 0.0 in $f4 if c.lt.s returned true
             self.code.append("movt.s $f4, $f2, 1")
-            # Put 0.0 in $f4 if c.lt.s returned false
+            # Put 1.0 in $f4 if c.lt.s returned false
             self.code.append("movf.s $f4, $f3, 1")
 
-            # Check if 0 < $f0
-            self.code.append("c.lt.s $f2, $f0")
-            # Put 1.0 in $f4 if c.lt.s returned true
+            # Check if $f1 == 0
+            self.code.append("c.eq.s $f1, $f2")
+            # Put 0.0 in $f4 if c.lt.s returned true
             self.code.append("movt.s $f5, $f2, 1")
-            # Put 0.0 in $f4 if c.lt.s returned false
+            # Put 1.0 in $f4 if c.lt.s returned false
             self.code.append("movf.s $f5, $f3, 1")
-
-            # Check if $f1 < 0
-            self.code.append("c.lt.s $f1, $f2")
-            # Put 1.0 in $f4 if c.lt.s returned true
-            self.code.append("movt.s $f6, $f2, 1")
-            # Put 0.0 in $f4 if c.lt.s returned false
-            self.code.append("movf.s $f6, $f3, 1")
-
-            # Check if 0 < $f1
-            self.code.append("c.lt.s $f2, $f1")
-            # Put 1.0 in $f4 if c.lt.s returned true
-            self.code.append("movt.s $f7, $f2, 1")
-            # Put 0.0 in $f4 if c.lt.s returned false
-            self.code.append("movf.s $f7, $f3, 1")
 
             # Convert to integers
             self.code.append("cvt.w.s $f4, $f4")
             self.code.append("cvt.w.s $f5, $f5")
-            self.code.append("cvt.w.s $f6, $f6")
-            self.code.append("cvt.w.s $f7, $f7")
             # Move to $t0, $t1, $t2 and $t3
             self.code.append("mfc1 $t0, $f4")
             self.code.append("mfc1 $t1, $f5")
-            self.code.append("mfc1 $t2, $f6")
-            self.code.append("mfc1 $t3, $f7")
-            # Check if one is true, if one is true then it does not equal 0
-            self.code.append("or $t0, $t0, $t1")
-            self.code.append("or $t1, $t2, $t3")
             # Check if both are 1
             self.code.append("and $t0, $t0, $t1")
             # Move to $f0
