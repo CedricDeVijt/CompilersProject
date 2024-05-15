@@ -1476,3 +1476,9 @@ class MIPSVisitor:
     @staticmethod
     def visit_StringNode(node):
         return node.value
+
+
+# PASS
+
+    def visit_TypedefNode(self, node):
+        pass
