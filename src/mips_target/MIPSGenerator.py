@@ -7,6 +7,7 @@ unary_ops = {'LogicalNotNode', 'BitwiseNotNode'}
 binary_ops = {'DivNode', 'ModNode', 'MultNode', 'MinusNode', 'PlusNode', 'GTNode', 'LTNode', 'GTEQNode', 'LTEQNode',
               'EQNode', 'NEQNode', 'SLNode', 'SRNode', 'BitwiseAndNode', 'BitwiseOrNode', 'BitwiseXorNode',
               'LogicalAndNode', 'LogicalOrNode'}
+literals = {'IntNode', 'FloatNode', 'CharNode', 'StringNode'}
 
 
 class MIPSVisitor:
@@ -394,6 +395,30 @@ class MIPSVisitor:
                         self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                         # Increment address by 4 bytes
                         self.variableAddress += 4
+
+    def visit_ArrayAssignmentNode(self, node):
+        symbol = self.scope.lookup(name=node.lvalue.value)
+        dimensions = symbol.dimensions
+        address = symbol.memAddress
+        for i in range(len(node.lvalue.indices)):
+            add = self.visit(node.lvalue.indices[i])
+            for j in range(i + 1, len(dimensions)):
+                add *= dimensions[j]
+            address += add * 4
+
+        if symbol.type == 'float':
+            # Store 0 in variable
+            self.code.append(f"li.s $f0, {self.visit(node.rvalue)}")
+            # Save to memory
+            self.code.append(f"s.s $f0, -{address}($gp)")
+        else:
+            # Store value in memory
+            if symbol.type == 'char':
+                self.code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
+            else:
+                self.code.append(f"li $t0, {self.visit(node.rvalue)}")
+            # Save to memory
+            self.code.append(f"sw $t0, -{address}($gp)")
 
     def visit_IdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
