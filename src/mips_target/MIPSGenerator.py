@@ -867,10 +867,12 @@ class MIPSVisitor:
             self.code.append("li.s $f3, 1.0")
             # Check if $f0 < $f1
             self.code.append("c.lt.s $f0, $f1")
-            # Put 1.0 in $f0 if c.lt.s returned true
-            self.code.append("movt.s $f0, $f3, 1")
-            # Put 0.0 in $f0 if c.lt.s returned false
-            self.code.append("movf.s $f0, $f2, 1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
         else:
             # Check if $t0 < $t1
             self.code.append("slt $t0, $t0, $t1")
@@ -896,16 +898,23 @@ class MIPSVisitor:
             self.code.append("li.s $f2, 0.0")
             # Load 1 into $f3
             self.code.append("li.s $f3, 1.0")
-            # Check if $f1 <= $f0
+            # Check if $f1 <= $f0 aka $f0 > $f1
             self.code.append("c.le.s $f1, $f0")
-            # Put 0.0 in $f0 if c.le.s returned true
-            self.code.append("movt.s $f0, $f3, 0")
-            # Put 1.0 in $f0 if c.le.s returned false
-            self.code.append("movf.s $f0, $f2, 0")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
         else:
-            # Check if $t1 < $t0
-            self.code.append("slt $t0, $t1, $t0")
-
+            # Check if $t0 < $t1
+            self.code.append("slt $t2, $t0, $t1")
+            # Check if $t0 == $t1
+            self.code.append("seq $t3, $t0, $t1")
+            # Check if $t2 or $t3 is true
+            self.code.append("or $t0, $t2, $t3")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
@@ -930,25 +939,53 @@ class MIPSVisitor:
             self.code.append("li.s $f3, 1.0")
             # Check if $f0 == $f1
             self.code.append("c.eq.s $f0, $f1")
-            # Put 1.0 in $f0 if c.eq.s returned true
-            self.code.append("movt.s $f0, $f3, 1")
-            # Put 0.0 in $f0 if c.eq.s returned false
-            self.code.append("movf.s $f0, $f2, 1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
         else:
-            # Check if $t0 is 0
-            self.code.append("slt $t2, $t0, $zero")
-            self.code.append("slt $t3, $zero, $t0")
-            # 0 if $t0 is 0
+            # Check if $t0 == $t1
+            self.code.append("seq $t0, $t0, $t1")
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Greater than
+        if type1 == 'float' or type2 == 'float':
+            # Load 0 into $f2
+            self.code.append("li.s $f2, 0.0")
+            # Load 1 into $f3
+            self.code.append("li.s $f3, 1.0")
+            # Check if $f1 <= $f0 aka $f0 > $f1
+            self.code.append("c.le.s $f1, $f0")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
+        else:
+            # Check if $t0 < $t1
+            self.code.append("slt $t2, $t0, $t1")
+            # Check if $t0 == $t1
+            self.code.append("seq $t3, $t0, $t1")
+            # Check if $t2 or $t3 is true
             self.code.append("or $t0, $t2, $t3")
-
-            # Check if $t1 is 0
-            self.code.append("slt $t2, $t1, $zero")
-            self.code.append("slt $t3, $zero, $t1")
-            # 0 if $t1 is 0
-            self.code.append("or $t1, $t2, $t3")
-
-            # And
-            self.code.append("and $t0, $t0, $t1")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
