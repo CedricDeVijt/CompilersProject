@@ -287,8 +287,13 @@ class MIPSVisitor:
 
     def visit_ArrayDefinitionNode(self, node):
         var_type = node.type.value
+        # create and save symbol
         symbol = Symbol(node.lvalue.value, var_type, 'array')
         symbol.memAddress = self.variableAddress
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
+
+        # load values in array to memory
         for i in node.rvalue.array:
             if var_type == 'float':
                 # Store 0 in variable
@@ -301,10 +306,9 @@ class MIPSVisitor:
                 # Store value in memory
                 self.code.append(f"li $t0, {self.visit(i)}")
                 # Save to memory
-                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
                 # Increment address by 4 bytes
                 self.variableAddress += 4
-
 
     def visit_AssignmentNode(self, node):
         if isinstance(node.lvalue, IdentifierNode):
@@ -386,8 +390,10 @@ class MIPSVisitor:
 
     def visit_ArrayIdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
+        address = symbol.memAddress
+        address += self.visit((node.indices[0])) * 4
         if symbol is not None:
-            return [symbol.memAddress]
+            return address
 
     def visit_PrintfNode(self, node):
         args = []
@@ -448,7 +454,7 @@ class MIPSVisitor:
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append("syscall")
                 self.printf_string += 1
-            elif isinstance(self.visit(arg), int):
+            elif isinstance(self.visit(arg), int) and not isinstance(arg, ArrayIdentifierNode):
                 self.code.append("li $v0, 1")
                 self.code.append(f"li $a0, {self.visit(arg)}")
                 self.code.append("syscall")
@@ -457,7 +463,29 @@ class MIPSVisitor:
                 self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', self.visit(arg)))[0])}")
                 self.code.append("mtc1 $t0, $f12")
                 self.code.append("syscall")
-
+            elif isinstance(arg, ArrayIdentifierNode):
+                symbol = self.scope.lookup(name=arg.value)
+                var_type = symbol.type
+                memAddress = self.visit(arg)
+                if var_type == 'char' or var_type == 'int':
+                    # Load from memory
+                    self.code.append(f"lw $t0, -{memAddress}($gp)")
+                    # Put in $a0
+                    self.code.append(f"move $a0, $t0")
+                    if var_type == 'char':
+                        # Print string
+                        self.code.append("li $v0, 11")
+                    else:
+                        self.code.append("li $v0, 1")
+                    self.code.append("syscall")
+                elif var_type == 'float':
+                    # Load from memory
+                    self.code.append(f"l.s $f0, -{memAddress}($gp)")
+                    # Move float to $f12
+                    self.code.append("mov.s $f12, $f0")
+                    # Print float
+                    self.code.append("li $v0, 2")
+                    self.code.append("syscall")
 
     def visit_PreFixNode(self, node):
         symbol = self.scope.lookup(name=node.value.value)
