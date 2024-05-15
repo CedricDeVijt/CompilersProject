@@ -47,6 +47,16 @@ def generate_ast(path, visitor, constant_fold=True):
     symbolTable = genAST.scope
     errors = genAST.errors
 
+    # Print Errors
+    err_str = ''
+    if not genAST.has_main:
+        err_str += "Error: No main function found!"
+    for error in errors:
+        err_str += f"\nError at {error}"
+    if err_str != '':
+        print(err_str)
+        return None, None, None
+
     # Print Warnings
     warnings = genAST.warnings
     for warning in warnings:
@@ -59,15 +69,6 @@ def generate_ast(path, visitor, constant_fold=True):
     # remove forward declarations
     ast.remove_forward_declarations()
 
-    # Print Errors
-    err_str = ''
-    if not genAST.has_main:
-        err_str += "Error: No main function found!"
-    for error in errors:
-        err_str += f"\nError at {error}"
-    if err_str != '':
-        print(err_str)
-        return None, None, None
     return ast, symbolTable, stdio_found
 
 

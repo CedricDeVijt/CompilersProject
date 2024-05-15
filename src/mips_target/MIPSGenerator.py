@@ -1088,6 +1088,66 @@ class MIPSVisitor:
     def visit_CommentNode(self, node):
         self.code.append(f"#{node.value[2:]}")
 
+
+    def visit_SLNode(self, node):
+        # Perform the shift operation
+        self.code.append("sll $t0, $t0, $t1")
+
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+
+        # Increment temporary address
+        self.temporaryAddress += 4
+
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_SRNode(self, node):
+        # Perform the shift operation
+        self.code.append("sra $t0, $t0, $t1")
+
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+
+        # Increment temporary address
+        self.temporaryAddress += 4
+
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_ExplicitConversionNode(self, node):
+        # Visit the child node
+        child = self.visit(node.rvalue)
+
+        # Load from memory
+        self.code.append(f"lw $t0, -{child[0]}($gp)")
+
+        # Convert to float
+        if node.type == 'float':
+            # Convert to float
+            self.code.append("mtc1 $t0, $f0")
+            self.code.append("cvt.s.w $f0, $f0")
+        # Convert to int
+        elif node.type == 'int':
+            # Convert to int
+            self.code.append("cvt.w.s $f0, $f0")
+            self.code.append("mfc1 $t0, $f0")
+        # Convert to char
+        elif node.type == 'char':
+            # Check if the value in $t0 can be converted to a char
+            self.code.append("sltiu $t1, $t0, 256")  # set $t1 to 1 if $t0 < 256, else 0
+            self.code.append("andi $t0, $t0, 0xFF")  # else, perform the conversion
+
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+
+        # Increment temporary address
+        self.temporaryAddress += 4
+
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+
     @staticmethod
     def visit_IntNode(node):
         return int(node.value)
