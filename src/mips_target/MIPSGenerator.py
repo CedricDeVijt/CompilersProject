@@ -283,24 +283,25 @@ class MIPSVisitor:
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
-    def visit_ArrayNode(self, node):
-        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+    def visit_ArrayDefinitionNode(self, node):
+        var_type = node.type.value
         symbol = Symbol(node.lvalue.value, var_type, 'array')
         symbol.memAddress = self.variableAddress
-        if var_type == 'float':
-            # Store 0 in variable
-            self.code.append(f"li.s $f0, 0.0")
-            # Save to memory
-            self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-            # Increment address by 4 bytes
-            self.variableAddress += 4
-        else:
-            # Store 0 in variable
-            self.code.append(f"li $t0, 0")
-            # Save to memory
-            self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
-            # Increment address by 4 bytes
-            self.variableAddress += 4
+        for i in node.rvalue.array:
+            if var_type == 'float':
+                # Store 0 in variable
+                self.code.append(f"li.s $f0, 0.0")
+                # Save to memory
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+            else:
+                # Store value in memory
+                self.code.append(f"li $t0, {self.visit(i)}")
+                # Save to memory
+                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
 
 
     def visit_AssignmentNode(self, node):
@@ -381,6 +382,11 @@ class MIPSVisitor:
         if symbol is not None:
             return [symbol.memAddress]
 
+    def visit_ArrayIdentifierNode(self, node):
+        symbol = self.scope.lookup(name=node.value)
+        if symbol is not None:
+            return [symbol.memAddress]
+
     def visit_PrintfNode(self, node):
         args = []
         specifiers = node.specifier
@@ -449,20 +455,7 @@ class MIPSVisitor:
                 self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', self.visit(arg)))[0])}")
                 self.code.append("mtc1 $t0, $f12")
                 self.code.append("syscall")
-            else:
-                register = self.visit(arg)[0]
-                if self.get_highest_type(arg) == 'char':
-                    self.code.append(f"li $v0, 11")
-                    self.code.append(f"move $a0, {register}")
-                    self.code.append(f"syscall")
-                elif self.get_highest_type(arg) == 'int':
-                    self.code.append(f"li $v0, 1")
-                    self.code.append(f"move $a0, {register}")
-                    self.code.append(f"syscall")
-                elif self.get_highest_type(arg) == 'float':
-                    self.code.append(f"li $v0, 2")
-                    self.code.append(f"mov.s $f12, {register}")
-                    self.code.append(f"syscall")
+
 
     def visit_PreFixNode(self, node):
         symbol = self.scope.lookup(name=node.value.value)
@@ -487,37 +480,6 @@ class MIPSVisitor:
 
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
-
-    # def visit_ScanfNode(self, node):
-    #    ...
-    #
-    # def visit_FunctionCallNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayDefinitionNode(self, node):
-    #    ...
-    #
-    # def visit_StructDefinitionNode(self, node):
-    #    ...
-    #
-    # def visit_DeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayDeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_StructDeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayAssignmentNode(self, node):
-    #    ...
-    #
-    # def visit_StructAssignmentNode(self, node):
-    #    ...
-    #
-
-    # def visit_StringNode(self, node):
-    #    ...
 
     def visit_BinaryOp(self, node, visitor):
         type1 = self.get_highest_type(node.children[0])
