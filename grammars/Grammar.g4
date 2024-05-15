@@ -151,7 +151,7 @@ pointer: type '*'+;
 
 deref: '*'+ identifier;
 
-addr: '&'+ identifier;
+addr: '&'+ (identifier | arrayElement);
 
 enumDeclaration: 'enum'  IDENTIFIER '{' IDENTIFIER (','  IDENTIFIER )*'}';
 

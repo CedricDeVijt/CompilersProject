@@ -1948,7 +1948,7 @@ class ASTGenerator(Visitor):
 
         original = f"{identifier}["
         for size in array_sizes:
-            original += f"{size}]"
+            original += f"{size.value}]"
         return ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=original, indices=array_sizes)
 
     def visitStructDefinition(self, ctx):
