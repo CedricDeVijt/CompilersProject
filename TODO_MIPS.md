@@ -77,9 +77,9 @@
 
 - Functionality
   - [x] (**mandatory**) Arrays
-  - [ ] (**mandatory**) Multi-dimensional arrays
-  - [ ] (**mandatory**) Assignment of complete arrays or array rows
-  - [ ] (**mandatory**) Array initialization
+  - [x] (**mandatory**) Multi-dimensional arrays
+  - [x] (**mandatory**) Assignment of complete arrays or array rows
+  - [x] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays
   - [ ] (**mandatory**) C-strings
   - [x] (**mandatory**) Including stdio.h

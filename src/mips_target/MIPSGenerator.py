@@ -211,6 +211,18 @@ class MIPSVisitor:
             # Increment address by 4 bytes
             self.variableAddress += 4
 
+    def visit_ArrayDeclarationNode(self, node):
+        var_type = node.type.value
+        # create and save symbol
+        symbol = Symbol(node.lvalue.value, var_type, 'array')
+        symbol.memAddress = self.variableAddress
+        symbol.dimensions = node.size
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
+
+        # create zero array
+        self.assignZeroArray(self.create_multi_dimensional_list(node.size), var_type)
+
     def visit_DefinitionNode(self, node):
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         symbol = Symbol(node.lvalue.value, node.type, 'variable')
@@ -310,6 +322,34 @@ class MIPSVisitor:
                     self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
                     # Increment address by 4 bytes
                     self.variableAddress += 4
+
+    def create_multi_dimensional_list(self, dimensions):
+        if not dimensions:
+            return 0
+        else:
+            return [self.create_multi_dimensional_list(dimensions[1:]) for _ in range(dimensions[0])]
+
+    def assignZeroArray(self, dimensions, var_type):
+        # recursive method to assign array elements to memory
+        if not isinstance(dimensions[0], list):
+            for i in dimensions:
+                if var_type == 'float':
+                    # Store 0 in variable
+                    self.code.append(f"li.s $f0, 0.0")
+                    # Save to memory
+                    self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                    # Increment address by 4 bytes
+                    self.variableAddress += 4
+                else:
+                    # Store 0 in variable
+                    self.code.append(f"li $t0, 0")
+                    # Save to memory
+                    self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                    # Increment address by 4 bytes
+                    self.variableAddress += 4
+        else:
+            for i in dimensions:
+                self.assignZeroArray(i, var_type)
 
     def visit_ArrayDefinitionNode(self, node):
         var_type = node.type.value
