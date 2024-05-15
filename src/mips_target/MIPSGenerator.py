@@ -304,7 +304,10 @@ class MIPSVisitor:
                 self.variableAddress += 4
             else:
                 # Store value in memory
-                self.code.append(f"li $t0, {self.visit(i)}")
+                if var_type == 'char':
+                    self.code.append(f"li $t0, {ord(self.visit(i))}")
+                else:
+                    self.code.append(f"li $t0, {self.visit(i)}")
                 # Save to memory
                 self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
                 # Increment address by 4 bytes
