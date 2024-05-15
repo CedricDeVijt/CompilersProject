@@ -847,9 +847,9 @@ class MIPSVisitor:
             self.code.append("li.s $f3, 1.0")
             # Check if $f0 < $f1
             self.code.append("c.lt.s $f0, $f1")
-            # Put 0.0 in $f0 if c.lt.s returned true
+            # Put 1.0 in $f0 if c.lt.s returned true
             self.code.append("movt.s $f0, $f3, 1")
-            # Put 1.0 in $f0 if c.lt.s returned false
+            # Put 0.0 in $f0 if c.lt.s returned false
             self.code.append("movf.s $f0, $f2, 1")
         else:
             # Check if $t0 < $t1
