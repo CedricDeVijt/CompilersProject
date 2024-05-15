@@ -740,7 +740,7 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # And
+        # Or
         if type1 == 'float' or type2 == 'float':
             # Load 0 into $f2
             self.code.append("li.s $f2, 0.0")
@@ -802,7 +802,7 @@ class MIPSVisitor:
     def visit_LogicalNotNode(self, node):
         type1 = self.get_highest_type(node.children[0])
 
-        # And
+        # Not
         if type1 == 'float':
             # Load 0 into $f1
             self.code.append("li.s $f1, 0.0")
@@ -839,7 +839,7 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # And
+        # Less than
         if type1 == 'float' or type2 == 'float':
             # Load 0 into $f2
             self.code.append("li.s $f2, 0.0")
@@ -870,7 +870,7 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # And
+        # Greater than
         if type1 == 'float' or type2 == 'float':
             # Load 0 into $f2
             self.code.append("li.s $f2, 0.0")
