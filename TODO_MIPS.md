@@ -20,7 +20,7 @@
 - [ ] (**mandatory**) Pointers
 - [x] (**mandatory**) Constants
 - [x] (**mandatory**) Implicit conversions warnings
-- [ ] (**mandatory**) Explicit conversions
+- [x] (**mandatory**) Explicit conversions
 - [ ] (**mandatory**) Pointer arithmetic
 - [ ] (**mandatory**) Increment/Decrement Operations
 - [x] (**optional**) Const casting
@@ -40,14 +40,14 @@
 - [ ] (**mandatory**) Conditional statements
 - [ ] (**optional**) Else if statements
 - [ ] (**mandatory**) Loops
-- [ ] (**mandatory**) Anonymous scopes
+- [x] (**mandatory**) Anonymous scopes
 - [ ] (**mandatory**) Switch statements
 - [ ] (**mandatory**) Enumerations
 
 # project 5
 
 - Functionality
-  - [ ] (**mandatory**) Function scopes
+  - [x] (**mandatory**) Function scopes
   - [x] (**mandatory**) Local and global variables
   - [ ] (**mandatory**) Functions
     - [ ] Defining functions
