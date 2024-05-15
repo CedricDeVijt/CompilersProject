@@ -108,6 +108,8 @@ class MIPSVisitor:
             identifier = identifier.value
         if isinstance(identifier, ArrayIdentifierNode):
             identifier = identifier.value
+        if isinstance(identifier, DerefNode):
+            identifier = identifier.identifier.value
         symbols = self.scope.lookup(identifier)
         if symbols:
             if isinstance(symbols.type, str):
@@ -122,7 +124,7 @@ class MIPSVisitor:
                 return var_type
             if symbols.symbol_type == 'array' and symbols.type.value == 'char':
                 return 'string'
-            return self.get_highest_type(symbols.type[0])
+            return self.get_highest_type(symbols.type[len(symbols.type) - 1])
 
     def handle_node_type(self, rval):
         if isinstance(rval, PointerNode):
@@ -540,10 +542,8 @@ class MIPSVisitor:
     def visit_AddrNode(self, node):
         symbol = self.scope.lookup(name=node.value.value)
         if symbol is not None:
-            # Load memAddress to register
-            self.code.append(f"li $t0, {symbol.memAddress}")
-            # Subtract $t0 from $gp
-            self.code.append("sub $t0, $gp, $t0")
+            # Subtract memAddress from $gp
+            self.code.append(f"sub $t0, $gp, {symbol.memAddress}")
             # Save to memory
             self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
             # Increment self.temporaryAddress
@@ -553,12 +553,10 @@ class MIPSVisitor:
     def visit_DerefNode(self, node):
         symbol = self.scope.lookup(name=node.identifier.value)
         if symbol is not None:
-            # Load memAddress to register
-            self.code.append(f"li $t0, {symbol.memAddress}")
-            # Subtract $t0 from $gp
-            self.code.append("sub $t0, $gp, $t0")
+            # Subtract memAddress from $gp
+            self.code.append(f"sub $t0, $gp, {symbol.memAddress}")
             # Load from address
-            self.code.append(f"lw $t0, -{symbol.memAddress}($gp)")
+            self.code.append(f"lw $t0, 0($t0)")
             for i in range(0, int(node.value)):
                 self.code.append(f"lw $t0, 0($t0)")
             # Store in memory
@@ -603,8 +601,9 @@ class MIPSVisitor:
         i = 0
         while i < len(specifiers):
             if specifiers[i] == '%':
-                args.append(specifiers[:i])
-                specifiers = specifiers[i:]
+                if len(specifiers[:i]) != 0:
+                    args.append(specifiers[:i])
+                    specifiers = specifiers[i:]
                 i = 0
                 nextChar = specifiers[1]
                 if nextChar == '%':
@@ -616,7 +615,8 @@ class MIPSVisitor:
                 i = 0
                 continue
             if len(specifiers) == i + 1:
-                args.append(specifiers)
+                if len(specifiers) != 0:
+                    args.append(specifiers)
                 break
             i += 1
         for arg in args:
@@ -626,8 +626,10 @@ class MIPSVisitor:
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append(f"syscall")
                 self.printf_string += 1
-            elif isinstance(self.visit(arg), list):
-                memAddress = self.visit(arg)[0]
+                continue
+            visited_arg = self.visit(arg)
+            if isinstance(visited_arg, list):
+                memAddress = visited_arg[0]
                 if self.get_highest_type(arg) == 'char' or self.get_highest_type(arg) == 'int':
                     # Load from memory
                     self.code.append(f"lw $t0, -{memAddress}($gp)")
@@ -648,25 +650,25 @@ class MIPSVisitor:
                     # Print float
                     self.code.append("li $v0, 2")
                     self.code.append("syscall")
-            elif isinstance(self.visit(arg), str):
-                self.data.append(f"printf_string_{self.printf_string}: .asciiz {self.visit(arg)}")
+            elif isinstance(visited_arg, str):
+                self.data.append(f"printf_string_{self.printf_string}: .asciiz {visited_arg}")
                 self.code.append("li $v0, 4")
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append("syscall")
                 self.printf_string += 1
-            elif isinstance(self.visit(arg), int) and not isinstance(arg, ArrayIdentifierNode):
+            elif isinstance(visited_arg, int) and not isinstance(arg, ArrayIdentifierNode):
                 self.code.append("li $v0, 1")
-                self.code.append(f"li $a0, {self.visit(arg)}")
+                self.code.append(f"li $a0, {visited_arg}")
                 self.code.append("syscall")
-            elif isinstance(self.visit(arg), float):
+            elif isinstance(visited_arg, float):
                 self.code.append("li $v0, 2")
-                self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', self.visit(arg)))[0])}")
+                self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', visited_arg))[0])}")
                 self.code.append("mtc1 $t0, $f12")
                 self.code.append("syscall")
             elif isinstance(arg, ArrayIdentifierNode):
                 symbol = self.scope.lookup(name=arg.value)
                 var_type = symbol.type
-                memAddress = self.visit(arg)
+                memAddress = visited_arg
                 if var_type == 'char' or var_type == 'int':
                     # Load from memory
                     self.code.append(f"lw $t0, -{memAddress}($gp)")
@@ -688,19 +690,95 @@ class MIPSVisitor:
                     self.code.append("syscall")
 
     def visit_PreFixNode(self, node):
-        symbol = self.scope.lookup(name=node.value.value)
-        if node.op == 'inc':
-            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, 1")
-        elif node.op == 'dec':
-            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, -1")
+        if isinstance(node.value, DerefNode):
+            address = self.return_DerefNodeAddress(node.value)[0]
+        else:
+            address = self.visit(node.value)[0]
+        self.code.append("# TEST")
+        print(address)
+        value = 1
+        if node.op == 'dec':
+            value = -1
+        # If pointer or not a float
+        if len(self.get_pointer_size(node.value)) != 0 or self.get_highest_type(node.value) != 'float':
+            # Load value
+            self.code.append(f"lw $t0, -{address}($gp)")
+            if len(self.get_pointer_size(node.value)) != 0:
+                # Multiply by 4 so we inc/dec by 4 bytes since it is a pointer
+                # Also multiply by -1 since we save from high to low
+                value *= -4
+            if isinstance(node.value, DerefNode):
+                # Save address
+                self.code.append("move $t1, $t0")
+                # Load value
+                self.code.append("lw $t0, 0($t0)")
+            # Add value
+            self.code.append(f"add $t0, $t0, {value}")
+            # Save to memory
+            if isinstance(node.value, DerefNode):
+                self.code.append("sw $t0, 0($t1)")
+                self.code.append(f"sw $t0, -{address}($gp)")
+            else:
+                self.code.append(f"sw $t0, -{address}($gp)")
+            # Return
+            return [address]
+        # Load value
+        self.code.append(f"l.s $f0, -{address}($gp)")
+        # Add value
+        self.code.append(f"fadd $f0, $f0, {value}")
+        # Save to memory
+        self.code.append(f"s.s $f0, -{address}($gp)")
+        # Return
+        return [address]
 
     def visit_PostFixNode(self, node):
-        symbol = self.scope.lookup(name=node.value.value)
-        # fix to post
-        if node.op == 'inc':
-            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, 1")
-        elif node.op == 'dec':
-            self.code.append(f"addi $t{symbol.int_reg}, $t{symbol.int_reg}, -1")
+        if isinstance(node.value, DerefNode):
+            address = self.return_DerefNodeAddress(node.value)[0]
+        else:
+            address = self.visit(node.value)[0]
+        self.code.append("# TEST")
+        print(address)
+        value = 1
+        if node.op == 'dec':
+            value = -1
+        # If pointer or not a float
+        if len(self.get_pointer_size(node.value)) != 0 or self.get_highest_type(node.value) != 'float':
+            # Load value
+            self.code.append(f"lw $t0, -{address}($gp)")
+            if len(self.get_pointer_size(node.value)) != 0:
+                # Multiply by 4 so we inc/dec by 4 bytes since it is a pointer
+                # Also multiply by -1 since we save from high to low
+                value *= -4
+            if isinstance(node.value, DerefNode):
+                # Save address
+                self.code.append("move $t1, $t0")
+                # Load value
+                self.code.append("lw $t0, 0($t0)")
+            # Save to temporary memory
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            # Increment temporary memory
+            self.temporaryAddress += 4
+            # Add value
+            self.code.append(f"add $t0, $t0, {value}")
+            # Save to memory
+            if isinstance(node.value, DerefNode):
+                self.code.append("sw $t0, 0($t1)")
+            else:
+                self.code.append(f"sw $t0, -{address}($gp)")
+            # Return
+            return [self.temporaryAddress - 4]
+        # Load value
+        self.code.append(f"l.s $f0, -{address}($gp)")
+        # Save to temporary memory
+        self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        # Increment temporary memory
+        self.temporaryAddress += 4
+        # Add value
+        self.code.append(f"fadd $f0, $f0, {value}")
+        # Save to memory
+        self.code.append(f"s.s $f0, -{address}($gp)")
+        # Return
+        return [self.temporaryAddress - 4]
 
     def visit_ScopeNode(self, node):
         self.scope.open_scope()
