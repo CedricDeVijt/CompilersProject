@@ -27,8 +27,8 @@
 
 # project 3
 
-- [ ] (**mandatory**) Single line comments
-- [ ] (**mandatory**) Multi line comments
+- [x] (**mandatory**) Single line comments
+- [x] (**mandatory**) Multi line comments
 - [ ] (**mandatory**) Output printf
 - [ ] (**mandatory**) Typedef support
 - [ ] (**mandatory**) LLVM definitions
