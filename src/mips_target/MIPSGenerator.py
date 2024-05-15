@@ -32,6 +32,8 @@ class MIPSVisitor:
         _visitor = getattr(self, method_name, self.generic_visit)
         if node.__class__.__name__ in binary_ops:
             return self.visit_BinaryOp(node, _visitor)
+        if node.__class__.__name__ in unary_ops:
+            return self.visit_UnaryOp(node, _visitor)
         return _visitor(node)
 
     def generic_visit(self, node):
@@ -529,6 +531,27 @@ class MIPSVisitor:
 
         return visitor(node)
 
+    def visit_UnaryOp(self, node, visitor):
+        type1 = self.get_highest_type(node.children[0])
+        child = self.visit(node.children[0])
+
+        # Left
+        if isinstance(child, list):
+            address = child[0]
+            if type1 == 'char' or type1 == 'int':
+                # Load the value as an int
+                self.code.append(f"lw $t0, -{address}($gp)")
+        elif isinstance(child, str) or isinstance(child, int):
+            if isinstance(child, str):
+                child = ord(child)
+            # Load the value as an int
+            self.code.append(f"li $t0, {child}")
+        elif isinstance(child, float):
+            # Load the value as a float
+            self.code.append(f"li.s $f0, {child}")
+
+        return visitor(node)
+
     def visit_PlusNode(self, node):
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
@@ -617,9 +640,6 @@ class MIPSVisitor:
         return [self.temporaryAddress - 4]
 
     def visit_BitwiseAndNode(self, node):
-        type1 = self.get_highest_type(node.children[0])
-        type2 = self.get_highest_type(node.children[1])
-
         # And
         self.code.append("and $t0, $t0, $t1")
         # Save to temporary address
@@ -630,9 +650,6 @@ class MIPSVisitor:
         return [self.temporaryAddress - 4]
 
     def visit_BitwiseOrNode(self, node):
-        type1 = self.get_highest_type(node.children[0])
-        type2 = self.get_highest_type(node.children[1])
-
         # Or
         self.code.append("or $t0, $t0, $t1")
         # Save to temporary address
@@ -643,11 +660,18 @@ class MIPSVisitor:
         return [self.temporaryAddress - 4]
 
     def visit_BitwiseXorNode(self, node):
-        type1 = self.get_highest_type(node.children[0])
-        type2 = self.get_highest_type(node.children[1])
-
         # Xor
         self.code.append("xor $t0, $t0, $t1")
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_BitwiseNotNode(self, node):
+        # Not
+        self.code.append("not $t0, $t0")
         # Save to temporary address
         self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
         # Increment temporary address
