@@ -283,6 +283,27 @@ class MIPSVisitor:
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
+    def visit_ArrayDefinitionNode(self, node):
+        var_type = node.type.value
+        symbol = Symbol(node.lvalue.value, var_type, 'array')
+        symbol.memAddress = self.variableAddress
+        for i in node.rvalue.array:
+            if var_type == 'float':
+                # Store 0 in variable
+                self.code.append(f"li.s $f0, 0.0")
+                # Save to memory
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+            else:
+                # Store value in memory
+                self.code.append(f"li $t0, {self.visit(i)}")
+                # Save to memory
+                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+
+
     def visit_AssignmentNode(self, node):
         if isinstance(node.lvalue, IdentifierNode):
             symbol = self.scope.lookup(name=node.lvalue.value)
@@ -361,6 +382,11 @@ class MIPSVisitor:
         if symbol is not None:
             return [symbol.memAddress]
 
+    def visit_ArrayIdentifierNode(self, node):
+        symbol = self.scope.lookup(name=node.value)
+        if symbol is not None:
+            return [symbol.memAddress]
+
     def visit_PrintfNode(self, node):
         args = []
         specifiers = node.specifier
@@ -429,20 +455,7 @@ class MIPSVisitor:
                 self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', self.visit(arg)))[0])}")
                 self.code.append("mtc1 $t0, $f12")
                 self.code.append("syscall")
-            else:
-                register = self.visit(arg)[0]
-                if self.get_highest_type(arg) == 'char':
-                    self.code.append(f"li $v0, 11")
-                    self.code.append(f"move $a0, {register}")
-                    self.code.append(f"syscall")
-                elif self.get_highest_type(arg) == 'int':
-                    self.code.append(f"li $v0, 1")
-                    self.code.append(f"move $a0, {register}")
-                    self.code.append(f"syscall")
-                elif self.get_highest_type(arg) == 'float':
-                    self.code.append(f"li $v0, 2")
-                    self.code.append(f"mov.s $f12, {register}")
-                    self.code.append(f"syscall")
+
 
     def visit_PreFixNode(self, node):
         symbol = self.scope.lookup(name=node.value.value)
@@ -467,37 +480,6 @@ class MIPSVisitor:
 
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
-
-    # def visit_ScanfNode(self, node):
-    #    ...
-    #
-    # def visit_FunctionCallNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayDefinitionNode(self, node):
-    #    ...
-    #
-    # def visit_StructDefinitionNode(self, node):
-    #    ...
-    #
-    # def visit_DeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayDeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_StructDeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayAssignmentNode(self, node):
-    #    ...
-    #
-    # def visit_StructAssignmentNode(self, node):
-    #    ...
-    #
-
-    # def visit_StringNode(self, node):
-    #    ...
 
     def visit_BinaryOp(self, node, visitor):
         type1 = self.get_highest_type(node.children[0])
@@ -740,7 +722,7 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # And
+        # Or
         if type1 == 'float' or type2 == 'float':
             # Load 0 into $f2
             self.code.append("li.s $f2, 0.0")
@@ -802,7 +784,7 @@ class MIPSVisitor:
     def visit_LogicalNotNode(self, node):
         type1 = self.get_highest_type(node.children[0])
 
-        # And
+        # Not
         if type1 == 'float':
             # Load 0 into $f1
             self.code.append("li.s $f1, 0.0")
@@ -839,7 +821,7 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # And
+        # Less than
         if type1 == 'float' or type2 == 'float':
             # Load 0 into $f2
             self.code.append("li.s $f2, 0.0")
@@ -847,9 +829,9 @@ class MIPSVisitor:
             self.code.append("li.s $f3, 1.0")
             # Check if $f0 < $f1
             self.code.append("c.lt.s $f0, $f1")
-            # Put 0.0 in $f0 if c.lt.s returned true
+            # Put 1.0 in $f0 if c.lt.s returned true
             self.code.append("movt.s $f0, $f3, 1")
-            # Put 1.0 in $f0 if c.lt.s returned false
+            # Put 0.0 in $f0 if c.lt.s returned false
             self.code.append("movf.s $f0, $f2, 1")
         else:
             # Check if $t0 < $t1
@@ -870,7 +852,7 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # And
+        # Greater than
         if type1 == 'float' or type2 == 'float':
             # Load 0 into $f2
             self.code.append("li.s $f2, 0.0")
