@@ -297,9 +297,9 @@ class MIPSVisitor:
         for i in node.rvalue.array:
             if var_type == 'float':
                 # Store 0 in variable
-                self.code.append(f"li.s $f0, 0.0")
+                self.code.append(f"li.s $f0, {self.visit(i)}")
                 # Save to memory
-                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
                 # Increment address by 4 bytes
                 self.variableAddress += 4
             else:
