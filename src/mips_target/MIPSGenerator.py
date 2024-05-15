@@ -713,23 +713,27 @@ class MIPSVisitor:
 
         # And
         if type1 == 'float' or type2 == 'float':
-            # Load 0 into $f2
-            self.code.append("li.s $f2, 0.0")
-            # Load 1 into $f3
-            self.code.append("li.s $f3, 1.0")
             # Check if $f0 == 0
             self.code.append("c.eq.s $f0, $f2")
-            # Put 0.0 in $f4 if c.eq.s returned true
-            self.code.append("movt.s $f4, $f2, 1")
-            # Put 1.0 in $f4 if c.eq.s returned false
-            self.code.append("movf.s $f4, $f3, 1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
 
             # Check if $f1 == 0
             self.code.append("c.eq.s $f1, $f2")
-            # Put 0.0 in $f4 if c.eq.s returned true
-            self.code.append("movt.s $f5, $f2, 1")
-            # Put 1.0 in $f4 if c.eq.s returned false
-            self.code.append("movf.s $f5, $f3, 1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f1")
+            # Convert to float
+            self.code.append("cvt.s.w $f1, $f1")
 
             # Convert to integers
             self.code.append("cvt.w.s $f4, $f4")
@@ -776,23 +780,27 @@ class MIPSVisitor:
 
         # Or
         if type1 == 'float' or type2 == 'float':
-            # Load 0 into $f2
-            self.code.append("li.s $f2, 0.0")
-            # Load 1 into $f3
-            self.code.append("li.s $f3, 1.0")
             # Check if $f0 == 0
             self.code.append("c.eq.s $f0, $f2")
-            # Put 0.0 in $f4 if c.lt.s returned true
-            self.code.append("movt.s $f4, $f2, 1")
-            # Put 1.0 in $f4 if c.lt.s returned false
-            self.code.append("movf.s $f4, $f3, 1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
 
             # Check if $f1 == 0
             self.code.append("c.eq.s $f1, $f2")
-            # Put 0.0 in $f4 if c.lt.s returned true
-            self.code.append("movt.s $f5, $f2, 1")
-            # Put 1.0 in $f4 if c.lt.s returned false
-            self.code.append("movf.s $f5, $f3, 1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f1")
+            # Convert to float
+            self.code.append("cvt.s.w $f1, $f1")
 
             # Convert to integers
             self.code.append("cvt.w.s $f4, $f4")
@@ -838,25 +846,19 @@ class MIPSVisitor:
 
         # Not
         if type1 == 'float':
-            # Load 0 into $f1
-            self.code.append("li.s $f1, 0.0")
-            # Load 1 into $f2
-            self.code.append("li.s $f2, 1.0")
             # Check if $f0 == 0
             self.code.append("c.eq.s $f0, $f1")
-            # Put 0.0 in $f3 if c.lt.s returned true
-            self.code.append("movt.s $f3, $f1, 1")
-            # Put 1.0 in $f3 if c.lt.s returned false
-            self.code.append("movf.s $f3, $f2, 1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
         else:
-            # Check if $t0 is 0
-            self.code.append("slt $t1, $t0, $zero")
-            self.code.append("slt $t2, $zero, $t0")
-            # 0 if $t0 is 0
-            self.code.append("or $t0, $t1, $t2")
-
-            # And
-            self.code.append("and $t0, $t0, $t1")
+            # Check if $t0 == 0?
+            self.code.append("seq $t0, $t0, $zero")
 
         if type1 == 'float':
             # Save to temporary address
@@ -875,10 +877,6 @@ class MIPSVisitor:
 
         # Less than
         if type1 == 'float' or type2 == 'float':
-            # Load 0 into $f2
-            self.code.append("li.s $f2, 0.0")
-            # Load 1 into $f3
-            self.code.append("li.s $f3, 1.0")
             # Check if $f0 < $f1
             self.code.append("c.lt.s $f0, $f1")
             # Load FCCR into $t0
@@ -908,10 +906,6 @@ class MIPSVisitor:
 
         # Greater than
         if type1 == 'float' or type2 == 'float':
-            # Load 0 into $f2
-            self.code.append("li.s $f2, 0.0")
-            # Load 1 into $f3
-            self.code.append("li.s $f3, 1.0")
             # Check if $f1 <= $f0 aka $f0 > $f1
             self.code.append("c.le.s $f1, $f0")
             # Load FCCR into $t0
@@ -947,10 +941,6 @@ class MIPSVisitor:
 
         # Equals
         if type1 == 'float' or type2 == 'float':
-            # Load 0 into $f2
-            self.code.append("li.s $f2, 0.0")
-            # Load 1 into $f3
-            self.code.append("li.s $f3, 1.0")
             # Check if $f0 == $f1
             self.code.append("c.eq.s $f0, $f1")
             # Load FCCR into $t0
@@ -974,30 +964,25 @@ class MIPSVisitor:
         # Return temporary address
         return [self.temporaryAddress - 4]
 
+    def visit_NEQNode(self, node):
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # Greater than
+        # Equals
         if type1 == 'float' or type2 == 'float':
-            # Load 0 into $f2
-            self.code.append("li.s $f2, 0.0")
-            # Load 1 into $f3
-            self.code.append("li.s $f3, 1.0")
-            # Check if $f1 <= $f0 aka $f0 > $f1
-            self.code.append("c.le.s $f1, $f0")
+            # Check if $f0 == $f1
+            self.code.append("c.eq.s $f0, $f1")
             # Load FCCR into $t0
             self.code.append("cfc1 $t0, $25")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
             # Move to $f0
             self.code.append("mtc1 $t0, $f0")
             # Convert to float
             self.code.append("cvt.s.w $f0, $f0")
         else:
-            # Check if $t0 < $t1
-            self.code.append("slt $t2, $t0, $t1")
             # Check if $t0 == $t1
-            self.code.append("seq $t3, $t0, $t1")
-            # Check if $t2 or $t3 is true
-            self.code.append("or $t0, $t2, $t3")
+            self.code.append("seq $t0, $t0, $t1")
             # Negate $t0
             self.code.append("xori $t0, $t0, 1")
 
@@ -1011,43 +996,6 @@ class MIPSVisitor:
         self.temporaryAddress += 4
         # Return temporary address
         return [self.temporaryAddress - 4]
-
-    # def visit_LTEQNode(self, node):
-    #    ...
-
-    # def visit_GTEQNode(self, node):
-    #    ...
-
-    # def visit_EQNode(self, node):
-    #    ...
-
-    # def visit_NEQNode(self, node):
-    #    ...
-
-    # def visit_IdentifierNode(self, node):
-    #    ...
-
-    # def visit_AddrNode(self, node):
-    #    ...
-
-    # def visit_DerefNode(self, node):
-    #    ...
-
-    # def visit_ExplicitConversionNode(self, node):
-    #    ...
-
-    # def visit_TypedefNode(self, node):
-    #    pass
-
-    # def visit_IfStatementNode(self, node):
-    #    ...
-
-    # def visit_WhileLoopNode(self, node):
-    #    ...
-
-    # def visit_BreakNode(self, node):
-    #     ...
-
 
     def visit_CommentNode(self, node):
         self.code.append(f"#{node.value[2:]}")
