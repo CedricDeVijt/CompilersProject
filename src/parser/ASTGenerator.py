@@ -168,8 +168,8 @@ class ASTGenerator(Visitor):
             return self.lookup_and_get_type(rval.value)
         if isinstance(rval, StructMemberNode):
             return self.get_highest_type(rval.type)
-        type1 = self.get_highest_type(rval.children[0])
-        type2 = self.get_highest_type(rval.children[-1])
+        type1 = self.get_highest_type(rval.children[0]) if not isinstance(rval, ProgramNode) else 'char'
+        type2 = self.get_highest_type(rval.children[-1]) if not isinstance(rval, ProgramNode) else 'char'
         if 'float' in [type1, type2]:
             return 'float'
         elif 'int' in [type1, type2]:
@@ -605,7 +605,6 @@ class ASTGenerator(Visitor):
                     for item in child:
                         if isinstance(item, TypeNode):
                             if item.value != 'const':
-                                a = self.get_highest_type(item)
                                 item.value = self.get_highest_type(item)
                         children.append(item)
                         original += f"{item.original} "
