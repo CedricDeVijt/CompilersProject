@@ -806,11 +806,19 @@ class MIPSVisitor:
                     self.code.append("mtc1 $t0, $f0")
                     # Convert to float
                     self.code.append("cvt.s.w $f0, $f0")
+            else:
+                # Load the value as a float
+                self.code.append(f"l.s $f0, -{address}($gp)")
         elif isinstance(left, str) or isinstance(left, int):
             if isinstance(left, str):
                 left = ord(left)
             # Load the value as an int
             self.code.append(f"li $t0, {left}")
+            if type2 == 'float':
+                # Move to $f0
+                self.code.append("mtc1 $t0, $f0")
+                # Convert to float
+                self.code.append("cvt.s.w $f0, $f0")
         elif isinstance(left, float):
             # Load the value as a float
             self.code.append(f"li.s $f0, {left}")
@@ -826,11 +834,19 @@ class MIPSVisitor:
                     self.code.append("mtc1 $t1, $f1")
                     # Convert to float
                     self.code.append("cvt.s.w $f1, $f1")
+            else:
+                # Load the value as a float
+                self.code.append(f"l.s $f1 -{address}($gp)")
         elif isinstance(right, str) or isinstance(right, int):
             if isinstance(right, str):
                 right = ord(right)
             # Load the value as an int
             self.code.append(f"li $t1, {right}")
+            if type1 == 'float':
+                # Move to $f1
+                self.code.append("mtc1 $t1, $f1")
+                # Convert to float
+                self.code.append("cvt.s.w $f1, $f1")
         elif isinstance(right, float):
             # Load the value as a float
             self.code.append(f"li.s $f1, {right}")
@@ -1350,7 +1366,6 @@ class MIPSVisitor:
     def visit_CommentNode(self, node):
         self.code.append(f"#{node.value[2:]}")
 
-
     def visit_SLNode(self, node):
         # Perform the shift operation
         self.code.append("sll $t0, $t0, $t1")
@@ -1415,7 +1430,20 @@ class MIPSVisitor:
             self.code.append(f"li $t0, {node.condition.value}")
         else:
             condition = self.visit(node.condition)
-            self.code.append(f"lw $t0, -{condition[0]}($gp)")
+            if self.get_highest_type(node.condition) == 'float':
+                # Load into $f0
+                self.code.append(f"l.s $f0, -{condition[0]}($gp)")
+                # Load 0.0 into $f1
+                self.code.append("li.s $f1, 0.0")
+                # Check if $f0 == $f1
+                self.code.append("c.eq.s $f0, $f1")
+                # Load FCCR into $t0
+                self.code.append("cfc1 $t0, $25")
+                # Negate $t0
+                self.code.append("xori $t0, $t0, 1")
+            else:
+                # Load
+                self.code.append(f"lw $t0, -{condition[0]}($gp)")
 
         # Check if $t0 is true
         self.code.append(f"beq $t0, $zero, endif_{self.if_count}")
