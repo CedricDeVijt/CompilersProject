@@ -1028,6 +1028,34 @@ class MIPSVisitor:
     def visit_CommentNode(self, node):
         self.code.append(f"#{node.value[2:]}")
 
+
+    def visit_SLNode(self, node):
+        # Perform the shift operation
+        self.code.append("sll $t0, $t0, $t1")
+
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+
+        # Increment temporary address
+        self.temporaryAddress += 4
+
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_SRNode(self, node):
+        # Perform the shift operation
+        self.code.append("sra $t0, $t0, $t1")
+
+        # Save to temporary address
+        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+
+        # Increment temporary address
+        self.temporaryAddress += 4
+
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+
     @staticmethod
     def visit_IntNode(node):
         return int(node.value)
