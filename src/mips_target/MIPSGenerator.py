@@ -302,6 +302,7 @@ class MIPSVisitor:
             # Increment address by 4 bytes
             self.variableAddress += 4
 
+
     def visit_AssignmentNode(self, node):
         if isinstance(node.lvalue, IdentifierNode):
             symbol = self.scope.lookup(name=node.lvalue.value)
