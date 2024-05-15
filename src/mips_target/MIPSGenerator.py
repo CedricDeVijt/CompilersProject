@@ -52,8 +52,8 @@ class MIPSVisitor:
         elif isinstance(node, IdentifierNode):
             identifier = node.value
             if self.scope.lookup(identifier):
-                if isinstance(self.scope.lookup(identifier).type, PointerNode):
-                    size.append(int(self.scope.lookup(identifier).type.value))
+                if isinstance(self.scope.lookup(identifier).type[0], PointerNode):
+                    size.append(int(self.scope.lookup(identifier).type[0].value))
         elif isinstance(node, AddrNode):
             identifier = node.value.value
             if self.scope.lookup(identifier):
@@ -476,7 +476,12 @@ class MIPSVisitor:
                     self.variableAddress += 4
                 elif isinstance(rvalue, list):
                     address = rvalue[0]
-                    if var_type == 'char' or var_type == 'int':
+                    if len(self.get_pointer_size(node.rvalue)) != 0:
+                        # Put address in $t0
+                        self.code.append(f"sub $t0, $gp, {address}")
+                        # Save to memory
+                        self.code.append(f"sw, $t0, -{symbol.memAddress}($gp)")
+                    elif var_type == 'char' or var_type == 'int':
                         if self.get_highest_type(node.rvalue) == 'float':
                             # Load as float
                             self.code.append(f"l.s $f0, -{address}($gp)")
@@ -1349,7 +1354,6 @@ class MIPSVisitor:
 
         # Increment the if count
         self.if_count += 1
-
 
     @staticmethod
     def visit_IntNode(node):
