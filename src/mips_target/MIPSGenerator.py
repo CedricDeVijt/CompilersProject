@@ -382,6 +382,11 @@ class MIPSVisitor:
         if symbol is not None:
             return [symbol.memAddress]
 
+    def visit_ArrayIdentifierNode(self, node):
+        symbol = self.scope.lookup(name=node.value)
+        if symbol is not None:
+            return [symbol.memAddress]
+
     def visit_PrintfNode(self, node):
         args = []
         specifiers = node.specifier
@@ -450,20 +455,7 @@ class MIPSVisitor:
                 self.code.append(f"li $t0, {hex(struct.unpack('<I', struct.pack('<f', self.visit(arg)))[0])}")
                 self.code.append("mtc1 $t0, $f12")
                 self.code.append("syscall")
-            else:
-                register = self.visit(arg)[0]
-                if self.get_highest_type(arg) == 'char':
-                    self.code.append(f"li $v0, 11")
-                    self.code.append(f"move $a0, {register}")
-                    self.code.append(f"syscall")
-                elif self.get_highest_type(arg) == 'int':
-                    self.code.append(f"li $v0, 1")
-                    self.code.append(f"move $a0, {register}")
-                    self.code.append(f"syscall")
-                elif self.get_highest_type(arg) == 'float':
-                    self.code.append(f"li $v0, 2")
-                    self.code.append(f"mov.s $f12, {register}")
-                    self.code.append(f"syscall")
+
 
     def visit_PreFixNode(self, node):
         symbol = self.scope.lookup(name=node.value.value)
