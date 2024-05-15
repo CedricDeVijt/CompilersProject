@@ -22,6 +22,7 @@ class MIPSVisitor:
         self.structs = {}
         self.break_blocks = []
         self.continue_blocks = []
+        self.if_count = 0
 
     def __setattr__(self, name, value):
         if name == "variableAddress":
@@ -1284,6 +1285,30 @@ class MIPSVisitor:
 
         # Return temporary address
         return [self.temporaryAddress - 4]
+
+    def visit_IfStatementNode(self, node):
+        # Get the condition
+        if isinstance(node.condition, IntNode):
+            self.code.append(f"li $t0, {node.condition.value}")
+        else:
+            condition = self.visit(node.condition)
+            self.code.append(f"lw $t0, -{condition[0]}($gp)")
+
+        # Check if $t0 is true
+        self.code.append(f"beq $t0, $zero, endif_{self.if_count}")
+
+        # Visit the if block
+        for statement in node.body:
+            self.visit(statement)
+
+        # Jump to the end
+        self.code.append(f"j endif_{self.if_count}")
+
+        # End of the if block
+        self.code.append(f"endif_{self.if_count}:")
+
+        # Increment the if count
+        self.if_count += 1
 
 
     @staticmethod
