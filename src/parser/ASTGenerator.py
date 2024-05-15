@@ -730,6 +730,8 @@ class ASTGenerator(Visitor):
                     var_type = self.scope.lookup(identifier).type
                     if isinstance(var_type, PointerNode):
                         lval_ptr = var_type.value
+                        if isinstance(children[0], DerefNode):
+                            lval_ptr = str(int(lval_ptr) - int(children[0].value))
                     if len(rval_ptr) > 1:
                         self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid operands!")
                         return None
