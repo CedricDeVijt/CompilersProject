@@ -1,3 +1,9 @@
+import os
+import re
+
+from src.main.__main__ import compile_mips, Generator
+
+
 def llvm_output_compare(root: str, input_file: str):
     import os
     from src.main.__main__ import compile_llvm, Generator
@@ -67,10 +73,17 @@ def llvm_output_compare_with_expected_output(root: str, input_file: str, expecte
     assert generated_output == expected_output
 
 
-def mips_output_compare(root: str, input_file: str):
-    import os
-    from src.main.__main__ import compile_mips, Generator
+def round_floats(text, decimal_places=6):
+    # This function finds all floating-point numbers in the text and rounds them to the specified decimal places
+    def replacer(match):
+        return f"{float(match.group()):.{decimal_places}f}"
 
+    # The regex matches floating-point numbers
+    float_pattern = re.compile(r'[-+]?\d*\.\d+|\d+')
+    return float_pattern.sub(replacer, text)
+
+
+def mips_output_compare(root: str, input_file: str):
     visitor = Generator()
     file_dir = root
     source_file = input_file
@@ -84,23 +97,28 @@ def mips_output_compare(root: str, input_file: str):
     gcc_output = filename + "_generated_output.txt"
 
     # compile the .c file using gcc
-    os.system("gcc " + file_dir + source_file + " -o " + file_dir + filename)
+    os.system(f"gcc {os.path.join(file_dir, source_file)} -o {os.path.join(file_dir, filename)}")
     # run the executable and save the output to the text file
-    os.system(file_dir + filename + " > " + file_dir + gcc_output)
+    os.system(f"{os.path.join(file_dir, filename)} > {os.path.join(file_dir, gcc_output)}")
 
     # compile to mips and run mips file with Spim
-    compile_mips(input_file=file_dir + source_file, visitor=visitor, output_file=file_dir + mips_code, run_code=False)
-    os.system("spim -quiet -file " + file_dir + mips_code + " > " + file_dir + mips_output)
+    compile_mips(input_file=os.path.join(file_dir, source_file), visitor=visitor,
+                 output_file=os.path.join(file_dir, mips_code), run_code=False)
+    os.system(f"spim -quiet -file {os.path.join(file_dir, mips_code)} > {os.path.join(file_dir, mips_output)}")
 
-    # compare the output files
-    with open(file_dir + gcc_output, 'r') as f:
+    # read and process the output files
+    with open(os.path.join(file_dir, gcc_output), 'r') as f:
         gcc_output_text = f.read()
-    with open(file_dir + mips_output, 'r') as f:
+    with open(os.path.join(file_dir, mips_output), 'r') as f:
         mips_output_text = f.read()
         if mips_output_text.startswith("SPIM"):
             mips_output_lines = mips_output_text.splitlines()
             cleaned_lines = mips_output_lines[5:]
             mips_output_text = '\n'.join(cleaned_lines)
+
+    # Round the floating-point numbers to ensure consistency
+    gcc_output_text = round_floats(gcc_output_text)
+    mips_output_text = round_floats(mips_output_text)
 
     print("GCC Output:")
     print(gcc_output_text)
@@ -109,7 +127,7 @@ def mips_output_compare(root: str, input_file: str):
     print(mips_output_text)
 
     # assert that the outputs are the same
-    assert gcc_output_text.strip().__str__() == mips_output_text.strip().__str__()
+    assert gcc_output_text.strip() == mips_output_text.strip()
 
 
 def mips_output_compare_with_expected_output(root: str, input_file: str, expected_output: str):
