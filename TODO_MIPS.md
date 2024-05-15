@@ -37,11 +37,11 @@
 
 # project 4
 
-- [ ] (**mandatory**) Conditional statements
-- [ ] (**optional**) Else if statements
+- [x] (**mandatory**) Conditional statements
+- [x] (**optional**) Else if statements
 - [ ] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
-- [ ] (**mandatory**) Switch statements
+- [x] (**mandatory**) Switch statements
 - [ ] (**mandatory**) Enumerations
 
 # project 5
