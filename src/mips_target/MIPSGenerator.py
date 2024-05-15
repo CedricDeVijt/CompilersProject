@@ -968,7 +968,7 @@ class MIPSVisitor:
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
 
-        # Equals
+        # Not equals
         if type1 == 'float' or type2 == 'float':
             # Check if $f0 == $f1
             self.code.append("c.eq.s $f0, $f1")
@@ -983,6 +983,78 @@ class MIPSVisitor:
         else:
             # Check if $t0 == $t1
             self.code.append("seq $t0, $t0, $t1")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_LTEQNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Less than or equals
+        if type1 == 'float' or type2 == 'float':
+            # Check if $f0 < $f1
+            self.code.append("c.lt.s $f0, $f1")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Check if $f0 == $f1
+            self.code.append("c.eq.s $f0, $f1")
+            # Load FCCR into $t1
+            self.code.append("cfc1 $t1, $25")
+            # Or of $t0 and $t1
+            self.code.append("or $t0, $t0, $t1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
+        else:
+            # Check if $t0 < $t1
+            self.code.append("slt $t2, $t0, $t1")
+            # Check if $t0 == $t1
+            self.code.append("seq $t3, $t0, $t1")
+            # Or of $t2 and $t3
+            self.code.append("or $t0, $t2, $t3")
+
+        if type1 == 'float' or type2 == 'float':
+            # Save to temporary address
+            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        else:
+            # Save to temporary address
+            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        # Increment temporary address
+        self.temporaryAddress += 4
+        # Return temporary address
+        return [self.temporaryAddress - 4]
+
+    def visit_GTEQNode(self, node):
+        type1 = self.get_highest_type(node.children[0])
+        type2 = self.get_highest_type(node.children[1])
+
+        # Greater than
+        if type1 == 'float' or type2 == 'float':
+            # Check if $f1 <= $f0 aka $f0 > $f1
+            self.code.append("c.lt.s $f1, $f0")
+            # Load FCCR into $t0
+            self.code.append("cfc1 $t0, $25")
+            # Negate $t0
+            self.code.append("xori $t0, $t0, 1")
+            # Move to $f0
+            self.code.append("mtc1 $t0, $f0")
+            # Convert to float
+            self.code.append("cvt.s.w $f0, $f0")
+        else:
+            # Check if $t0 < $t1
+            self.code.append("slt $t0, $t0, $t1")
             # Negate $t0
             self.code.append("xori $t0, $t0, 1")
 
