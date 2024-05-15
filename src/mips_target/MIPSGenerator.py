@@ -489,37 +489,6 @@ class MIPSVisitor:
     def visit_EnumNode(self, node):
         self.enums[node.enum_name] = node.enum_list
 
-    # def visit_ScanfNode(self, node):
-    #    ...
-    #
-    # def visit_FunctionCallNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayDefinitionNode(self, node):
-    #    ...
-    #
-    # def visit_StructDefinitionNode(self, node):
-    #    ...
-    #
-    # def visit_DeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayDeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_StructDeclarationNode(self, node):
-    #    ...
-    #
-    # def visit_ArrayAssignmentNode(self, node):
-    #    ...
-    #
-    # def visit_StructAssignmentNode(self, node):
-    #    ...
-    #
-
-    # def visit_StringNode(self, node):
-    #    ...
-
     def visit_BinaryOp(self, node, visitor):
         type1 = self.get_highest_type(node.children[0])
         type2 = self.get_highest_type(node.children[1])
