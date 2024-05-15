@@ -283,24 +283,25 @@ class MIPSVisitor:
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
-    def visit_ArrayNode(self, node):
-        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+    def visit_ArrayDefinitionNode(self, node):
+        var_type = node.type.value
         symbol = Symbol(node.lvalue.value, var_type, 'array')
         symbol.memAddress = self.variableAddress
-        if var_type == 'float':
-            # Store 0 in variable
-            self.code.append(f"li.s $f0, 0.0")
-            # Save to memory
-            self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-            # Increment address by 4 bytes
-            self.variableAddress += 4
-        else:
-            # Store 0 in variable
-            self.code.append(f"li $t0, 0")
-            # Save to memory
-            self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
-            # Increment address by 4 bytes
-            self.variableAddress += 4
+        for i in node.rvalue.array:
+            if var_type == 'float':
+                # Store 0 in variable
+                self.code.append(f"li.s $f0, 0.0")
+                # Save to memory
+                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+            else:
+                # Store value in memory
+                self.code.append(f"li $t0, {self.visit(i)}")
+                # Save to memory
+                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
 
 
     def visit_AssignmentNode(self, node):
