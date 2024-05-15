@@ -285,33 +285,42 @@ class MIPSVisitor:
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
+    def assignArrayElement(self, node, var_type):
+        # recursive method to assign array elements to memory
+        if isinstance(node.array[0], ArrayNode):
+            for i in node.array:
+                self.assignArrayElement(i, var_type)
+        else:
+            for i in node.array:
+                if var_type == 'float':
+                    # Store 0 in variable
+                    self.code.append(f"li.s $f0, {self.visit(i)}")
+                    # Save to memory
+                    self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                    # Increment address by 4 bytes
+                    self.variableAddress += 4
+                else:
+                    # Store value in memory
+                    if var_type == 'char':
+                        self.code.append(f"li $t0, {ord(self.visit(i))}")
+                    else:
+                        self.code.append(f"li $t0, {self.visit(i)}")
+                    # Save to memory
+                    self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                    # Increment address by 4 bytes
+                    self.variableAddress += 4
+
     def visit_ArrayDefinitionNode(self, node):
         var_type = node.type.value
         # create and save symbol
         symbol = Symbol(node.lvalue.value, var_type, 'array')
         symbol.memAddress = self.variableAddress
+        symbol.dimensions = node.size
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
         # load values in array to memory
-        for i in node.rvalue.array:
-            if var_type == 'float':
-                # Store 0 in variable
-                self.code.append(f"li.s $f0, {self.visit(i)}")
-                # Save to memory
-                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
-                # Increment address by 4 bytes
-                self.variableAddress += 4
-            else:
-                # Store value in memory
-                if var_type == 'char':
-                    self.code.append(f"li $t0, {ord(self.visit(i))}")
-                else:
-                    self.code.append(f"li $t0, {self.visit(i)}")
-                # Save to memory
-                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
-                # Increment address by 4 bytes
-                self.variableAddress += 4
+        self.assignArrayElement(node.rvalue, var_type)
 
     def visit_AssignmentNode(self, node):
         if isinstance(node.lvalue, IdentifierNode):
@@ -393,10 +402,14 @@ class MIPSVisitor:
 
     def visit_ArrayIdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
+        dimensions = symbol.dimensions
         address = symbol.memAddress
-        address += self.visit((node.indices[0])) * 4
-        if symbol is not None:
-            return address
+        for i in range(len(node.indices)):
+            add = self.visit(node.indices[i])
+            for j in range(i+1, len(dimensions)):
+                add *= dimensions[j]
+            address += add * 4
+        return address
 
     def visit_PrintfNode(self, node):
         args = []
