@@ -169,6 +169,31 @@ class MIPSVisitor:
                 return self.get_highest_type(symbol.type)
         return 'char'
 
+    def get_conditions(self, node):
+        if isinstance(node.condition, IntNode):
+            self.code.append(f"li $t0, {node.condition.value}")
+        else:
+            condition = self.visit(node.condition)
+            if self.get_highest_type(node.condition) == 'float':
+                # Load into $f0
+                self.code.append(f"l.s $f0, -{condition[0]}($gp)")
+                # Load 0.0 into $f1
+                self.code.append("li.s $f1, 0.0")
+                # Check if $f0 == $f1
+                self.code.append("c.eq.s $f0, $f1")
+                # Move the result of the comparison to $t0
+                self.code.append("bc1t set_t0_to_zero")
+                self.code.append("li $t0, 1")  # Set $t0 to 1 if $f0 != $f1
+                self.code.append("j continue_comparison")
+                self.code.append("set_t0_to_zero:")
+                self.code.append("li $t0, 0")  # Set $t0 to 0 if $f0 == $f1
+                self.code.append("continue_comparison:")
+            else:
+                # Load the condition variable
+                self.code.append(f"lw $t0, -{condition[0]}($gp)")
+                # Perform the comparison against zero
+                self.code.append("sltu $t0, $zero, $t0")  # $t0 = 1 if condition is true, 0 otherwise
+
     def visit_ProgramNode(self, node):
         for child in node.children:
             self.visit(child)
@@ -190,8 +215,12 @@ class MIPSVisitor:
         elif isinstance(node.return_value, CharNode):
             self.code.append(f"li $v0, {chr(node.return_value.value)}")
         elif isinstance(node.return_value, IdentifierNode):
-            # TODO handle return value when it is an identifier
-            ...
+            symbol = self.scope.lookup(name=node.return_value.value)
+            if symbol is not None:
+                if symbol.type == 'float':
+                    self.code.append(f"l.s $f0, -{symbol.memAddress}($gp)")
+                else:
+                    self.code.append(f"lw $v0, -{symbol.memAddress}($gp)")
 
         self.code.append(f"jr $ra")
 
@@ -694,7 +723,6 @@ class MIPSVisitor:
             address = self.return_DerefNodeAddress(node.value)[0]
         else:
             address = self.visit(node.value)[0]
-        self.code.append("# TEST")
         print(address)
         value = 1
         if node.op == 'dec':
@@ -736,7 +764,6 @@ class MIPSVisitor:
             address = self.return_DerefNodeAddress(node.value)[0]
         else:
             address = self.visit(node.value)[0]
-        self.code.append("# TEST")
         print(address)
         value = 1
         if node.op == 'dec':
