@@ -23,6 +23,7 @@ class MIPSVisitor:
         self.break_blocks = []
         self.continue_blocks = []
         self.if_count = 0
+        self.while_count = 0
 
     def __setattr__(self, name, value):
         if name == "variableAddress":
@@ -1452,25 +1453,8 @@ class MIPSVisitor:
         return [self.temporaryAddress - 4]
 
     def visit_IfStatementNode(self, node):
-        # Get the condition
-        if isinstance(node.condition, IntNode):
-            self.code.append(f"li $t0, {node.condition.value}")
-        else:
-            condition = self.visit(node.condition)
-            if self.get_highest_type(node.condition) == 'float':
-                # Load into $f0
-                self.code.append(f"l.s $f0, -{condition[0]}($gp)")
-                # Load 0.0 into $f1
-                self.code.append("li.s $f1, 0.0")
-                # Check if $f0 == $f1
-                self.code.append("c.eq.s $f0, $f1")
-                # Load FCCR into $t0
-                self.code.append("cfc1 $t0, $25")
-                # Negate $t0
-                self.code.append("xori $t0, $t0, 1")
-            else:
-                # Load
-                self.code.append(f"lw $t0, -{condition[0]}($gp)")
+        # Get the condition and put in correct register
+        self.get_conditions(node)
 
         # Check if $t0 is true
         self.code.append(f"beq $t0, $zero, endif_{self.if_count}")
@@ -1487,6 +1471,48 @@ class MIPSVisitor:
 
         # Increment the if count
         self.if_count += 1
+
+    def visit_WhileLoopNode(self, node):
+        # Create unique labels for this while loop
+        start_label = f"while_{self.while_count}"
+        end_label = f"endwhile_{self.while_count}"
+        continue_label = f"continue_{self.while_count}"
+
+        # Increment the while loop count for the next loop
+        self.while_count += 1
+
+        # Start of the while loop
+        self.code.append(f"{start_label}:")
+
+        # Get the condition and put it in the correct register
+        self.get_conditions(node)
+
+        # Assume the condition result is in $t0, compare it to zero
+        self.code.append(f"beq $t0, $zero, {end_label}")
+
+        # Visit the body of the while loop
+        for statement in node.body:
+            self.visit(statement)
+
+        # Label for continue statement to jump to
+        self.code.append(f"{continue_label}:")
+
+        # Jump to the start to recheck the condition
+        self.code.append(f"j {start_label}")
+
+        # End of the while loop
+        self.code.append(f"{end_label}:")
+
+    def visit_BreakNode(self, node):
+        # Use the current while_count to jump to the correct endwhile label
+        end_label = f"endwhile_{self.while_count - 1}"
+        self.code.append(f"j {end_label}")
+
+    def visit_ContinueNode(self, node):
+        # Use the current while_count to jump to the correct continue label
+        continue_label = f"continue_{self.while_count - 1}"
+        self.code.append(f"j {continue_label}")
+
 
     @staticmethod
     def visit_IntNode(node):
