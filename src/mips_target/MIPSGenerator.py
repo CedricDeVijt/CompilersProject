@@ -244,6 +244,8 @@ class MIPSVisitor:
             self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
             # Increment address by 4 bytes
             self.variableAddress += 4
+        if self.scope.get_symbol(name=symbol.name) is None:
+            self.scope.add_symbol(symbol)
 
     def visit_ArrayDeclarationNode(self, node):
         var_type = node.type.value
