@@ -206,7 +206,7 @@ class MIPSVisitor:
         for statement in node.body:
             if not isinstance(statement, CommentNode):
                 self.code.append(f"# {statement.original}")
-                self.visit(statement)
+            self.visit(statement)
         self.scope.close_scope()
 
     def visit_ReturnNode(self, node):
@@ -1391,7 +1391,9 @@ class MIPSVisitor:
         return [self.temporaryAddress - 4]
 
     def visit_CommentNode(self, node):
-        self.code.append(f"#{node.value.strip().replace('\n', '')}")
+        endline = '\n'
+        backslash = '\\'
+        self.code.append(f"#{node.value.strip().replace(endline, f'{backslash}n ')}")
 
     def visit_SLNode(self, node):
         # Perform the shift operation
