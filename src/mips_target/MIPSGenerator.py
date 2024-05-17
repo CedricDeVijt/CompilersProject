@@ -267,7 +267,8 @@ class MIPSVisitor:
         if isinstance(rvalue, int):
             # Load int
             self.code.append(f"li $t0, {rvalue}")
-            if self.get_highest_type(symbol.type[0]) == 'float':
+
+            if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'float':
                 # Move to $f0
                 self.code.append(f"mtc1 $t0, $f0")
                 # Convert to float
@@ -284,7 +285,8 @@ class MIPSVisitor:
         elif isinstance(rvalue, float):
             # Load float
             self.code.append(f"li.s $f0, {rvalue}")
-            if self.get_highest_type(symbol.type[0]) == 'int' or self.get_highest_type(symbol.type[0]) == 'char':
+
+            if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'int' or self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'char':
                 # Convert to int
                 self.code.append("cvt.w.s $f0, $f0")
                 # Move
@@ -408,7 +410,8 @@ class MIPSVisitor:
                 if isinstance(rvalue, int):
                     # Load int
                     self.code.append(f"li $t0, {rvalue}")
-                    if self.get_highest_type(symbol.type[0]) == 'float':
+
+                    if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'float':
                         # Move to $f0
                         self.code.append(f"mtc1 $t0, $f0")
                         # Convert to float
@@ -425,7 +428,8 @@ class MIPSVisitor:
                 elif isinstance(rvalue, float):
                     # Load float
                     self.code.append(f"li.s $f0, {rvalue}")
-                    if self.get_highest_type(symbol.type[0]) == 'int' or self.get_highest_type(symbol.type[0]) == 'char':
+
+                    if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'int' or self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'char':
                         # Convert to int
                         self.code.append("cvt.w.s $f0, $f0")
                         # Move
@@ -476,13 +480,15 @@ class MIPSVisitor:
                 # Load address
                 self.code.append(f"lw $t1, -{lvalue[0]}($gp)")
                 rvalue = self.visit(node.rvalue)
-                var_type = self.get_highest_type(symbol.type[0])
+
+                var_type = self.get_highest_type(symbol.type[len(symbol.type) - 1])
                 if isinstance(rvalue, str):
                     rvalue = ord(rvalue)
                 if isinstance(rvalue, int):
                     # Load int
                     self.code.append(f"li $t0, {rvalue}")
-                    if self.get_highest_type(symbol.type[0]) == 'float':
+
+                    if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'float':
                         # Move to $f0
                         self.code.append(f"mtc1 $t0, $f0")
                         # Convert to float
@@ -495,7 +501,8 @@ class MIPSVisitor:
                 elif isinstance(rvalue, float):
                     # Load float
                     self.code.append(f"li.s $f0, {rvalue}")
-                    if self.get_highest_type(symbol.type[0]) == 'int' or self.get_highest_type(symbol.type[0]) == 'char':
+
+                    if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'int' or self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'char':
                         # Convert to int
                         self.code.append("cvt.w.s $f0, $f0")
                         # Move
