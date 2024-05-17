@@ -265,10 +265,9 @@ class MIPSVisitor:
     def visit_StructDeclarationNode(self, node):
         struct_name = node.type.value
         symbol = Symbol(node.lvalue.value, node.type, 'struct')
-        symbol.name = struct_name
+        symbol.struct_name = struct_name
         symbol.memAddress = self.variableAddress
         if self.scope.get_symbol(name=node.lvalue.value) is None:
-            print(node.lvalue.value)
             self.scope.add_symbol(symbol)
 
         for i in self.structs[struct_name][0]:
@@ -598,27 +597,26 @@ class MIPSVisitor:
 
     def visit_StructAssignmentNode(self, node):
         struct_var_name = node.lvalue.struct_var_name
-        print(struct_var_name)
         symbol = self.scope.lookup(name=struct_var_name)
-        print(symbol)
-        struct_name = symbol.name
+        struct_name = symbol.struct_name
         types = self.structs[struct_name][0]
         vars = self.structs[struct_name][1]
-        address = symbol.memAddress
+        index = vars.index(node.lvalue.struct_member_name)
+        address = symbol.memAddress + index * 4
+        type = types[index]
 
-        for i in range(len(node.lvalue.children)):
-            if struct[i] == 'int':
-                self.code.append(f"li $t0, {self.visit(node.rvalue.children[i])}")
-                self.code.append(f"sw $t0, -{address}($gp)")
-                address += 4
-            elif struct[i] == 'float':
-                self.code.append(f"li.s $f0, {self.visit(node.rvalue.children[i])}")
-                self.code.append(f"s.s $f0, -{address}($gp)")
-                address += 4
-            elif struct[i] == 'char':
-                self.code.append(f"li $t0, {ord(self.visit(node.rvalue.children[i]))}")
-                self.code.append(f"sw $t0, -{address}($gp)")
-                address += 4
+        if type == 'int':
+            self.code.append(f"li $t0, {self.visit(node.rvalue)}")
+            self.code.append(f"sw $t0, -{address}($gp)")
+            address += 4
+        elif type == 'float':
+            self.code.append(f"li.s $f0, {self.visit(node.rvalue)}")
+            self.code.append(f"s.s $f0, -{address}($gp)")
+            address += 4
+        elif type == 'char':
+            self.code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
+            self.code.append(f"sw $t0, -{address}($gp)")
+            address += 4
 
     def visit_IdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
@@ -762,7 +760,7 @@ class MIPSVisitor:
                 self.code.append(f"la $a0, printf_string_{self.printf_string}")
                 self.code.append("syscall")
                 self.printf_string += 1
-            elif isinstance(visited_arg, int) and not isinstance(arg, ArrayIdentifierNode):
+            elif isinstance(visited_arg, int) and not isinstance(arg, ArrayIdentifierNode) and not isinstance(arg, StructMemberNode):
                 self.code.append("li $v0, 1")
                 self.code.append(f"li $a0, {visited_arg}")
                 self.code.append("syscall")
@@ -775,6 +773,28 @@ class MIPSVisitor:
                 symbol = self.scope.lookup(name=arg.value)
                 var_type = symbol.type
                 memAddress = visited_arg
+                if var_type == 'char' or var_type == 'int':
+                    # Load from memory
+                    self.code.append(f"lw $t0, -{memAddress}($gp)")
+                    # Put in $a0
+                    self.code.append(f"move $a0, $t0")
+                    if var_type == 'char':
+                        # Print string
+                        self.code.append("li $v0, 11")
+                    else:
+                        self.code.append("li $v0, 1")
+                    self.code.append("syscall")
+                elif var_type == 'float':
+                    # Load from memory
+                    self.code.append(f"l.s $f0, -{memAddress}($gp)")
+                    # Move float to $f12
+                    self.code.append("mov.s $f12, $f0")
+                    # Print float
+                    self.code.append("li $v0, 2")
+                    self.code.append("syscall")
+            elif isinstance(arg, StructMemberNode):
+                var_type = arg.type.value
+                memAddress = self.visit(arg)
                 if var_type == 'char' or var_type == 'int':
                     # Load from memory
                     self.code.append(f"lw $t0, -{memAddress}($gp)")
@@ -1613,6 +1633,12 @@ class MIPSVisitor:
 
         # save struct with name and type
         self.structs[struct_name] = [struct_types, struct_vars]
+
+    def visit_StructMemberNode(self, node):
+        symbol = self.scope.get_symbol(name=node.struct_var_name)
+        index = self.structs[symbol.struct_name][1].index(node.struct_member_name)
+        adress = symbol.memAddress + index * 4
+        return adress
 
     @staticmethod
     def visit_IntNode(node):
