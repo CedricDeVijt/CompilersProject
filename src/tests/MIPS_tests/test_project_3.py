@@ -31,3 +31,13 @@ def test_p3_typedef_2():
 def test_p3_typedef_3():
     source_file = "p3_typedef_3.c"
     mips_output_compare(root, source_file)
+
+
+def test_p3_complex_printf_test():
+    source_file = "p3_complex_printf_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p3_complex_typedef_test():
+    source_file = "p3_complex_typedef_test.c"
+    mips_output_compare(root, source_file)
