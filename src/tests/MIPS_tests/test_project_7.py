@@ -21,3 +21,7 @@ def test_p7_struct_assignment():
 def test_p7_struct_assignment2():
     source_file = "p7_struct_assignment2.c"
     mips_output_compare(root, source_file)
+
+def test_p7_struct_definition():
+    source_file = "test_p7_struct_definition.c"
+    mips_output_compare(root, source_file)
