@@ -230,6 +230,9 @@ class MIPSVisitor:
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         symbol = Symbol(node.lvalue.value, node.type, 'variable')
         symbol.memAddress = self.variableAddress
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
+
         if var_type == 'float':
             # Store 0 in variable
             self.code.append(f"li.s $f0, 0.0")
@@ -256,6 +259,24 @@ class MIPSVisitor:
 
         # create zero array
         self.assignZeroArray(self.create_multi_dimensional_list(node.size), var_type)
+
+    def visit_StructDeclarationNode(self, node):
+        struct_name = node.type.value
+        symbol = Symbol(struct_name, node.type, 'struct')
+        symbol.name = struct_name
+        symbol.memAddress = self.variableAddress
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
+
+        for i in self.structs[struct_name][0]:
+            if i == 'int' or i == 'char':
+                self.code.append(f"li $t0, 0")
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
+            elif i == 'float':
+                self.code.append(f"li.s $f0, 0.0")
+                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
 
     def visit_DefinitionNode(self, node):
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
@@ -564,6 +585,29 @@ class MIPSVisitor:
                 self.code.append(f"li $t0, {self.visit(node.rvalue)}")
             # Save to memory
             self.code.append(f"sw $t0, -{address}($gp)")
+
+    def visit_StructAssignmentNode(self, node):
+        struct_var_name = node.lvalue.struct_var_name
+        symbol = self.scope.lookup(name='t')
+        print(symbol)
+        struct_name = symbol.name
+        types = self.structs[struct_name][0]
+        vars = self.structs[struct_name][1]
+        address = symbol.memAddress
+
+        for i in range(len(node.lvalue.children)):
+            if struct[i] == 'int':
+                self.code.append(f"li $t0, {self.visit(node.rvalue.children[i])}")
+                self.code.append(f"sw $t0, -{address}($gp)")
+                address += 4
+            elif struct[i] == 'float':
+                self.code.append(f"li.s $f0, {self.visit(node.rvalue.children[i])}")
+                self.code.append(f"s.s $f0, -{address}($gp)")
+                address += 4
+            elif struct[i] == 'char':
+                self.code.append(f"li $t0, {ord(self.visit(node.rvalue.children[i]))}")
+                self.code.append(f"sw $t0, -{address}($gp)")
+                address += 4
 
     def visit_IdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
