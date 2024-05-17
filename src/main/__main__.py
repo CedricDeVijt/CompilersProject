@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 
 import antlr4
@@ -124,7 +125,9 @@ def compile_mips(input_file, visitor, output_file, run_code):
                 mips_file.write(f"\t{line}\n")
 
     if run_code:
-        os.system(f'spim -quiet -file {output_file}')
+        process = subprocess.run(f'spim -quiet -file {output_file}', shell=True, check=False)
+        # Exit with process exit code
+        exit(process.returncode)
 
 
 def render_ast(input_file, output_file):

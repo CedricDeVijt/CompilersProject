@@ -18,17 +18,13 @@ class MIPSVisitor:
         self.variableAddress = 0
         self.printf_string = 0
         self.scanf_string = 0
+        self.function = 0
         self.enums = {}
         self.structs = {}
         self.break_blocks = []
         self.continue_blocks = []
         self.if_count = 0
         self.while_count = 0
-
-    def __setattr__(self, name, value):
-        if name == "variableAddress":
-            self.__dict__["temporaryAddress"] = value
-        self.__dict__[name] = value
 
     def visit(self, node):
         method_name = "visit_" + node.__class__.__name__
@@ -196,40 +192,131 @@ class MIPSVisitor:
                 self.code.append("sltu $t0, $zero, $t0")  # $t0 = 1 if condition is true, 0 otherwise
 
     def visit_ProgramNode(self, node):
+        a = 5
         for child in node.children:
             self.visit(child)
 
     def visit_FunctionNode(self, node):
+        func_name = f'function_{self.function}'
+        if node.value == 'main' and len(node.params) == 0:
+            func_name = 'main'
+        else:
+            self.function += 1
+        self.code.append(f"{func_name}:")
+        # Add function to scope
+        func_symbol = Symbol(name=node.value, var_type=node.type, symbol_type='function', params=node.params)
+        func_symbol.mips_name = func_name
+        func_symbol.return_address = self.variableAddress
+        # Increment address by 4 bytes
+        self.variableAddress += 4
+        self.scope.add_symbol(func_symbol)
+        # Open function scope
         self.scope.open_scope()
-        self.code.append(f"{node.value}:")
-        self.code.append(f"li $sp, 0x7ffffffc")
+        # Define $sp in main
+        if node.value == 'main' and len(node.params) == 0:
+            self.code.append(f"li $sp, 0x7ffffffc")
+        # Add arguments to scope where function is defined (easier to access)
+        for param in node.params:
+            # Get type of param
+            var_type = self.get_highest_type(param[0])
+            # Make symbol
+            symbol = Symbol(param[1].value, var_type, 'variable')
+            # Set address to param
+            symbol.memAddress = self.variableAddress
+            # Set address to param of func_symbol
+            if not hasattr(func_symbol, 'paramsAddresses'):
+                func_symbol.paramsAddresses = []
+            func_symbol.paramsAddresses.append(self.variableAddress)
+            # Increment address by 4 bytes
+            self.variableAddress += 4
+            # Add param to scope
+            if self.scope.get_symbol(name=symbol.name) is None:
+                self.scope.add_symbol(symbol)
         for statement in node.body:
             if not isinstance(statement, CommentNode):
+                # Add comment for code
                 self.code.append(f"# {statement.original}")
+                if isinstance(statement, ReturnNode):
+                    self.visit_ReturnNode(statement, func_symbol.return_address)
+                    continue
             self.visit(statement)
+        # Close function scope
         self.scope.close_scope()
 
-    def visit_ReturnNode(self, node):
-        if isinstance(node.return_value, IntNode):
-            self.code.append(f"li $v0, {int(node.return_value.value)}")
-        elif isinstance(node.return_value, FloatNode):
-            self.code.append(f"li $v0, {hex(struct.unpack('<I', struct.pack('<f', float(node.return_value.value)))[0])}")
-        elif isinstance(node.return_value, CharNode):
-            self.code.append(f"li $v0, {chr(node.return_value.value)}")
-        elif isinstance(node.return_value, IdentifierNode):
-            symbol = self.scope.lookup(name=node.return_value.value)
-            if symbol is not None:
-                if symbol.type == 'float':
-                    self.code.append(f"l.s $f0, -{symbol.memAddress}($gp)")
-                else:
-                    self.code.append(f"lw $v0, -{symbol.memAddress}($gp)")
+    def visit_FunctionCallNode(self, node):
+        # Get matching function
+        symbols = self.scope.lookup(name=node.value)
+        if isinstance(symbols, Symbol):
+            symbols = [symbols]
+        if not isinstance(symbols, list):
+            return
+        for symbol in symbols:
+            if len(symbol.params) != len(node.arguments):
+                continue
+            similar = all(self.get_highest_type(param[0]) == self.get_highest_type(arg) for param, arg in zip(symbol.params, node.arguments))
+            if similar:
+                symbols = symbol
+                break
 
+        # Load arguments into their addresses
+        for arg in node.arguments:
+            arg_type = self.get_highest_type(arg)
+            if self.get_pointer_size(arg) == [] or arg_type != 'float':
+                if isinstance(self.visit(arg), list):
+                    self.code.append(f"lw $t0, -{self.visit(arg)[0]}($gp)")
+                    self.code.append(f"sw $t0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
+                else:
+                    self.code.append(f"li $t0, {self.visit(arg)}")
+                    self.code.append(f"sw $t0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
+            else:
+                if isinstance(self.visit(arg), list):
+                    self.code.append(f"l.s $f0, -{self.visit(arg)[0]}($gp)")
+                    self.code.append(f"s.s $f0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
+                else:
+                    self.code.append(f"li.s $f0, {self.visit(arg)}")
+                    self.code.append(f"s.s $f0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
+        # Save $ra to stack
+        self.code.append("# Save $ra to stack")
+        self.code.append("sub $sp, $sp, 4")
+        self.code.append("sw $ra, 0($sp)")
+        # Jump to function
+        self.code.append(f"jal {symbols.mips_name}")
+        # Restore $ra from stack
+        self.code.append("# Restore $ra from stack")
+        self.code.append("lw $ra, 0($sp)")
+        self.code.append("add $sp, $sp, 4")
+        # Return return value
+        return [symbols.return_address]
+
+    def visit_ReturnNode(self, node, return_address):
+        if node.return_type != 'void':
+            address = self.visit(node.return_value)
+            # Save to return address.
+            if isinstance(address, float):
+                self.code.append(f"li.s $f0, {address}")
+            elif isinstance(address, str) or isinstance(address, int):
+                if isinstance(address, str):
+                    address = ord(address)
+                self.code.append(f"li $t0, {address}")
+            elif self.get_highest_type(node.return_value) == 'float':
+                self.code.append(f"l.s $f0, -{address[0]}($gp)")
+            else:
+                self.code.append(f"lw $t0, -{address[0]}($gp)")
+            # Save to address
+            if self.get_highest_type(node.return_value) == 'float':
+                self.code.append(f"s.s $f0, -{return_address}($gp)")
+                self.code.append("mov.s $v0, $f0")
+            else:
+                self.code.append(f"sw $t0, -{return_address}($gp)")
+                self.code.append("move $v0, $t0")
         self.code.append(f"jr $ra")
 
     def visit_DeclarationNode(self, node):
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         symbol = Symbol(node.lvalue.value, node.type, 'variable')
         symbol.memAddress = self.variableAddress
+        # Increment address by 4 bytes
+        self.variableAddress += 4
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
@@ -238,15 +325,11 @@ class MIPSVisitor:
             self.code.append(f"li.s $f0, 0.0")
             # Save to memory
             self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-            # Increment address by 4 bytes
-            self.variableAddress += 4
         else:
             # Store 0 in variable
             self.code.append(f"li $t0, 0")
             # Save to memory
             self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
-            # Increment address by 4 bytes
-            self.variableAddress += 4
         if self.scope.get_symbol(name=symbol.name) is None:
             self.scope.add_symbol(symbol)
 
@@ -255,6 +338,8 @@ class MIPSVisitor:
         # create and save symbol
         symbol = Symbol(node.lvalue.value, var_type, 'array')
         symbol.memAddress = self.variableAddress
+        # Increment address by 4 bytes
+        self.variableAddress += 4
         symbol.dimensions = node.size
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
@@ -267,6 +352,8 @@ class MIPSVisitor:
         symbol = Symbol(node.lvalue.value, node.type, 'struct')
         symbol.struct_name = struct_name
         symbol.memAddress = self.variableAddress
+        # Increment address by 4 bytes
+        self.variableAddress += 4
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
@@ -274,11 +361,9 @@ class MIPSVisitor:
             if i == 'int' or i == 'char':
                 self.code.append(f"li $t0, 0")
                 self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
-                self.variableAddress += 4
             elif i == 'float':
                 self.code.append(f"li.s $f0, 0.0")
                 self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
-                self.variableAddress += 4
 
     def visit_StructDefinitionNode(self, node):
         struct_name = node.type.value
@@ -309,6 +394,8 @@ class MIPSVisitor:
         var_type = self.get_highest_type(node_type[len(node_type) - 1])
         symbol = Symbol(node.lvalue.value, node.type, 'variable')
         symbol.memAddress = self.variableAddress
+        # Increment address by 4 bytes
+        self.variableAddress += 4
         rvalue = self.visit(node.rvalue)
         if isinstance(rvalue, str):
             rvalue = ord(rvalue)
@@ -324,12 +411,9 @@ class MIPSVisitor:
                 # Save to memory
                 self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                 # Increment address by 4 bytes
-                self.variableAddress += 4
             else:
                 # Save to memory
                 self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
-                # Increment address by 4 bytes
-                self.variableAddress += 4
         elif isinstance(rvalue, float):
             # Load float
             self.code.append(f"li.s $f0, {rvalue}")
@@ -344,8 +428,6 @@ class MIPSVisitor:
             else:
                 # Save to memory
                 self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-            # Increment address by 4 bytes
-            self.variableAddress += 4
         elif isinstance(rvalue, list):
             address = rvalue[0]
             if var_type == 'char' or var_type == 'int':
@@ -361,8 +443,6 @@ class MIPSVisitor:
                     self.code.append(f"lw $t0, -{address}($gp)")
                 # Save to memory
                 self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
-                # Increment address by 4 bytes
-                self.variableAddress += 4
             elif var_type == 'float':
                 if self.get_highest_type(node.rvalue) != 'float':
                     # Load as int
@@ -376,8 +456,6 @@ class MIPSVisitor:
                     self.code.append(f"l.s $f0, -{address}($gp)")
                 # Save to memory
                 self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-                # Increment address by 4 bytes
-                self.variableAddress += 4
 
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
@@ -440,6 +518,8 @@ class MIPSVisitor:
         # create and save symbol
         symbol = Symbol(node.lvalue.value, var_type, 'array')
         symbol.memAddress = self.variableAddress
+        # Increment address by 4 bytes
+        self.variableAddress += 4
         symbol.dimensions = node.size
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
@@ -466,13 +546,9 @@ class MIPSVisitor:
                         self.code.append(f"cvt.s.w $f0, $f0")
                         # Save to memory
                         self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-                        # Increment address by 4 bytes
-                        self.variableAddress += 4
                     else:
                         # Save to memory
                         self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
-                        # Increment address by 4 bytes
-                        self.variableAddress += 4
                 elif isinstance(rvalue, float):
                     # Load float
                     self.code.append(f"li.s $f0, {rvalue}")
@@ -487,8 +563,6 @@ class MIPSVisitor:
                     else:
                         # Save to memory
                         self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-                    # Increment address by 4 bytes
-                    self.variableAddress += 4
                 elif isinstance(rvalue, list):
                     address = rvalue[0]
                     if var_type == 'char' or var_type == 'int':
@@ -504,8 +578,6 @@ class MIPSVisitor:
                             self.code.append(f"lw $t0, -{address}($gp)")
                         # Save to memory
                         self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
-                        # Increment address by 4 bytes
-                        self.variableAddress += 4
                     elif var_type == 'float':
                         if self.get_highest_type(node.rvalue) != 'float':
                             # Load as int
@@ -519,8 +591,6 @@ class MIPSVisitor:
                             self.code.append(f"l.s $f0, -{address}($gp)")
                         # Save to memory
                         self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
-                        # Increment address by 4 bytes
-                        self.variableAddress += 4
         elif isinstance(node.lvalue, DerefNode):
             symbol = self.scope.lookup(name=node.lvalue.identifier.value)
             if symbol is not None:
@@ -560,8 +630,6 @@ class MIPSVisitor:
                     else:
                         # Save to memory
                         self.code.append("s.s $f0, 0($t1)")
-                    # Increment address by 4 bytes
-                    self.variableAddress += 4
                 elif isinstance(rvalue, list):
                     address = rvalue[0]
                     if len(self.get_pointer_size(node.rvalue)) != 0:
@@ -657,19 +725,19 @@ class MIPSVisitor:
                     # Negate
                     self.code.append("neg.s $f0, $f0")
                     # Save to memory
-                    self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
-                    # Increment self.temporaryAddress
-                    self.temporaryAddress += 4
-                    return [self.temporaryAddress - 4]
+                    self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                    # Increment self.variableAddress
+                    self.variableAddress += 4
+                    return [self.variableAddress - 4]
                 # Load value
                 self.code.append(f"lw $t0, -{symbol.memAddress}($gp)")
                 # Negate
                 self.code.append("neg $t0, $t0")
                 # Save to memory
-                self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
-                # Increment self.temporaryAddress
-                self.temporaryAddress += 4
-                return [self.temporaryAddress - 4]
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                # Increment self.variableAddress
+                self.variableAddress += 4
+                return [self.variableAddress - 4]
             return [symbol.memAddress]
 
     def visit_AddrNode(self, node):
@@ -678,10 +746,10 @@ class MIPSVisitor:
             # Subtract memAddress from $gp
             self.code.append(f"sub $t0, $gp, {symbol.memAddress}")
             # Save to memory
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
-            # Increment self.temporaryAddress
-            self.temporaryAddress += 4
-            return [self.temporaryAddress - 4]
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+            # Increment self.variableAddress
+            self.variableAddress += 4
+            return [self.variableAddress - 4]
 
     def visit_DerefNode(self, node):
         symbol = self.scope.lookup(name=node.identifier.value)
@@ -693,10 +761,10 @@ class MIPSVisitor:
             for i in range(0, int(node.value)):
                 self.code.append(f"lw $t0, 0($t0)")
             # Store in memory
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
-            # Increment self.temporaryAddress
-            self.temporaryAddress += 4
-            return [self.temporaryAddress - 4]
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+            # Increment self.variableAddress
+            self.variableAddress += 4
+            return [self.variableAddress - 4]
 
     def return_DerefNodeAddress(self, node):
         symbol = self.scope.lookup(name=node.identifier.value)
@@ -710,10 +778,10 @@ class MIPSVisitor:
             for i in range(0, int(node.value) - 1):
                 self.code.append(f"lw $t0, 0($t0)")
             # Store in memory
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
-            # Increment self.temporaryAddress
-            self.temporaryAddress += 4
-            return [self.temporaryAddress - 4]
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+            # Increment self.variableAddress
+            self.variableAddress += 4
+            return [self.variableAddress - 4]
 
     def visit_ArrayIdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
@@ -906,9 +974,9 @@ class MIPSVisitor:
                 # Load value
                 self.code.append("lw $t0, 0($t0)")
             # Save to temporary memory
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
             # Increment temporary memory
-            self.temporaryAddress += 4
+            self.variableAddress += 4
             # Add value
             self.code.append(f"add $t0, $t0, {value}")
             # Save to memory
@@ -917,19 +985,19 @@ class MIPSVisitor:
             else:
                 self.code.append(f"sw $t0, -{address}($gp)")
             # Return
-            return [self.temporaryAddress - 4]
+            return [self.variableAddress - 4]
         # Load value
         self.code.append(f"l.s $f0, -{address}($gp)")
         # Save to temporary memory
-        self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         # Increment temporary memory
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Add value
         self.code.append(f"fadd $f0, $f0, {value}")
         # Save to memory
         self.code.append(f"s.s $f0, -{address}($gp)")
         # Return
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_ScopeNode(self, node):
         self.scope.open_scope()
@@ -1033,15 +1101,15 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("add.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             self.code.append("add $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_MinusNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1051,15 +1119,15 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("sub.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             self.code.append("sub $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_MultNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1069,15 +1137,15 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("mul.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             self.code.append("mul $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_DivNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1087,15 +1155,15 @@ class MIPSVisitor:
         if type1 == 'float' or type2 == 'float':
             self.code.append("div.s $f0, $f0, $f1")
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             self.code.append("div $t0, $t0, $t1")
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_ModNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1106,51 +1174,51 @@ class MIPSVisitor:
         # Get remainder
         self.code.append("mfhi $t2")
         # Save to temporary address
-        self.code.append(f"sw $t2, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t2, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_BitwiseAndNode(self, node):
         # And
         self.code.append("and $t0, $t0, $t1")
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_BitwiseOrNode(self, node):
         # Or
         self.code.append("or $t0, $t0, $t1")
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_BitwiseXorNode(self, node):
         # Xor
         self.code.append("xor $t0, $t0, $t1")
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_BitwiseNotNode(self, node):
         # Not
         self.code.append("not $t0, $t0")
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_LogicalAndNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1210,14 +1278,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_LogicalOrNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1277,14 +1345,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_LogicalNotNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1307,14 +1375,14 @@ class MIPSVisitor:
 
         if type1 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_LTNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1336,14 +1404,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_GTNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1371,14 +1439,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_EQNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1400,14 +1468,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_NEQNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1433,14 +1501,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_LTEQNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1472,14 +1540,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_GTEQNode(self, node):
         type1 = self.get_highest_type(node.children[0])
@@ -1505,14 +1573,14 @@ class MIPSVisitor:
 
         if type1 == 'float' or type2 == 'float':
             # Save to temporary address
-            self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         else:
             # Save to temporary address
-            self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+            self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_CommentNode(self, node):
         endline = '\n'
@@ -1524,26 +1592,26 @@ class MIPSVisitor:
         self.code.append("sll $t0, $t0, $t1")
 
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
 
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
 
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_SRNode(self, node):
         # Perform the shift operation
         self.code.append("sra $t0, $t0, $t1")
 
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
 
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
 
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_ExplicitConversionNode(self, node):
         # Visit the child node
@@ -1569,13 +1637,13 @@ class MIPSVisitor:
             self.code.append("andi $t0, $t0, 0xFF")  # else, perform the conversion
 
         # Save to temporary address
-        self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
 
         # Increment temporary address
-        self.temporaryAddress += 4
+        self.variableAddress += 4
 
         # Return temporary address
-        return [self.temporaryAddress - 4]
+        return [self.variableAddress - 4]
 
     def visit_IfStatementNode(self, node):
         # Create unique labels for this if block
