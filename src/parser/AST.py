@@ -466,9 +466,9 @@ class PointerNode(Node):
 
 
 class DerefNode(Node):
-    def __init__(self, value: int, line: int, column: int, original: str | None, identifier: str, children=None):
+    def __init__(self, value: int, line: int, column: int, original: str | None, identifier: IdentifierNode, children=None):
         super().__init__(str(value), line, column, original, children=children)
-        self.identifier=identifier
+        self.identifier = identifier
 
 
 class AddrNode(Node):

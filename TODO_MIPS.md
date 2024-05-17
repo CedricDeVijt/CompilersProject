@@ -17,12 +17,12 @@
 - [x] (**mandatory**) Literals are now no longer limited to integers: literals of any type (integer, floating point,
   character) can now be part of expressions
 - [x] (**mandatory**) Variables
-- [ ] (**mandatory**) Pointers
+- [x] (**mandatory**) Pointers
 - [x] (**mandatory**) Constants
 - [x] (**mandatory**) Implicit conversions warnings
 - [x] (**mandatory**) Explicit conversions
-- [ ] (**mandatory**) Pointer arithmetic
-- [ ] (**mandatory**) Increment/Decrement Operations
+- [x] (**mandatory**) Pointer arithmetic
+- [x] (**mandatory**) Increment/Decrement Operations
 - [x] (**optional**) Const casting
 
 # project 3
@@ -31,17 +31,17 @@
 - [x] (**mandatory**) Multi line comments
 - [x] (**mandatory**) Output printf
 - [x] (**mandatory**) Typedef support
-- [ ] (**mandatory**) LLVM definitions
-- [ ] (**mandatory**) LLVM pointers
-- [ ] (**mandatory**) LLVM comments
+- [x] (**mandatory**) LLVM definitions
+- [x] (**mandatory**) LLVM pointers
+- [x] (**mandatory**) LLVM comments
 
 # project 4
 
-- [ ] (**mandatory**) Conditional statements
-- [ ] (**optional**) Else if statements
-- [ ] (**mandatory**) Loops
+- [x] (**mandatory**) Conditional statements
+- [x] (**optional**) Else if statements
+- [x] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
-- [ ] (**mandatory**) Switch statements
+- [x] (**mandatory**) Switch statements
 - [ ] (**mandatory**) Enumerations
 
 # project 5

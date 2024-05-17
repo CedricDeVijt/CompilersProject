@@ -3,11 +3,11 @@
 int main() {
     int x = 10;
     if (x > 10) {
-        printf("%d", x);
+        printf("%d>10", x);
     } else if (x == 10) {
-        printf("%d", x);
+        printf("%d==10", x);
     } else {
-        printf("%d", x);
+        printf("%d<10", x);
     }
     return 0;
 }

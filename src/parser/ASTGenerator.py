@@ -129,6 +129,8 @@ class ASTGenerator(Visitor):
             identifier = identifier.value
         if isinstance(identifier, ArrayIdentifierNode):
             identifier = identifier.value
+        if isinstance(identifier, DerefNode):
+            identifier = identifier.identifier.value
         symbols = self.scope.lookup(identifier)
         if symbols:
             if isinstance(symbols.type, str):

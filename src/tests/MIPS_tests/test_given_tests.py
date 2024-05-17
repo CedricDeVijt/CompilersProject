@@ -1,6 +1,6 @@
 from src.tests.utils import mips_output_compare
 
-root = "src/tests/test_input_files/finished_proj/CorrectCode/"
+root = "src/tests/test_input_files/finished_proj/CorrectCode"
 
 
 def test_binaryOperations1():
