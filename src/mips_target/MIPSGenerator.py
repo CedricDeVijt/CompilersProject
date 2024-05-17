@@ -1452,11 +1452,15 @@ class MIPSVisitor:
         return [self.temporaryAddress - 4]
 
     def visit_IfStatementNode(self, node):
+        # Create unique labels for this if block
+        end_label = f"endif_{self.if_count}"
+        self.if_count += 1
+
         # Get the condition and put in correct register
         self.get_conditions(node)
 
         # Check if $t0 is true
-        self.code.append(f"beq $t0, $zero, endif_{self.if_count}")
+        self.code.append(f"beq $t0, $zero, {end_label}")
 
         # Visit the if block
         for statement in node.body:
@@ -1465,13 +1469,11 @@ class MIPSVisitor:
             self.visit(statement)
 
         # Jump to the end
-        self.code.append(f"j endif_{self.if_count}")
+        self.code.append(f"j {end_label}")
 
         # End of the if block
-        self.code.append(f"endif_{self.if_count}:")
+        self.code.append(f"{end_label}:")
 
-        # Increment the if count
-        self.if_count += 1
 
     def visit_WhileLoopNode(self, node):
         # Create unique labels for this while loop
