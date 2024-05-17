@@ -91,7 +91,7 @@
 # project 7
 
 - Functionality
-  - [ ] (**mandatory**) Structs
+  - [x] (**mandatory**) Structs
   - [ ] (**optional**) Structs containing other structs
   - [ ] (**optional**) Dynamic allocation of structs
   - [ ] (**optional**) Unions
