@@ -131,8 +131,15 @@ def compile_mips(input_file, visitor, output_file, run_code):
         SPIM_header = ['SPIM Version 8.0 of January 8, 2010', 'Copyright 1990-2010, James R. Larus.', 'All Rights Reserved.', 'See the file README for a full copyright notice.', 'Loaded: /usr/lib/spim/exceptions.s']
         if output[:5] == SPIM_header:
             output = output[5:]
+
+        # Print all
         for line in output:
             print(line)
+
+        # Print all except exit code
+        # for line in output[:-1]:
+        #     print(line)
+        # exit(int(output[-1]))
 
 
 def render_ast(input_file, output_file):

@@ -199,9 +199,32 @@ class MIPSVisitor:
     def visit_FunctionNode(self, node):
         func_name = f'function_{self.function}'
         if node.value == 'main' and len(node.params) == 0:
-            func_name = 'main'
-        else:
-            self.function += 1
+            self.code.append("main:")
+            # Actually jump to main
+            self.code.append(f"jal {func_name}")
+            # Print exit code
+            # if self.get_highest_type(node.type) == 'void':
+            #     pass
+            # else:
+            #     # Copy exit code to $t0
+            #     self.code.append("move $t0, $v0")
+            #     # Print newline
+            #     self.code.append("li $v0, 11")
+            #     self.code.append("li $a0, 10")
+            #     self.code.append("syscall")
+            #     # Print actual exit code
+            #     self.code.append("move $a0, $t0")
+            #     if self.get_highest_type(node.type) == 'float':
+            #         self.code.append("li $v0, 2")
+            #     else:
+            #         self.code.append("li $v0, 1")
+            #     self.code.append("syscall")
+            # # Exit program
+            self.code.append("li $v0, 10")
+            self.code.append("syscall")
+        # Increment function name
+        self.function += 1
+        # Add function label
         self.code.append(f"{func_name}:")
         # Add function to scope
         func_symbol = Symbol(name=node.value, var_type=node.type, symbol_type='function', params=node.params)
