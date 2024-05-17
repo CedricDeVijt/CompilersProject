@@ -2,7 +2,8 @@
 
 int main() {
     int a = 5;
-    printf("%d\n", -a + 10);
-    printf("%d\n", +a * 2);
+    int* p = &a;
+    *p = 10;
+    printf("a: %d\n", a);
     return 0;
 }
