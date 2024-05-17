@@ -1391,7 +1391,9 @@ class MIPSVisitor:
         return [self.temporaryAddress - 4]
 
     def visit_CommentNode(self, node):
-        self.code.append(f"#{node.value.strip().replace('\n', '')}")
+        endline = '\n'
+        backslash = '\\'
+        self.code.append(f"#{node.value.strip().replace(endline, f'{backslash}n ')}")
 
     def visit_SLNode(self, node):
         # Perform the shift operation
