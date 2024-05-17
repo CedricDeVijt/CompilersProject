@@ -39,7 +39,7 @@
 
 - [x] (**mandatory**) Conditional statements
 - [x] (**optional**) Else if statements
-- [ ] (**mandatory**) Loops
+- [x] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
 - [x] (**mandatory**) Switch statements
 - [ ] (**mandatory**) Enumerations
