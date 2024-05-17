@@ -281,7 +281,10 @@ class MIPSVisitor:
                 self.variableAddress += 4
 
     def visit_DefinitionNode(self, node):
-        var_type = self.get_highest_type(node.type[len(node.type) - 1])
+        node_type = node.type
+        if not isinstance(node_type, list):
+            node_type = [node_type]
+        var_type = self.get_highest_type(node_type[len(node_type) - 1])
         symbol = Symbol(node.lvalue.value, node.type, 'variable')
         symbol.memAddress = self.variableAddress
         rvalue = self.visit(node.rvalue)
