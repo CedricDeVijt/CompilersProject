@@ -267,7 +267,7 @@ class MIPSVisitor:
         if isinstance(rvalue, int):
             # Load int
             self.code.append(f"li $t0, {rvalue}")
-            if symbol.type == 'float':
+            if self.get_highest_type(symbol.type[0]) == 'float':
                 # Move to $f0
                 self.code.append(f"mtc1 $t0, $f0")
                 # Convert to float
@@ -284,7 +284,7 @@ class MIPSVisitor:
         elif isinstance(rvalue, float):
             # Load float
             self.code.append(f"li.s $f0, {rvalue}")
-            if symbol.type == 'int' or symbol.type == 'char':
+            if self.get_highest_type(symbol.type[0]) == 'int' or self.get_highest_type(symbol.type[0]) == 'char':
                 # Convert to int
                 self.code.append("cvt.w.s $f0, $f0")
                 # Move
@@ -408,7 +408,7 @@ class MIPSVisitor:
                 if isinstance(rvalue, int):
                     # Load int
                     self.code.append(f"li $t0, {rvalue}")
-                    if symbol.type == 'float':
+                    if self.get_highest_type(symbol.type[0]) == 'float':
                         # Move to $f0
                         self.code.append(f"mtc1 $t0, $f0")
                         # Convert to float
@@ -425,7 +425,7 @@ class MIPSVisitor:
                 elif isinstance(rvalue, float):
                     # Load float
                     self.code.append(f"li.s $f0, {rvalue}")
-                    if symbol.type == 'int' or symbol.type == 'char':
+                    if self.get_highest_type(symbol.type[0]) == 'int' or self.get_highest_type(symbol.type[0]) == 'char':
                         # Convert to int
                         self.code.append("cvt.w.s $f0, $f0")
                         # Move
@@ -476,13 +476,13 @@ class MIPSVisitor:
                 # Load address
                 self.code.append(f"lw $t1, -{lvalue[0]}($gp)")
                 rvalue = self.visit(node.rvalue)
-                var_type = self.get_highest_type(symbol.type)
+                var_type = self.get_highest_type(symbol.type[0])
                 if isinstance(rvalue, str):
                     rvalue = ord(rvalue)
                 if isinstance(rvalue, int):
                     # Load int
                     self.code.append(f"li $t0, {rvalue}")
-                    if symbol.type == 'float':
+                    if self.get_highest_type(symbol.type[0]) == 'float':
                         # Move to $f0
                         self.code.append(f"mtc1 $t0, $f0")
                         # Convert to float
@@ -495,7 +495,7 @@ class MIPSVisitor:
                 elif isinstance(rvalue, float):
                     # Load float
                     self.code.append(f"li.s $f0, {rvalue}")
-                    if symbol.type == 'int' or symbol.type == 'char':
+                    if self.get_highest_type(symbol.type[0]) == 'int' or self.get_highest_type(symbol.type[0]) == 'char':
                         # Convert to int
                         self.code.append("cvt.w.s $f0, $f0")
                         # Move
@@ -568,6 +568,26 @@ class MIPSVisitor:
     def visit_IdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
         if symbol is not None:
+            if node.value.count('-') % 2 == 1:
+                if self.get_highest_type(node) == 'float':
+                    # Load from memory
+                    self.code.append(f"l.s $f0, -{symbol.memAddress}($gp)")
+                    # Negate
+                    self.code.append("neg.s $f0, $f0")
+                    # Save to memory
+                    self.code.append(f"s.s $f0, -{self.temporaryAddress}($gp)")
+                    # Increment self.temporaryAddress
+                    self.temporaryAddress += 4
+                    return [self.temporaryAddress - 4]
+                # Load value
+                self.code.append(f"lw $t0, -{symbol.memAddress}($gp)")
+                # Negate
+                self.code.append("neg $t0, $t0")
+                # Save to memory
+                self.code.append(f"sw $t0, -{self.temporaryAddress}($gp)")
+                # Increment self.temporaryAddress
+                self.temporaryAddress += 4
+                return [self.temporaryAddress - 4]
             return [symbol.memAddress]
 
     def visit_AddrNode(self, node):
