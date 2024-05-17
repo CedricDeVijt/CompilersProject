@@ -22,14 +22,17 @@ def test_p7_struct_assignment2():
     source_file = "p7_struct_assignment2.c"
     mips_output_compare(root, source_file)
 
+
 def test_p7_struct_definition():
-    source_file = "test_p7_struct_definition.c"
+    source_file = "p7_struct_definition.c"
     mips_output_compare(root, source_file)
+
 
 def test_p7_struct_operations():
-    source_file = "test_p7_struct_operations.c"
+    source_file = "p7_struct_operations.c"
     mips_output_compare(root, source_file)
 
+
 def test_p7_struct_var_assignment():
-    source_file = "test_p7_struct_var_assignment.c"
+    source_file = "p7_struct_var_assignment.c"
     mips_output_compare(root, source_file)
