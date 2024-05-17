@@ -724,7 +724,6 @@ class MIPSVisitor:
             address = self.return_DerefNodeAddress(node.value)[0]
         else:
             address = self.visit(node.value)[0]
-        print(address)
         value = 1
         if node.op == 'dec':
             value = -1
@@ -765,7 +764,6 @@ class MIPSVisitor:
             address = self.return_DerefNodeAddress(node.value)[0]
         else:
             address = self.visit(node.value)[0]
-        print(address)
         value = 1
         if node.op == 'dec':
             value = -1
