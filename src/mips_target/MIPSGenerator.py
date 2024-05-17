@@ -264,10 +264,11 @@ class MIPSVisitor:
 
     def visit_StructDeclarationNode(self, node):
         struct_name = node.type.value
-        symbol = Symbol(struct_name, node.type, 'struct')
+        symbol = Symbol(node.lvalue.value, node.type, 'struct')
         symbol.name = struct_name
         symbol.memAddress = self.variableAddress
         if self.scope.get_symbol(name=node.lvalue.value) is None:
+            print(node.lvalue.value)
             self.scope.add_symbol(symbol)
 
         for i in self.structs[struct_name][0]:
@@ -597,7 +598,8 @@ class MIPSVisitor:
 
     def visit_StructAssignmentNode(self, node):
         struct_var_name = node.lvalue.struct_var_name
-        symbol = self.scope.lookup(name='t')
+        print(struct_var_name)
+        symbol = self.scope.lookup(name=struct_var_name)
         print(symbol)
         struct_name = symbol.name
         types = self.structs[struct_name][0]
