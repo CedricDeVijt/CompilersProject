@@ -630,18 +630,22 @@ class MIPSVisitor:
         address = symbol.memAddress + index * 4
         type = types[index]
 
-        if type == 'int':
+        if isinstance(node.rvalue, IntNode):
             self.code.append(f"li $t0, {self.visit(node.rvalue)}")
             self.code.append(f"sw $t0, -{address}($gp)")
-            address += 4
-        elif type == 'float':
+        elif isinstance(node.rvalue, FloatNode):
             self.code.append(f"li.s $f0, {self.visit(node.rvalue)}")
             self.code.append(f"s.s $f0, -{address}($gp)")
-            address += 4
-        elif type == 'char':
+        elif isinstance(node.rvalue, CharNode):
             self.code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
             self.code.append(f"sw $t0, -{address}($gp)")
-            address += 4
+        else:
+            if type == 'float':
+                self.code.append(f"l.s $f0, -{self.visit(node.rvalue)[0]}($gp)")
+                self.code.append(f"s.s $f0, -{address}($gp)")
+            else:
+                self.code.append(f"lw $t0, -{self.visit(node.rvalue)[0]}($gp)")
+                self.code.append(f"sw $t0, -{address}($gp)")
 
     def visit_IdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
