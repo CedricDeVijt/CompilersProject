@@ -1460,7 +1460,8 @@ class MIPSVisitor:
 
         # Visit the if block
         for statement in node.body:
-            self.code.append(f"# {node.original}")
+            if not isinstance(statement, CommentNode):
+                self.code.append(f"# {node.original}")
             self.visit(statement)
 
         # Jump to the end
@@ -1492,7 +1493,8 @@ class MIPSVisitor:
 
         # Visit the body of the while loop
         for statement in node.body:
-            self.code.append(f"# {node.original}")
+            if not isinstance(statement, CommentNode):
+                self.code.append(f"# {node.original}")
             self.visit(statement)
 
         # Label for continue statement to jump to
