@@ -280,6 +280,28 @@ class MIPSVisitor:
                 self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
                 self.variableAddress += 4
 
+    def visit_StructDefinitionNode(self, node):
+        struct_name = node.type.value
+        symbol = Symbol(node.lvalue.value, node.type, 'struct')
+        symbol.struct_name = struct_name
+        symbol.memAddress = self.variableAddress
+        if self.scope.get_symbol(name=node.lvalue.value) is None:
+            self.scope.add_symbol(symbol)
+
+        for i in range(len(self.structs[struct_name][0])):
+            if self.structs[struct_name][0][i] == 'int':
+                self.code.append(f"li $t0, {self.visit(node.rvalue[i])}")
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
+            elif self.structs[struct_name][0][i] == 'float':
+                self.code.append(f"li.s $f0, {self.visit(node.rvalue[i])}")
+                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
+            elif self.structs[struct_name][0][i] == 'char':
+                self.code.append(f"li $t0, {ord(self.visit(node.rvalue[i]))}")
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
+
     def visit_DefinitionNode(self, node):
         node_type = node.type
         if not isinstance(node_type, list):
