@@ -1350,6 +1350,24 @@ class MIPSVisitor:
         # Increment the if count
         self.if_count += 1
 
+    def visit_StructNode(self, node):
+        struct_name = node.struct_name
+        # get all types
+        struct_types = []
+        for i in node.struct_members:
+            if self.get_highest_type(i.type) == 'int':
+                struct_types.append('int')
+            elif self.get_highest_type(i.type) == 'float':
+                struct_types.append('float')
+            elif self.get_highest_type(i.type) == 'char':
+                struct_types.append('char')
+
+        struct_vars = []
+        for i in node.struct_members:
+            struct_vars.append(i.lvalue.value)
+
+        # save struct with name and type
+        self.structs[struct_name] = [struct_types, struct_vars]
 
     @staticmethod
     def visit_IntNode(node):
