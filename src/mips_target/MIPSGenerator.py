@@ -206,7 +206,7 @@ class MIPSVisitor:
         for statement in node.body:
             if not isinstance(statement, CommentNode):
                 self.code.append(f"# {statement.original}")
-                self.visit(statement)
+            self.visit(statement)
         self.scope.close_scope()
 
     def visit_ReturnNode(self, node):
