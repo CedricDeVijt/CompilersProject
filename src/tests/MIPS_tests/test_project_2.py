@@ -76,3 +76,43 @@ def test_p2_shift_op():
 def test_p2_unary_op():
     source_file = "p2_unary_op.c"
     mips_output_compare(root, source_file)
+
+
+def test_p2_constants_test():
+    source_file = "p2_constants_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p2_explicit_conversions_test():
+    source_file = "p2_explicit_conversions_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p2_implicit_conversions_test():
+    source_file = "p2_implicit_conversions_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p2_increment_decrement_test():
+    source_file = "p2_increment_decrement_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p2_literals_test():
+    source_file = "p2_literals_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p2_main_function_test():
+    source_file = "p2_main_function_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p2_pointer_arithmetic_test():
+    source_file = "p2_pointer_arithmetic_test.c"
+    mips_output_compare(root, source_file)
+
+
+def test_p2_reserved_keywords_test():
+    source_file = "p2_reserved_keywords_test.c"
+    mips_output_compare(root, source_file)
