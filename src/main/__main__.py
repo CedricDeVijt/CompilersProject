@@ -19,7 +19,7 @@ class ThrowingErrorListener(ErrorListener):
         raise SyntaxError(f"Syntax error at line {line}:{column}")
 
 
-def generate_ast(path, visitor, constant_fold=True):
+def generate_ast(path, visitor, constant_fold=True, warnings=False):
     # Preprocessor
     stdio_found = [False]
     new_code = pre_processing(path, stdio_found)
@@ -59,9 +59,10 @@ def generate_ast(path, visitor, constant_fold=True):
         return None, None, None
 
     # Print Warnings
-    warnings = genAST.warnings
-    for warning in warnings:
-        print(f"Warning: {warning}")
+    if warnings:
+        warnings = genAST.warnings
+        for warning in warnings:
+            print(f"Warning: {warning}")
 
     # Constant folding of expressions
     if constant_fold:
@@ -133,13 +134,13 @@ def compile_mips(input_file, visitor, output_file, run_code):
             output = output[5:]
 
         # Print all
-        for line in output:
-            print(line)
+        # for line in output:
+        #     print(line)
 
         # Print all except exit code
-        # for line in output[:-1]:
-        #     print(line)
-        # exit(int(output[-1]))
+        for line in output[:-1]:
+            print(line)
+        exit(int(output[-1]))
 
 
 def render_ast(input_file, output_file):

@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 
 from src.main.__main__ import compile_mips, Generator
 
@@ -99,22 +100,21 @@ def mips_output_compare(root: str, input_file: str):
     # compile the .c file using gcc
     os.system(f"gcc {os.path.join(file_dir, source_file)} -o {os.path.join(file_dir, filename)}")
     # run the executable and save the output to the text file
-    os.system(f"{os.path.join(file_dir, filename)} > {os.path.join(file_dir, gcc_output)}")
+    # os.system(f"{os.path.join(file_dir, filename)} > {os.path.join(file_dir, gcc_output)}")
+
+    gcc = subprocess.run(f"{os.path.join(file_dir, filename)}", shell=True, capture_output=True, text=True)
+    gcc_output_text = gcc.stdout
 
     # compile to mips and run mips file with Spim
-    compile_mips(input_file=os.path.join(file_dir, source_file), visitor=visitor,
-                 output_file=os.path.join(file_dir, mips_code), run_code=False)
-    os.system(f"spim -quiet -file {os.path.join(file_dir, mips_code)} > {os.path.join(file_dir, mips_output)}")
+    # compile_mips(input_file=os.path.join(file_dir, source_file), visitor=visitor,
+    #              output_file=os.path.join(file_dir, mips_code), run_code=False)
+    # os.system(f"spim -quiet -file {os.path.join(file_dir, mips_code)} > {os.path.join(file_dir, mips_output)}")
 
-    # read and process the output files
-    with open(os.path.join(file_dir, gcc_output), 'r') as f:
-        gcc_output_text = f.read()
-    with open(os.path.join(file_dir, mips_output), 'r') as f:
-        mips_output_text = f.read()
-        if mips_output_text.startswith("SPIM"):
-            mips_output_lines = mips_output_text.splitlines()
-            cleaned_lines = mips_output_lines[5:]
-            mips_output_text = '\n'.join(cleaned_lines)
+    # Print working directory
+    print(os.getcwd())
+    # run the mips code with our compiler
+    compiler = subprocess.run(f"python3 -m src.main --input {os.path.join(file_dir, source_file)} --target_mips {os.path.join(file_dir, mips_code)}", shell=True, capture_output=True, text=True)
+    mips_output_text = compiler.stdout
 
     # Round the floating-point numbers to ensure consistency
     gcc_output_text = round_floats(gcc_output_text)
@@ -125,6 +125,9 @@ def mips_output_compare(root: str, input_file: str):
 
     print("MIPS Output:")
     print(mips_output_text)
+
+    # assert that the exit codes are the same
+    assert gcc.returncode == compiler.returncode
 
     # assert that the outputs are the same
     assert gcc_output_text.strip() == mips_output_text.strip()

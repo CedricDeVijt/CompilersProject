@@ -203,23 +203,23 @@ class MIPSVisitor:
             # Actually jump to main
             self.code.append(f"jal {func_name}")
             # Print exit code
-            # if self.get_highest_type(node.type) == 'void':
-            #     pass
-            # else:
-            #     # Copy exit code to $t0
-            #     self.code.append("move $t0, $v0")
-            #     # Print newline
-            #     self.code.append("li $v0, 11")
-            #     self.code.append("li $a0, 10")
-            #     self.code.append("syscall")
-            #     # Print actual exit code
-            #     self.code.append("move $a0, $t0")
-            #     if self.get_highest_type(node.type) == 'float':
-            #         self.code.append("li $v0, 2")
-            #     else:
-            #         self.code.append("li $v0, 1")
-            #     self.code.append("syscall")
-            # # Exit program
+            if self.get_highest_type(node.type) == 'void':
+                pass
+            else:
+                # Copy exit code to $t0
+                self.code.append("move $t0, $v0")
+                # Print newline
+                self.code.append("li $v0, 11")
+                self.code.append("li $a0, 10")
+                self.code.append("syscall")
+                # Print actual exit code
+                self.code.append("move $a0, $t0")
+                if self.get_highest_type(node.type) == 'float':
+                    self.code.append("li $v0, 2")
+                else:
+                    self.code.append("li $v0, 1")
+                self.code.append("syscall")
+            # Exit program
             self.code.append("li $v0, 10")
             self.code.append("syscall")
         # Increment function name
@@ -1640,27 +1640,32 @@ class MIPSVisitor:
         # Visit the child node
         child = self.visit(node.rvalue)
 
-        # Load from memory
-        self.code.append(f"lw $t0, -{child[0]}($gp)")
-
-        # Convert to float
-        if node.type == 'float':
-            # Convert to float
-            self.code.append("mtc1 $t0, $f0")
-            self.code.append("cvt.s.w $f0, $f0")
-        # Convert to int
-        elif node.type == 'int':
-            # Convert to int
-            self.code.append("cvt.w.s $f0, $f0")
-            self.code.append("mfc1 $t0, $f0")
-        # Convert to char
-        elif node.type == 'char':
-            # Check if the value in $t0 can be converted to a char
-            self.code.append("sltiu $t1, $t0, 256")  # set $t1 to 1 if $t0 < 256, else 0
-            self.code.append("andi $t0, $t0, 0xFF")  # else, perform the conversion
-
-        # Save to temporary address
-        self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+        if self.get_highest_type(node.rvalue) == 'float':
+            # Load from memory
+            self.code.append(f"l.s $f0, -{child[0]}($gp)")
+            if node.type == 'float':
+                # Save to address
+                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+            else:
+                # Convert to int
+                self.code.append("cvt.w.s $f0, $f0")
+                # Move to $t0
+                self.code.append("mfc1 $t0, $f0")
+                # Save to address
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+        else:
+            # Load from memory
+            self.code.append(f"lw $t0, -{child[0]}($gp)")
+            if node.type == 'float':
+                # Move to $f0
+                self.code.append("mtc1 $t0, $f0")
+                # Convert to float
+                self.code.append("cvt.s.w $f0, $f0")
+                # Save to address
+                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+            else:
+                # Save to address
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
 
         # Increment temporary address
         self.variableAddress += 4
