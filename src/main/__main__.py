@@ -108,6 +108,7 @@ def compile_mips(input_file, visitor, output_file, run_code):
         visitor.visit(ast)
         mips_data = visitor.data
         mips_code = visitor.code
+        mips_globals = visitor.global_code
 
         if len(mips_data) > 0:
             mips_file.write(".data\n")
@@ -122,6 +123,9 @@ def compile_mips(input_file, visitor, output_file, run_code):
         for line in mips_code:
             if line.endswith(":"):
                 mips_file.write(f"{line}\n")
+                if line == "main:":
+                    for line in mips_globals:
+                        mips_file.write(f"\t{line}\n")
             else:
                 mips_file.write(f"\t{line}\n")
 

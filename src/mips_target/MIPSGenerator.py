@@ -12,6 +12,7 @@ literals = {'IntNode', 'FloatNode', 'CharNode', 'StringNode'}
 
 class MIPSVisitor:
     def __init__(self, stdio=False):
+        self.global_code = []
         self.code = []
         self.data = []
         self.scope = SymbolTableTree()
@@ -335,6 +336,7 @@ class MIPSVisitor:
         self.code.append(f"jr $ra")
 
     def visit_DeclarationNode(self, node):
+        code = []
         var_type = self.get_highest_type(node.type[len(node.type) - 1])
         symbol = Symbol(node.lvalue.value, node.type, 'variable')
         symbol.memAddress = self.variableAddress
@@ -345,14 +347,20 @@ class MIPSVisitor:
 
         if var_type == 'float':
             # Store 0 in variable
-            self.code.append(f"li.s $f0, 0.0")
+            code.append(f"li.s $f0, 0.0")
             # Save to memory
-            self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+            code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
         else:
             # Store 0 in variable
-            self.code.append(f"li $t0, 0")
+            code.append(f"li $t0, 0")
             # Save to memory
-            self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+            code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
+
         if self.scope.get_symbol(name=symbol.name) is None:
             self.scope.add_symbol(symbol)
 
@@ -371,6 +379,7 @@ class MIPSVisitor:
         self.assignZeroArray(self.create_multi_dimensional_list(node.size), var_type)
 
     def visit_StructDeclarationNode(self, node):
+        code = []
         struct_name = node.type.value
         symbol = Symbol(node.lvalue.value, node.type, 'struct')
         symbol.struct_name = struct_name
@@ -382,13 +391,19 @@ class MIPSVisitor:
 
         for i in self.structs[struct_name][0]:
             if i == 'int' or i == 'char':
-                self.code.append(f"li $t0, 0")
-                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                code.append(f"li $t0, 0")
+                code.append(f"sw $t0, -{self.variableAddress}($gp)")
             elif i == 'float':
-                self.code.append(f"li.s $f0, 0.0")
-                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                code.append(f"li.s $f0, 0.0")
+                code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
 
     def visit_StructDefinitionNode(self, node):
+        code = []
         struct_name = node.type.value
         symbol = Symbol(node.lvalue.value, node.type, 'struct')
         symbol.struct_name = struct_name
@@ -398,19 +413,25 @@ class MIPSVisitor:
 
         for i in range(len(self.structs[struct_name][0])):
             if self.structs[struct_name][0][i] == 'int':
-                self.code.append(f"li $t0, {self.visit(node.rvalue[i])}")
-                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                code.append(f"li $t0, {self.visit(node.rvalue[i])}")
+                code.append(f"sw $t0, -{self.variableAddress}($gp)")
                 self.variableAddress += 4
             elif self.structs[struct_name][0][i] == 'float':
-                self.code.append(f"li.s $f0, {self.visit(node.rvalue[i])}")
-                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                code.append(f"li.s $f0, {self.visit(node.rvalue[i])}")
+                code.append(f"s.s $f0, -{self.variableAddress}($gp)")
                 self.variableAddress += 4
             elif self.structs[struct_name][0][i] == 'char':
-                self.code.append(f"li $t0, {ord(self.visit(node.rvalue[i]))}")
-                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                code.append(f"li $t0, {ord(self.visit(node.rvalue[i]))}")
+                code.append(f"sw $t0, -{self.variableAddress}($gp)")
                 self.variableAddress += 4
 
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
+
     def visit_DefinitionNode(self, node):
+        code = []
         node_type = node.type
         if not isinstance(node_type, list):
             node_type = [node_type]
@@ -424,66 +445,72 @@ class MIPSVisitor:
             rvalue = ord(rvalue)
         if isinstance(rvalue, int):
             # Load int
-            self.code.append(f"li $t0, {rvalue}")
+            code.append(f"li $t0, {rvalue}")
 
             if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'float':
                 # Move to $f0
-                self.code.append(f"mtc1 $t0, $f0")
+                code.append(f"mtc1 $t0, $f0")
                 # Convert to float
-                self.code.append(f"cvt.s.w $f0, $f0")
+                code.append(f"cvt.s.w $f0, $f0")
                 # Save to memory
-                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                 # Increment address by 4 bytes
             else:
                 # Save to memory
-                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                code.append(f"sw $t0, -{symbol.memAddress}($gp)")
         elif isinstance(rvalue, float):
             # Load float
-            self.code.append(f"li.s $f0, {rvalue}")
+            code.append(f"li.s $f0, {rvalue}")
 
             if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'int' or self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'char':
                 # Convert to int
-                self.code.append("cvt.w.s $f0, $f0")
+                code.append("cvt.w.s $f0, $f0")
                 # Move
-                self.code.append("mfc1 $t0, $f0")
+                code.append("mfc1 $t0, $f0")
                 # Save to memory
-                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                code.append(f"sw $t0, -{symbol.memAddress}($gp)")
             else:
                 # Save to memory
-                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
         elif isinstance(rvalue, list):
             address = rvalue[0]
             if var_type == 'char' or var_type == 'int':
                 if self.get_highest_type(node.rvalue) == 'float':
                     # Load as float
-                    self.code.append(f"l.s $f0, -{address}($gp)")
+                    code.append(f"l.s $f0, -{address}($gp)")
                     # Convert to int
-                    self.code.append("cvt.w.s $f0, $f0")
+                    code.append("cvt.w.s $f0, $f0")
                     # Move
-                    self.code.append("mfc1 $t0, $f0")
+                    code.append("mfc1 $t0, $f0")
                 else:
                     # Load as int
-                    self.code.append(f"lw $t0, -{address}($gp)")
+                    code.append(f"lw $t0, -{address}($gp)")
                 # Save to memory
-                self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                code.append(f"sw $t0, -{symbol.memAddress}($gp)")
             elif var_type == 'float':
                 if self.get_highest_type(node.rvalue) != 'float':
                     # Load as int
-                    self.code.append(f"lw $t0, -{address}($gp)")
+                    code.append(f"lw $t0, -{address}($gp)")
                     # Move to $f0
-                    self.code.append("mtc1 $t0, $f0")
+                    code.append("mtc1 $t0, $f0")
                     # Convert to float
-                    self.code.append("cvt.s.w $f0, $f0")
+                    code.append("cvt.s.w $f0, $f0")
                 else:
                     # Load as float
-                    self.code.append(f"l.s $f0, -{address}($gp)")
+                    code.append(f"l.s $f0, -{address}($gp)")
                 # Save to memory
-                self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
 
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
     def assignArrayElement(self, node, var_type):
+        code = []
         # recursive method to assign array elements to memory
         if isinstance(node.array[0], ArrayNode):
             for i in node.array:
@@ -492,21 +519,26 @@ class MIPSVisitor:
             for i in node.array:
                 if var_type == 'float':
                     # Store 0 in variable
-                    self.code.append(f"li.s $f0, {self.visit(i)}")
+                    code.append(f"li.s $f0, {self.visit(i)}")
                     # Save to memory
-                    self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                    code.append(f"s.s $f0, -{self.variableAddress}($gp)")
                     # Increment address by 4 bytes
                     self.variableAddress += 4
                 else:
                     # Store value in memory
                     if var_type == 'char':
-                        self.code.append(f"li $t0, {ord(self.visit(i))}")
+                        code.append(f"li $t0, {ord(self.visit(i))}")
                     else:
-                        self.code.append(f"li $t0, {self.visit(i)}")
+                        code.append(f"li $t0, {self.visit(i)}")
                     # Save to memory
-                    self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                    code.append(f"sw $t0, -{self.variableAddress}($gp)")
                     # Increment address by 4 bytes
                     self.variableAddress += 4
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
 
     def create_multi_dimensional_list(self, dimensions):
         if not dimensions:
@@ -515,26 +547,32 @@ class MIPSVisitor:
             return [self.create_multi_dimensional_list(dimensions[1:]) for _ in range(dimensions[0])]
 
     def assignZeroArray(self, dimensions, var_type):
+        code = []
         # recursive method to assign array elements to memory
         if not isinstance(dimensions[0], list):
             for i in dimensions:
                 if var_type == 'float':
                     # Store 0 in variable
-                    self.code.append(f"li.s $f0, 0.0")
+                    code.append(f"li.s $f0, 0.0")
                     # Save to memory
-                    self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                    code.append(f"s.s $f0, -{self.variableAddress}($gp)")
                     # Increment address by 4 bytes
                     self.variableAddress += 4
                 else:
                     # Store 0 in variable
-                    self.code.append(f"li $t0, 0")
+                    code.append(f"li $t0, 0")
                     # Save to memory
-                    self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                    code.append(f"sw $t0, -{self.variableAddress}($gp)")
                     # Increment address by 4 bytes
                     self.variableAddress += 4
         else:
             for i in dimensions:
                 self.assignZeroArray(i, var_type)
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
 
     def visit_ArrayDefinitionNode(self, node):
         var_type = node.type.value
@@ -551,6 +589,7 @@ class MIPSVisitor:
         self.assignArrayElement(node.rvalue, var_type)
 
     def visit_AssignmentNode(self, node):
+        code = []
         if isinstance(node.lvalue, IdentifierNode):
             symbol = self.scope.lookup(name=node.lvalue.value)
             if symbol is not None:
@@ -560,66 +599,66 @@ class MIPSVisitor:
                     rvalue = ord(rvalue)
                 if isinstance(rvalue, int):
                     # Load int
-                    self.code.append(f"li $t0, {rvalue}")
+                    code.append(f"li $t0, {rvalue}")
 
                     if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'float':
                         # Move to $f0
-                        self.code.append(f"mtc1 $t0, $f0")
+                        code.append(f"mtc1 $t0, $f0")
                         # Convert to float
-                        self.code.append(f"cvt.s.w $f0, $f0")
+                        code.append(f"cvt.s.w $f0, $f0")
                         # Save to memory
-                        self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                        code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                     else:
                         # Save to memory
-                        self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                        code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                 elif isinstance(rvalue, float):
                     # Load float
-                    self.code.append(f"li.s $f0, {rvalue}")
+                    code.append(f"li.s $f0, {rvalue}")
 
                     if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'int' or self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'char':
                         # Convert to int
-                        self.code.append("cvt.w.s $f0, $f0")
+                        code.append("cvt.w.s $f0, $f0")
                         # Move
-                        self.code.append("mfc1 $t0, $f0")
+                        code.append("mfc1 $t0, $f0")
                         # Save to memory
-                        self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                        code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                     else:
                         # Save to memory
-                        self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                        code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
                 elif isinstance(rvalue, list):
                     address = rvalue[0]
                     if var_type == 'char' or var_type == 'int':
                         if self.get_highest_type(node.rvalue) == 'float':
                             # Load as float
-                            self.code.append(f"l.s $f0, -{address}($gp)")
+                            code.append(f"l.s $f0, -{address}($gp)")
                             # Convert to int
-                            self.code.append("cvt.w.s $f0, $f0")
+                            code.append("cvt.w.s $f0, $f0")
                             # Move
-                            self.code.append("mfc1 $t0, $f0")
+                            code.append("mfc1 $t0, $f0")
                         else:
                             # Load as int
-                            self.code.append(f"lw $t0, -{address}($gp)")
+                            code.append(f"lw $t0, -{address}($gp)")
                         # Save to memory
-                        self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                        code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                     elif var_type == 'float':
                         if self.get_highest_type(node.rvalue) != 'float':
                             # Load as int
-                            self.code.append(f"lw $t0, -{address}($gp)")
+                            code.append(f"lw $t0, -{address}($gp)")
                             # Move to $f0
-                            self.code.append("mtc1 $t0, $f0")
+                            code.append("mtc1 $t0, $f0")
                             # Convert to float
-                            self.code.append("cvt.s.w $f0, $f0")
+                            code.append("cvt.s.w $f0, $f0")
                         else:
                             # Load as float
-                            self.code.append(f"l.s $f0, -{address}($gp)")
+                            code.append(f"l.s $f0, -{address}($gp)")
                         # Save to memory
-                        self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                        code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
         elif isinstance(node.lvalue, DerefNode):
             symbol = self.scope.lookup(name=node.lvalue.identifier.value)
             if symbol is not None:
                 lvalue = self.return_DerefNodeAddress(node.lvalue)
                 # Load address
-                self.code.append(f"lw $t1, -{lvalue[0]}($gp)")
+                code.append(f"lw $t1, -{lvalue[0]}($gp)")
                 rvalue = self.visit(node.rvalue)
 
                 var_type = self.get_highest_type(symbol.type[len(symbol.type) - 1])
@@ -627,67 +666,73 @@ class MIPSVisitor:
                     rvalue = ord(rvalue)
                 if isinstance(rvalue, int):
                     # Load int
-                    self.code.append(f"li $t0, {rvalue}")
+                    code.append(f"li $t0, {rvalue}")
 
                     if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'float':
                         # Move to $f0
-                        self.code.append(f"mtc1 $t0, $f0")
+                        code.append(f"mtc1 $t0, $f0")
                         # Convert to float
-                        self.code.append(f"cvt.s.w $f0, $f0")
+                        code.append(f"cvt.s.w $f0, $f0")
                         # Save to memory
-                        self.code.append(f"s.s $f0, 0($t1)")
+                        code.append(f"s.s $f0, 0($t1)")
                     else:
                         # Save to memory
-                        self.code.append("sw $t0, 0($t1)")
+                        code.append("sw $t0, 0($t1)")
                 elif isinstance(rvalue, float):
                     # Load float
-                    self.code.append(f"li.s $f0, {rvalue}")
+                    code.append(f"li.s $f0, {rvalue}")
 
                     if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'int' or self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'char':
                         # Convert to int
-                        self.code.append("cvt.w.s $f0, $f0")
+                        code.append("cvt.w.s $f0, $f0")
                         # Move
-                        self.code.append("mfc1 $t0, $f0")
+                        code.append("mfc1 $t0, $f0")
                         # Save to memory
-                        self.code.append("sw $t0, 0($t1)")
+                        code.append("sw $t0, 0($t1)")
                     else:
                         # Save to memory
-                        self.code.append("s.s $f0, 0($t1)")
+                        code.append("s.s $f0, 0($t1)")
                 elif isinstance(rvalue, list):
                     address = rvalue[0]
                     if len(self.get_pointer_size(node.rvalue)) != 0:
                         # Put address in $t0
-                        self.code.append(f"sub $t0, $gp, {address}")
+                        code.append(f"sub $t0, $gp, {address}")
                         # Save to memory
-                        self.code.append(f"sw, $t0, -{symbol.memAddress}($gp)")
+                        code.append(f"sw, $t0, -{symbol.memAddress}($gp)")
                     elif var_type == 'char' or var_type == 'int':
                         if self.get_highest_type(node.rvalue) == 'float':
                             # Load as float
-                            self.code.append(f"l.s $f0, -{address}($gp)")
+                            code.append(f"l.s $f0, -{address}($gp)")
                             # Convert to int
-                            self.code.append("cvt.w.s $f0, $f0")
+                            code.append("cvt.w.s $f0, $f0")
                             # Move
-                            self.code.append("mfc1 $t0, $f0")
+                            code.append("mfc1 $t0, $f0")
                         else:
                             # Load as int
-                            self.code.append(f"lw $t0, -{address}($gp)")
+                            code.append(f"lw $t0, -{address}($gp)")
                         # Save to memory
-                        self.code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                        code.append(f"sw $t0, -{symbol.memAddress}($gp)")
                     elif var_type == 'float':
                         if self.get_highest_type(node.rvalue) != 'float':
                             # Load as int
-                            self.code.append(f"lw $t0, -{address}($gp)")
+                            code.append(f"lw $t0, -{address}($gp)")
                             # Move to $f0
-                            self.code.append("mtc1 $t0, $f0")
+                            code.append("mtc1 $t0, $f0")
                             # Convert to float
-                            self.code.append("cvt.s.w $f0, $f0")
+                            code.append("cvt.s.w $f0, $f0")
                         else:
                             # Load as float
-                            self.code.append(f"l.s $f0, -{address}($gp)")
+                            code.append(f"l.s $f0, -{address}($gp)")
                         # Save to memory
-                        self.code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                        code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
 
     def visit_ArrayAssignmentNode(self, node):
+        code = []
         symbol = self.scope.lookup(name=node.lvalue.value)
         dimensions = symbol.dimensions
         address = symbol.memAddress
@@ -699,19 +744,25 @@ class MIPSVisitor:
 
         if symbol.type == 'float':
             # Store 0 in variable
-            self.code.append(f"li.s $f0, {self.visit(node.rvalue)}")
+            code.append(f"li.s $f0, {self.visit(node.rvalue)}")
             # Save to memory
-            self.code.append(f"s.s $f0, -{address}($gp)")
+            code.append(f"s.s $f0, -{address}($gp)")
         else:
             # Store value in memory
             if symbol.type == 'char':
-                self.code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
+                code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
             else:
-                self.code.append(f"li $t0, {self.visit(node.rvalue)}")
+                code.append(f"li $t0, {self.visit(node.rvalue)}")
             # Save to memory
-            self.code.append(f"sw $t0, -{address}($gp)")
+            code.append(f"sw $t0, -{address}($gp)")
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
 
     def visit_StructAssignmentNode(self, node):
+        code = []
         struct_var_name = node.lvalue.struct_var_name
         symbol = self.scope.lookup(name=struct_var_name)
         struct_name = symbol.struct_name
@@ -722,21 +773,26 @@ class MIPSVisitor:
         type = types[index]
 
         if isinstance(node.rvalue, IntNode):
-            self.code.append(f"li $t0, {self.visit(node.rvalue)}")
-            self.code.append(f"sw $t0, -{address}($gp)")
+            code.append(f"li $t0, {self.visit(node.rvalue)}")
+            code.append(f"sw $t0, -{address}($gp)")
         elif isinstance(node.rvalue, FloatNode):
-            self.code.append(f"li.s $f0, {self.visit(node.rvalue)}")
-            self.code.append(f"s.s $f0, -{address}($gp)")
+            code.append(f"li.s $f0, {self.visit(node.rvalue)}")
+            code.append(f"s.s $f0, -{address}($gp)")
         elif isinstance(node.rvalue, CharNode):
-            self.code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
-            self.code.append(f"sw $t0, -{address}($gp)")
+            code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
+            code.append(f"sw $t0, -{address}($gp)")
         else:
             if type == 'float':
-                self.code.append(f"l.s $f0, -{self.visit(node.rvalue)[0]}($gp)")
-                self.code.append(f"s.s $f0, -{address}($gp)")
+                code.append(f"l.s $f0, -{self.visit(node.rvalue)[0]}($gp)")
+                code.append(f"s.s $f0, -{address}($gp)")
             else:
-                self.code.append(f"lw $t0, -{self.visit(node.rvalue)[0]}($gp)")
-                self.code.append(f"sw $t0, -{address}($gp)")
+                code.append(f"lw $t0, -{self.visit(node.rvalue)[0]}($gp)")
+                code.append(f"sw $t0, -{address}($gp)")
+
+        if self.scope.is_global():
+            self.global_code.extend(code)
+        else:
+            self.code.extend(code)
 
     def visit_IdentifierNode(self, node):
         symbol = self.scope.lookup(name=node.value)
