@@ -1,5 +1,7 @@
 from src.tests.utils import mips_output_compare, mips_output_compare_with_expected_output
 
+import os
+
 root = "src/tests/test_input_files/custom_tests/project_5/"
 
 
@@ -21,7 +23,7 @@ def test_p5_functions_1():
 
 def test_p5_include():
     source_file = "p5_include.c"
-    mips_output_compare(root, source_file)
+    mips_output_compare_with_expected_output(root, source_file, "src/tests/MIPS_tests/expected_output/p5_include_expected_output.txt")
 
 
 def test_p5_include_guards_1():
@@ -31,7 +33,7 @@ def test_p5_include_guards_1():
 
 def test_p5_include_guards_2():
     source_file = "p5_include_guards_2.c"
-    mips_output_compare(root, source_file)
+    mips_output_compare_with_expected_output(root, source_file, "src/tests/MIPS_tests/expected_output/p5_include_guards_2_expected_output.txt")
 
 
 def test_p5_local_global_var():
