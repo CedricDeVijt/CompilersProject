@@ -1,10 +1,8 @@
 #include <stdio.h>
 
-int a = 5;
-
 void function1() {
-    int b = 10;
-    printf("a: %d, b: %d\n", a, b);
+    int a = 5;
+    printf("a: %d\n", a);
     return;
 }
 

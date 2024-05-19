@@ -46,3 +46,8 @@ def test_p4_switch():
 def test_p4_while_loop():
     source_file = "p4_while_loop.c"
     mips_output_compare(root, source_file)
+
+
+def test_complex_loops_test():
+    source_file = "p4_complex_conditional_statements.c"
+    mips_output_compare(root, source_file)

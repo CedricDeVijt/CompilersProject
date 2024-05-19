@@ -1,13 +1,13 @@
 #include <stdio.h>
 
 int main() {
-    int x = 10;
-    if (x > 10) {
-        printf("%d>10", x);
-    } else if (x == 10) {
-        printf("%d==10", x);
+    int a = 5;
+    if (a > 10) {
+        printf("a is greater than 10\n");
+    } else if (a > 3) {
+        printf("a is greater than 3\n");
     } else {
-        printf("%d<10", x);
+        printf("a is not greater than 3\n");
     }
     return 0;
 }

@@ -24,7 +24,7 @@ def test_p5_include():
 
 
 def test_p5_include_guards():
-    source_file = "p5_include_guards.c"
+    source_file = "p5_include_guards_1.c"
     llvm_output_compare(root, source_file)
 
 
