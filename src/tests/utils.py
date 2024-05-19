@@ -99,19 +99,10 @@ def mips_output_compare(root: str, input_file: str):
 
     # compile the .c file using gcc
     os.system(f"gcc {os.path.join(file_dir, source_file)} -o {os.path.join(file_dir, filename)}")
-    # run the executable and save the output to the text file
-    # os.system(f"{os.path.join(file_dir, filename)} > {os.path.join(file_dir, gcc_output)}")
 
     gcc = subprocess.run(f"{os.path.join(file_dir, filename)}", shell=True, capture_output=True, text=True)
     gcc_output_text = gcc.stdout
 
-    # compile to mips and run mips file with Spim
-    # compile_mips(input_file=os.path.join(file_dir, source_file), visitor=visitor,
-    #              output_file=os.path.join(file_dir, mips_code), run_code=False)
-    # os.system(f"spim -quiet -file {os.path.join(file_dir, mips_code)} > {os.path.join(file_dir, mips_output)}")
-
-    # Print working directory
-    print(os.getcwd())
     # run the mips code with our compiler
     compiler = subprocess.run(f"python3 -m src.main --input {os.path.join(file_dir, source_file)} --target_mips {os.path.join(file_dir, mips_code)}", shell=True, capture_output=True, text=True)
     mips_output_text = compiler.stdout
@@ -147,14 +138,12 @@ def mips_output_compare_with_expected_output(root: str, input_file: str, expecte
     mips_code = filename + "_test.mips"
     mips_output = filename + "_test_output.txt"
 
-    # compile to mips and run with our compiler
-    compile_mips(input_file=file_dir + source_file, visitor=visitor, output_file=file_dir + mips_code,
-                 run_code=False)
-    os.system("spim -quiet -file " + file_dir + mips_code + " > " + file_dir + mips_output)
+    # run the mips code with our compiler
+    compiler = subprocess.run(
+        f"python3 -m src.main --input {os.path.join(file_dir, source_file)} --target_mips {os.path.join(file_dir, mips_code)}",
+        shell=True, capture_output=True, text=True)
+    mips_output_text = compiler.stdout
 
-    # compare the output with the expected output
-    with open(file_dir + mips_output, 'r') as f:
-        generated_output = f.read()
 
     with open(expected_output, 'r') as f:
         expected_output = f.read()
@@ -163,7 +152,7 @@ def mips_output_compare_with_expected_output(root: str, input_file: str, expecte
     print(expected_output)
 
     print("MIPS Output:")
-    print(generated_output)
+    print(mips_output_text)
 
     # assert that the outputs are the same
-    assert generated_output == expected_output
+    assert mips_output_text == expected_output
