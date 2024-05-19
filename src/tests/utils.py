@@ -159,5 +159,11 @@ def mips_output_compare_with_expected_output(root: str, input_file: str, expecte
     with open(expected_output, 'r') as f:
         expected_output = f.read()
 
+    print("Expected Output:")
+    print(expected_output)
+
+    print("MIPS Output:")
+    print(generated_output)
+
     # assert that the outputs are the same
     assert generated_output == expected_output
