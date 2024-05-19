@@ -23,6 +23,9 @@ jobs:
       - name: Install Spim (MIPS simulator)
         run: sudo apt install -y spim
 
+      - name: Do list of files
+        run: ls
+
       - name: Run all tests
         run: |
           python -m pytest src/tests/MIPS_tests
