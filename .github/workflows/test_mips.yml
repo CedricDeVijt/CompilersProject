@@ -24,7 +24,7 @@ jobs:
         run: sudo apt install -y spim
 
       - name: Do list of files
-        run: ls
+        run: tree
 
       - name: Run all tests
         run: |
