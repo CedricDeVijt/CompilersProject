@@ -264,19 +264,20 @@ class MIPSVisitor:
         # Load arguments into their addresses
         for arg in node.arguments:
             arg_type = self.get_highest_type(arg)
+            visited_arg = self.visit(arg)
             if self.get_pointer_size(arg) == [] or arg_type != 'float':
-                if isinstance(self.visit(arg), list):
-                    self.code.append(f"lw $t0, -{self.visit(arg)[0]}($gp)")
+                if isinstance(visited_arg, list):
+                    self.code.append(f"lw $t0, -{visited_arg[0]}($gp)")
                     self.code.append(f"sw $t0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
                 else:
-                    self.code.append(f"li $t0, {self.visit(arg)}")
+                    self.code.append(f"li $t0, {visited_arg}")
                     self.code.append(f"sw $t0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
             else:
-                if isinstance(self.visit(arg), list):
-                    self.code.append(f"l.s $f0, -{self.visit(arg)[0]}($gp)")
+                if isinstance(visited_arg, list):
+                    self.code.append(f"l.s $f0, -{visited_arg[0]}($gp)")
                     self.code.append(f"s.s $f0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
                 else:
-                    self.code.append(f"li.s $f0, {self.visit(arg)}")
+                    self.code.append(f"li.s $f0, {visited_arg}")
                     self.code.append(f"s.s $f0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
         # Save $ra to stack
         self.code.append("sub $sp, $sp, 4")
