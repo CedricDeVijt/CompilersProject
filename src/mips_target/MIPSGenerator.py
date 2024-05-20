@@ -291,7 +291,7 @@ class MIPSVisitor:
         # for i in range(len(node.arguments), 0, -1):
         #     self.code.append(f"lw $t0, 0($sp)")
         #     self.code.append("add $sp, $sp, 4")
-        #     self.code.append(f"sw $t0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
+        #     self.code.append(f"sw $t0, -{symbols.paramsAddresses[i - 1]}($gp)")
         # Return return value
         return [symbols.return_address]
 
