@@ -1750,9 +1750,6 @@ class MIPSVisitor:
         for statement in node.body:
             self.visit(statement, return_address)
 
-        # Jump to the end
-        self.code.append(f"j {end_label}")
-
         # End of the if block
         self.code.append(f"{end_label}:")
 
