@@ -27,13 +27,15 @@ class MIPSVisitor:
         self.if_count = 0
         self.while_count = 0
 
-    def visit(self, node):
+    def visit(self, node, return_address=0):
         method_name = "visit_" + node.__class__.__name__
         _visitor = getattr(self, method_name, self.generic_visit)
         if node.__class__.__name__ in binary_ops:
             return self.visit_BinaryOp(node, _visitor)
         if node.__class__.__name__ in unary_ops:
             return self.visit_UnaryOp(node, _visitor)
+        if isinstance(node, ReturnNode) or isinstance(node, IfStatementNode) or isinstance(node, WhileLoopNode) or isinstance(node, ScopeNode):
+            return _visitor(node, return_address)
         return _visitor(node)
 
     def generic_visit(self, node):
@@ -167,31 +169,6 @@ class MIPSVisitor:
                 return self.get_highest_type(symbol.type)
         return 'char'
 
-    def get_conditions(self, node):
-        if isinstance(node.condition, IntNode):
-            self.code.append(f"li $t0, {node.condition.value}")
-        else:
-            condition = self.visit(node.condition)
-            if self.get_highest_type(node.condition) == 'float':
-                # Load into $f0
-                self.code.append(f"l.s $f0, -{condition[0]}($gp)")
-                # Load 0.0 into $f1
-                self.code.append("li.s $f1, 0.0")
-                # Check if $f0 == $f1
-                self.code.append("c.eq.s $f0, $f1")
-                # Move the result of the comparison to $t0
-                self.code.append("bc1t set_t0_to_zero")
-                self.code.append("li $t0, 1")  # Set $t0 to 1 if $f0 != $f1
-                self.code.append("j continue_comparison")
-                self.code.append("set_t0_to_zero:")
-                self.code.append("li $t0, 0")  # Set $t0 to 0 if $f0 == $f1
-                self.code.append("continue_comparison:")
-            else:
-                # Load the condition variable
-                self.code.append(f"lw $t0, -{condition[0]}($gp)")
-                # Perform the comparison against zero
-                self.code.append("sltu $t0, $zero, $t0")  # $t0 = 1 if condition is true, 0 otherwise
-
     def visit_ProgramNode(self, node):
         a = 5
         for child in node.children:
@@ -257,13 +234,10 @@ class MIPSVisitor:
             if self.scope.get_symbol(name=symbol.name) is None:
                 self.scope.add_symbol(symbol)
         for statement in node.body:
-            if not isinstance(statement, CommentNode):
+            if not isinstance(statement, CommentNode) and not isinstance(statement, ScopeNode):
                 # Add comment for code
                 self.code.append(f"# {statement.original}")
-                if isinstance(statement, ReturnNode):
-                    self.visit_ReturnNode(statement, func_symbol.return_address)
-                    continue
-            self.visit(statement)
+            self.visit(statement, func_symbol.return_address)
         # Close function scope
         self.scope.close_scope()
 
@@ -282,6 +256,11 @@ class MIPSVisitor:
                 symbols = symbol
                 break
 
+        # Save previous arguments to stack
+        # for i in range(0, len(node.arguments)):
+        #     self.code.append(f"lw $t0, -{symbols.paramsAddresses[i]}($gp)")
+        #     self.code.append("sub $sp, $sp, 4")
+        #     self.code.append("sw $t0, 0($sp)")
         # Load arguments into their addresses
         for arg in node.arguments:
             arg_type = self.get_highest_type(arg)
@@ -300,15 +279,18 @@ class MIPSVisitor:
                     self.code.append(f"li.s $f0, {self.visit(arg)}")
                     self.code.append(f"s.s $f0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
         # Save $ra to stack
-        self.code.append("# Save $ra to stack")
         self.code.append("sub $sp, $sp, 4")
         self.code.append("sw $ra, 0($sp)")
         # Jump to function
         self.code.append(f"jal {symbols.mips_name}")
         # Restore $ra from stack
-        self.code.append("# Restore $ra from stack")
         self.code.append("lw $ra, 0($sp)")
         self.code.append("add $sp, $sp, 4")
+        # Restore arguments from stack
+        # for i in range(len(node.arguments), 0, -1):
+        #     self.code.append(f"lw $t0, 0($sp)")
+        #     self.code.append("add $sp, $sp, 4")
+        #     self.code.append(f"sw $t0, -{symbols.paramsAddresses[node.arguments.index(arg)]}($gp)")
         # Return return value
         return [symbols.return_address]
 
@@ -1078,10 +1060,12 @@ class MIPSVisitor:
         # Return
         return [self.variableAddress - 4]
 
-    def visit_ScopeNode(self, node):
+    def visit_ScopeNode(self, node, return_address):
         self.scope.open_scope()
         for statement in node.children:
-            self.visit(statement)
+            if not isinstance(statement, CommentNode):
+                self.code.append(f"# {statement.original}")
+            self.visit(statement, return_address)
         self.scope.close_scope()
 
     def visit_EnumNode(self, node):
@@ -1729,22 +1713,41 @@ class MIPSVisitor:
         # Return temporary address
         return [self.variableAddress - 4]
 
-    def visit_IfStatementNode(self, node):
+    def visit_IfStatementNode(self, node, return_address):
         # Create unique labels for this if block
         end_label = f"endif_{self.if_count}"
         self.if_count += 1
 
-        # Get the condition and put in correct register
-        self.get_conditions(node)
+        # Condition
+        address = self.visit(node.condition)
+        if isinstance(address, list):
+            if self.get_highest_type(node.condition) == 'float':
+                # Load into $f0
+                self.code.append(f"s.s $f0, -{address[0]}($gp)")
+                # Convert to integer
+                self.code.append("cvt.w.s $f0, $f0")
+                # Move to $t0
+                self.code.append("mfc1 $t0, $f0")
+            else:
+                # Load into $t0
+                self.code.append(f"lw $t0, -{address[0]}($gp)")
+        elif isinstance(address, float):
+            # Load into $f0
+            self.code.append(f"li.s $f0, {address}")
+            # Convert to integer
+            self.code.append("cvt.w.s $f0, $f0")
+            # Move to $t0
+            self.code.append("mfc1 $t0, $f0")
+        else:
+            # Load into $t0
+            self.code.append(f"li $t0, {address}")
 
         # Check if $t0 is true
         self.code.append(f"beq $t0, $zero, {end_label}")
 
         # Visit the if block
         for statement in node.body:
-            if not isinstance(statement, CommentNode):
-                self.code.append(f"# {node.original}")
-            self.visit(statement)
+            self.visit(statement, return_address)
 
         # Jump to the end
         self.code.append(f"j {end_label}")
@@ -1752,8 +1755,7 @@ class MIPSVisitor:
         # End of the if block
         self.code.append(f"{end_label}:")
 
-
-    def visit_WhileLoopNode(self, node):
+    def visit_WhileLoopNode(self, node, return_address):
         # Create unique labels for this while loop
         start_label = f"while_{self.while_count}"
         end_label = f"endwhile_{self.while_count}"
@@ -1765,17 +1767,36 @@ class MIPSVisitor:
         # Start of the while loop
         self.code.append(f"{start_label}:")
 
-        # Get the condition and put it in the correct register
-        self.get_conditions(node)
+        # Condition
+        address = self.visit(node.condition)
+        if isinstance(address, list):
+            if self.get_highest_type(node.condition) == 'float':
+                # Load into $f0
+                self.code.append(f"s.s $f0, -{address[0]}($gp)")
+                # Convert to integer
+                self.code.append("cvt.w.s $f0, $f0")
+                # Move to $t0
+                self.code.append("mfc1 $t0, $f0")
+            else:
+                # Load into $t0
+                self.code.append(f"lw $t0, -{address[0]}($gp)")
+        elif isinstance(address, float):
+            # Load into $f0
+            self.code.append(f"li.s $f0, {address}")
+            # Convert to integer
+            self.code.append("cvt.w.s $f0, $f0")
+            # Move to $t0
+            self.code.append("mfc1 $t0, $f0")
+        else:
+            # Load into $t0
+            self.code.append(f"li $t0, {address}")
 
         # Assume the condition result is in $t0, compare it to zero
         self.code.append(f"beq $t0, $zero, {end_label}")
 
         # Visit the body of the while loop
         for statement in node.body:
-            if not isinstance(statement, CommentNode):
-                self.code.append(f"# {node.original}")
-            self.visit(statement)
+            self.visit(statement, return_address)
 
         # Label for continue statement to jump to
         self.code.append(f"{continue_label}:")

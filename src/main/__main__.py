@@ -132,6 +132,7 @@ def compile_mips(input_file, visitor, output_file, run_code):
     if run_code:
         process = subprocess.run(f'spim -quiet -file {output_file}', shell=True, capture_output=True, text=True)
         output = process.stdout.splitlines()
+
         # Remove the first 5 lines of output (SPIM header)
         SPIM_header = ['SPIM Version 8.0 of January 8, 2010', 'Copyright 1990-2010, James R. Larus.', 'All Rights Reserved.', 'See the file README for a full copyright notice.', 'Loaded: /usr/lib/spim/exceptions.s']
         if output[:5] == SPIM_header:
