@@ -1015,6 +1015,16 @@ class MIPSVisitor:
         return [address]
 
     def visit_PostFixNode(self, node):
+        if isinstance(node.value, ArrayIdentifierNode):
+            address = self.visit(node.value)
+            # load value stored in address
+            self.code.append(f"lw $t0, -{address}($gp)")
+            if node.op == 'inc':
+                self.code.append("add $t0, $t0, 1")
+            else:
+                self.code.append("sub $t0, $t0, 1")
+            self.code.append(f"sw $t0, -{address}($gp)")
+            return address
         if isinstance(node.value, DerefNode):
             address = self.return_DerefNodeAddress(node.value)[0]
         else:
