@@ -776,6 +776,15 @@ class MIPSVisitor:
         # self.code.append("li $a0, 13")
         # self.code.append("li $v0, 11")
         # self.code.append("syscall")
+        # # Print value in $t0
+        # self.code.append("lw $t1, 0($t0)")
+        # self.code.append("move $a0, $t1")
+        # self.code.append("li $v0, 1")
+        # self.code.append("syscall")
+        # # Print end line
+        # self.code.append("li $a0, 13")
+        # self.code.append("li $v0, 11")
+        # self.code.append("syscall")
 
         if symbol.type == 'float':
             # Load literal float
