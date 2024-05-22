@@ -1694,7 +1694,12 @@ class ASTGenerator(Visitor):
                 continue
             if child.getText() == "]":
                 continue
-            arraySizes.append(int(child.getText()))
+            node = self.visit(child)
+            if not isinstance(node, (IntNode, CharNode)):
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid array declaration!")
+                return None
+
+            arraySizes.append(int(node.value))
 
         # Add symbol to scope
         if self.scope.get_symbol(identifier):
@@ -1728,7 +1733,13 @@ class ASTGenerator(Visitor):
                     continue
                 if child.getText() == "]":
                     continue
-                array_sizes.append(int(child.getText()))
+
+                node = self.visit(child)
+                if not isinstance(node, (IntNode, CharNode)):
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid array definition!")
+                    return None
+
+                array_sizes.append(int(node.value))
 
             # Check if array is valid with the given sizes
             if not self.checkArraySizes(rvalue, array_sizes):
