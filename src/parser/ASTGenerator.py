@@ -298,7 +298,6 @@ class ASTGenerator(Visitor):
                 self.errors.append(f"line {node.line}:{node.column} {node.value} is not in it's respective while/switch statement or in a function.")
 
     def remove_unused_children(self, children: list):
-        return
         # check in current scope which variables are not used. (remove them)
         unused_children = []
         for child in children:
@@ -1257,7 +1256,14 @@ class ASTGenerator(Visitor):
             children.append(line)
         type = children[1].getText()
         original = f"({type}) {children[len(children) - 1].getText()}"
-        node = ExplicitConversionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type, rvalue=self.visit(children[len(children) - 1]))
+        typeNode = TypeNode(value=type, line=ctx.start.line, column=ctx.start.column, original=type)
+        type = self.get_highest_type(typeNode)
+
+        rval = self.visit(children[len(children) - 1])
+        if isinstance(rval, IdentifierNode):
+            self.scope.lookup(rval.value)
+
+        node = ExplicitConversionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type, rvalue=rval)
         return node
 
     def visitPrintfStatement(self, ctx):
@@ -1957,6 +1963,17 @@ class ASTGenerator(Visitor):
             else:
                 array_sizes.append(int(child.getText()))
 
+        # check if array sizes are correct
+        if len(array_sizes) != len(id_node.arraySizes):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
+            return None
+
+        for i in range(len(id_node.arraySizes)):
+            if isinstance(array_sizes[i], (IntNode, CharNode)):
+                if int(array_sizes[i].value) >= id_node.arraySizes[i]:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array index out of bounds!")
+                    return ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=identifier, indices=array_sizes)
+
         original = f"{identifier}["
         for size in array_sizes:
             original += f"{size.value}]"
@@ -2070,7 +2087,7 @@ class ASTGenerator(Visitor):
 
         # get struct members
         def_members = []
-        for i in range(5, 10, 2):
+        for i in range(5, len(children)-1, 2):
             def_members.append(self.visit(children[i]))
 
         # Check if all values of the struct are assigned
