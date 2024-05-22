@@ -2081,7 +2081,7 @@ class ASTGenerator(Visitor):
 
         # get struct members
         def_members = []
-        for i in range(5, 10, 2):
+        for i in range(5, len(children)-1, 2):
             def_members.append(self.visit(children[i]))
 
         # Check if all values of the struct are assigned
