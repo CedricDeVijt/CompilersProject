@@ -1065,7 +1065,7 @@ class ASTGenerator(Visitor):
                 if self.scope.lookup(child0.value) is None:
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
                     return node
-                if self.scope.lookup(child0.value).symbol_type != 'variable':
+                if self.scope.lookup(child0.value).symbol_type not in ['variable', 'enum']:
                     self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + child0.value + "\' not declared yet!")
                     return node
             if isinstance(child2, IdentifierNode):
