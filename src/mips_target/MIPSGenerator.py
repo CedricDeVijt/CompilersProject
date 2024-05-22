@@ -563,7 +563,6 @@ class MIPSVisitor:
         symbol = Symbol(node.lvalue.value, var_type, 'array')
         symbol.memAddress = self.variableAddress
         # Increment address by 4 bytes
-        self.variableAddress += 4
         symbol.dimensions = node.size
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
