@@ -426,6 +426,8 @@ class MIPSVisitor:
         var_type = self.get_highest_type(node_type[len(node_type) - 1])
         symbol = Symbol(node.lvalue.value, node.type, 'variable')
         symbol.memAddress = self.variableAddress
+        if isinstance(node.rvalue, IntNode):
+            symbol.index = self.visit(node.rvalue)
         # Increment address by 4 bytes
         self.variableAddress += 4
         rvalue = self.visit(node.rvalue)
@@ -856,7 +858,8 @@ class MIPSVisitor:
         for i in range(len(node.indices)):
             add = self.visit(node.indices[i])
             if isinstance(add, list):
-                add = add[0]
+                symbol1 = self.scope.lookup(node.indices[i].value)
+                add = symbol1.index
             for j in range(i+1, len(dimensions)):
                 add *= dimensions[j]
             address += add * 4
