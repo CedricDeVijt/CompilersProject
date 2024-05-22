@@ -740,26 +740,53 @@ class MIPSVisitor:
         code = []
         symbol = self.scope.lookup(name=node.lvalue.value)
         dimensions = symbol.dimensions
+        dimensions.reverse()
         address = symbol.memAddress
+        # Set $t0 to start of array
+        self.code.append(f"li $t0, {address}")
         for i in range(len(node.lvalue.indices)):
-            add = self.visit(node.lvalue.indices[i])
-            for j in range(i + 1, len(dimensions)):
-                add *= dimensions[j]
-            address += add * 4
+            if self.get_highest_type(node.lvalue.indices[i]) != 'float':
+                add = self.visit(node.lvalue.indices[i])
+                if isinstance(add, int):
+                    add *= 4
+                    # Add to $t0
+                    self.code.append(f"add $t0, $t0, {add}")
+                    continue
+                if isinstance(add, list):
+                    # Load from memory
+                    self.code.append(f"lw $t1, -{add[0]}($gp)")
+                    for j in range(0, len(dimensions) - i - 1):
+                        # Multiply by dimensions
+                        self.code.append(f"mul $t1, $t1, {dimensions[j]}")
+                    # Multiply by 4
+                    self.code.append("mul $t1, $t1, 4")
+                    # Add to $t0
+                    self.code.append("add $t0, $t0, $t1")
+            else:
+                raise Exception("WHAT THE FUCK HAPPENED HERE THEN")
+
+        # Subtract address from $gp
+        self.code.append("sub $t0, $gp, $t0")
+
+        # # Print address as int
+        # self.code.append("move $a0, $t0")
+        # self.code.append("li $v0, 1")
+        # self.code.append("syscall")
+        # # Print end line
+        # self.code.append("li $a0, 13")
+        # self.code.append("li $v0, 11")
+        # self.code.append("syscall")
 
         if symbol.type == 'float':
             # Store 0 in variable
             code.append(f"li.s $f0, {self.visit(node.rvalue)}")
             # Save to memory
-            code.append(f"s.s $f0, -{address}($gp)")
+            code.append(f"s.s $f0, 0($t0)")
         else:
             # Store value in memory
-            if symbol.type == 'char':
-                code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
-            else:
-                code.append(f"li $t0, {self.visit(node.rvalue)}")
+            code.append(f"li $t1, {self.visit(node.rvalue)}")
             # Save to memory
-            code.append(f"sw $t0, -{address}($gp)")
+            code.append(f"sw $t1, 0($t0)")
 
         if self.scope.is_global():
             self.global_code.extend(code)
@@ -915,12 +942,12 @@ class MIPSVisitor:
                 dimensions = symbol.dimensions
                 dimensions.reverse()
                 address = symbol.memAddress
-                # Clear $t0
+                # Set $t0 to start of array
                 self.code.append(f"li $t0, {address}")
                 for i in range(len(arg.indices)):
                     if self.get_highest_type(arg.indices[i]) != 'float':
                         add = self.visit(arg.indices[i])
-                        if isinstance(arg.indices[i], IntNode):
+                        if isinstance(add, int):
                             add *= 4
                             # Add to $t0
                             self.code.append(f"add $t0, $t0, {add}")
