@@ -778,12 +778,12 @@ class MIPSVisitor:
         # self.code.append("syscall")
 
         if symbol.type == 'float':
-            # Store 0 in variable
+            # Load literal float
             code.append(f"li.s $f0, {self.visit(node.rvalue)}")
             # Save to memory
             code.append(f"s.s $f0, 0($t0)")
         else:
-            # Store value in memory
+            # Load literal int/char
             code.append(f"li $t1, {self.visit(node.rvalue)}")
             # Save to memory
             code.append(f"sw $t1, 0($t0)")
