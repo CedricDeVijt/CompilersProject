@@ -1651,7 +1651,7 @@ class ASTGenerator(Visitor):
 
         original = f"{enum_type_name} {enum_var_name}"
 
-        return DeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=type, lvalue=lvalue)
+        return DeclarationNode(line=ctx.start.line, column=ctx.start.column, original=original, type=[type], lvalue=lvalue)
 
     def visitEnumVariableDefinition(self, ctx):
         enum_type_name = ctx.children[1].getText()
@@ -1685,7 +1685,7 @@ class ASTGenerator(Visitor):
 
         rvalue = IntNode(value=enum_value_index, line=ctx.start.line, column=ctx.start.column, original=enum_value)
 
-        return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=type, lvalue=lvalue, rvalue=rvalue)
+        return DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), type=[type], lvalue=lvalue, rvalue=rvalue)
 
     def visitArrayStatement(self, ctx):
         return self.visit(ctx.getChild(0))

@@ -71,6 +71,9 @@ def generate_ast(path, visitor, constant_fold=True, warnings=False):
     # remove forward declarations
     ast.remove_forward_declarations()
 
+    # replace enums types with integer types
+    ast.replace_enum(symbolTable)
+
     return ast, symbolTable, stdio_found
 
 

@@ -329,6 +329,36 @@ class Node:
                 index = self.children.index(forward_declaration)
                 self.children[index] = definition
 
+    def replace_enum(self, symbolTable):
+        # Remove enum nodes
+        self._remove_enum_nodes()
+
+        # Replace enum with int
+        for node in self.children:
+            self._replace_enum_with_int(node, symbolTable.get_all_enums())
+
+    def _remove_enum_nodes(self):
+        remove = []
+        for node in self.children:
+            if isinstance(node, EnumNode):
+                remove.append(node)
+
+        for node in remove:
+            self.children.remove(node)
+
+    def _replace_enum_with_int(self, node, enums):
+        if isinstance(node, DeclarationNode):
+            if node.type[-1].value in enums:
+                node.type[-1].value = "int"
+        elif isinstance(node, DefinitionNode):
+            if node.type[-1].value in enums:
+                node.type[-1].value = "int"
+        elif isinstance(node, FunctionNode):
+            for child in node.body:
+                self._replace_enum_with_int(child, enums)
+
+
+
 
 class ProgramNode(Node):
     def __init__(self, line: int, column: int, original: str | None, children=None):
