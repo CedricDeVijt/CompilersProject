@@ -1957,6 +1957,17 @@ class ASTGenerator(Visitor):
             else:
                 array_sizes.append(int(child.getText()))
 
+        # check if array sizes are correct
+        if len(array_sizes) != len(id_node.arraySizes):
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array size mismatch!")
+            return None
+
+        for i in range(len(id_node.arraySizes)):
+            if isinstance(array_sizes[i], (IntNode, CharNode)):
+                if int(array_sizes[i].value) >= id_node.arraySizes[i]:
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Array index out of bounds!")
+                    return ArrayIdentifierNode(identifier=id_node, line=ctx.start.line, column=ctx.start.column, original=identifier, indices=array_sizes)
+
         original = f"{identifier}["
         for size in array_sizes:
             original += f"{size.value}]"
