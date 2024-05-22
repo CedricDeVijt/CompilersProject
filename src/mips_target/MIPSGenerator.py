@@ -850,6 +850,8 @@ class MIPSVisitor:
         address = symbol.memAddress
         for i in range(len(node.indices)):
             add = self.visit(node.indices[i])
+            if isinstance(add, list):
+                add = add[0]
             for j in range(i+1, len(dimensions)):
                 add *= dimensions[j]
             address += add * 4
