@@ -432,8 +432,7 @@ class MIPSVisitor:
         self.variableAddress += 4
         rvalue = self.visit(node.rvalue)
         if isinstance(rvalue, str):
-            self.visit_ArrayDefinitionNode(node)
-            return
+            rvalue = ord(rvalue)
         if isinstance(rvalue, int):
             # Load int
             code.append(f"li $t0, {rvalue}")
@@ -921,20 +920,6 @@ class MIPSVisitor:
                 continue
             visited_arg = self.visit(arg)
             if isinstance(visited_arg, list):
-                symbol = self.scope.lookup(name=arg.value)
-                address = visited_arg[0]
-                if hasattr(symbol, 'dimensions'):
-                    for i in range(symbol.dimensions[0]):
-                        # Load from memory
-                        self.code.append(f"lw $t0, -{address}($gp)")
-                        # Put in $a0
-                        self.code.append(f"move $a0, $t0")
-                        # Print char
-                        self.code.append("li $v0, 11")
-                        self.code.append("syscall")
-                        # increment address
-                        address += 4
-                else:
                     memAddress = visited_arg[0]
                     if self.get_highest_type(arg) == 'char' or self.get_highest_type(arg) == 'int':
                         # Load from memory
