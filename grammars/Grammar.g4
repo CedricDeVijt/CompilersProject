@@ -7,6 +7,7 @@ declaration: enumDeclaration
            | variable
            | typedef
            | arrayStatement
+           | enumStatement
            ;
 
 scope: LBRACE statement* RBRACE;
