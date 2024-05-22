@@ -935,7 +935,7 @@ class MIPSVisitor:
                 memAddress = visited_arg
                 if var_type == 'char' or var_type == 'int':
                     # Load from memory
-                    self.code.append(f"lw $t0, -{memAddress}($gp)")
+                    self.code.append(f"lw $t0, -{visited_arg}($gp)")
                     # Put in $a0
                     self.code.append(f"move $a0, $t0")
                     if var_type == 'char':
@@ -946,7 +946,7 @@ class MIPSVisitor:
                     self.code.append("syscall")
                 elif var_type == 'float':
                     # Load from memory
-                    self.code.append(f"l.s $f0, -{memAddress}($gp)")
+                    self.code.append(f"l.s $f0, -{visited_arg}($gp)")
                     # Move float to $f12
                     self.code.append("mov.s $f12, $f0")
                     # Print float
@@ -976,6 +976,16 @@ class MIPSVisitor:
                     self.code.append("syscall")
 
     def visit_PreFixNode(self, node):
+        if isinstance(node.value, ArrayIdentifierNode):
+            address = self.visit(node.value)
+            # load value stored in address
+            self.code.append(f"lw $t0, -{address}($gp)")
+            if node.op == 'inc':
+                self.code.append("add $t0, $t0, 1")
+            else:
+                self.code.append("sub $t0, $t0, 1")
+            self.code.append(f"sw $t0, -{address}($gp)")
+            return [address]
         if isinstance(node.value, DerefNode):
             address = self.return_DerefNodeAddress(node.value)[0]
         else:
@@ -1017,7 +1027,22 @@ class MIPSVisitor:
 
     def visit_PostFixNode(self, node):
         if isinstance(node.value, ArrayIdentifierNode):
+            symbol = self.scope.lookup(name=node.value.value)
+            var_type = symbol.type
             address = self.visit(node.value)
+            if var_type == 'float':
+                # Store 0 in variable
+                self.code.append(f"li.s $f0, {self.visit(node.value)}")
+                # Save to memory
+                self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
+            else:
+                self.code.append(f"lw $t0, -{address}($gp)")
+                # Save to memory
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                # Increment address by 4 bytes
+                self.variableAddress += 4
             # load value stored in address
             self.code.append(f"lw $t0, -{address}($gp)")
             if node.op == 'inc':
@@ -1025,7 +1050,7 @@ class MIPSVisitor:
             else:
                 self.code.append("sub $t0, $t0, 1")
             self.code.append(f"sw $t0, -{address}($gp)")
-            return address
+            return [self.variableAddress-4]
         if isinstance(node.value, DerefNode):
             address = self.return_DerefNodeAddress(node.value)[0]
         else:
