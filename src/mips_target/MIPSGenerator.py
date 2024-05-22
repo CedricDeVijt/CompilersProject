@@ -1016,8 +1016,10 @@ class MIPSVisitor:
             return [address]
         # Load value
         self.code.append(f"l.s $f0, -{address}($gp)")
+        # Load 1 into $f1
+        self.code.append("li.s $f1, 1.0")
         # Add value
-        self.code.append(f"fadd $f0, $f0, {value}")
+        self.code.append(f"add.s $f0, $f0, $f1")
         # Save to memory
         self.code.append(f"s.s $f0, -{address}($gp)")
         # Return
@@ -1073,8 +1075,10 @@ class MIPSVisitor:
         self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         # Increment temporary memory
         self.variableAddress += 4
+        # Load 1 into $f1
+        self.code.append("li.s $f1, 1.0")
         # Add value
-        self.code.append(f"fadd $f0, $f0, {value}")
+        self.code.append(f"add.s $f0, $f0, $f1")
         # Save to memory
         self.code.append(f"s.s $f0, -{address}($gp)")
         # Return
