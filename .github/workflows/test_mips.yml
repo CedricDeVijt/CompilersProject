@@ -24,4 +24,4 @@ jobs:
         run: sudo apt install -y spim
       - name: Run all tests
         run: |
-          pytest src/tests/MIPS_tests
+          pytest src/tests/MIPS_tests -n auto
