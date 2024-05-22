@@ -1235,11 +1235,8 @@ class ASTGenerator(Visitor):
         literal = ctx.getText()
         node = ProgramNode(line=0, column=0, original=None)
         if literal.startswith("\'"):
-            # TODO: fix things like '\n' as character.
-            for i in literal:
-                if i.isalnum():
-                    node = CharNode(value=str(ord(i)), line=ctx.start.line, column=ctx.start.column, original=i)
-                    return node
+            literal = literal.strip("\'")
+            node = CharNode(value=str(ord(literal)), line=ctx.start.line, column=ctx.start.column, original=literal)
         elif '.' in literal:
             node = FloatNode(value=ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
         elif literal.isdigit():

@@ -889,6 +889,9 @@ class MIPSVisitor:
                 break
             i += 1
         for arg in args:
+            if isinstance(arg, CharNode):
+                arg = chr(int(arg.value))
+
             if isinstance(arg, str):
                 self.data.append(f"printf_string_{self.printf_string}: .asciiz \"{arg}\"")
                 self.code.append(f"li $v0, 4")
