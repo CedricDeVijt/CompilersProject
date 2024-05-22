@@ -79,8 +79,8 @@ def round_floats(text, decimal_places=6):
     def replacer(match):
         return f"{float(match.group()):.{decimal_places}f}"
 
-    # The regex matches floating-point numbers
-    float_pattern = re.compile(r'[-+]?\d*\.\d+|\d+')
+    # The regex matches floating-point numbers but not integers
+    float_pattern = re.compile(r'[-+]?\d*\.\d+')
     return float_pattern.sub(replacer, text)
 
 
