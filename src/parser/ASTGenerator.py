@@ -834,6 +834,11 @@ class ASTGenerator(Visitor):
                 else:
                     self.scope.get_symbol(symbol.name).defined = True
                 self.implicit_type_conversion(var_type, rval)
+
+                # if rvalue is a string
+                if isinstance(rval, StringNode):
+                    node = ArrayDefinitionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=var_type, lvalue=children[len(children) - 3], rvalue=rval, size=[len(rval.value)])
+                    return node
                 node = DefinitionNode(line=ctx.start.line, column=ctx.start.column, original=original, type=children[:len(children) - 3], lvalue=children[children.index("=") - 1], rvalue=children[children.index("=") + 1])
                 return node
 
