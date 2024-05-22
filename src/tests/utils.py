@@ -100,7 +100,7 @@ def mips_output_compare(root: str, input_file: str):
     # compile the .c file using gcc
     os.system(f"gcc {os.path.join(file_dir, source_file)} -o {os.path.join(file_dir, filename)}")
 
-    gcc = subprocess.run(f"{os.path.join(file_dir, filename)}", shell=True, capture_output=True, text=True)
+    gcc = subprocess.run(f"{os.path.join(file_dir, filename)}", shell=True, capture_output=True, text=True, errors='ignore')
     gcc_output_text = gcc.stdout
 
     # run the mips code with our compiler
