@@ -1235,11 +1235,8 @@ class ASTGenerator(Visitor):
         literal = ctx.getText()
         node = ProgramNode(line=0, column=0, original=None)
         if literal.startswith("\'"):
-            # TODO: fix things like '\n' as character.
-            for i in literal:
-                if i.isalnum():
-                    node = CharNode(value=str(ord(i)), line=ctx.start.line, column=ctx.start.column, original=i)
-                    return node
+            literal = literal.strip("\'")
+            node = CharNode(value=str(ord(literal)), line=ctx.start.line, column=ctx.start.column, original=literal)
         elif '.' in literal:
             node = FloatNode(value=ctx.getText(), line=ctx.start.line, column=ctx.start.column, original=ctx.getText())
         elif literal.isdigit():
@@ -1697,7 +1694,12 @@ class ASTGenerator(Visitor):
                 continue
             if child.getText() == "]":
                 continue
-            arraySizes.append(int(child.getText()))
+            node = self.visit(child)
+            if not isinstance(node, (IntNode, CharNode)):
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid array declaration!")
+                return None
+
+            arraySizes.append(int(node.value))
 
         # Add symbol to scope
         if self.scope.get_symbol(identifier):
@@ -1731,7 +1733,13 @@ class ASTGenerator(Visitor):
                     continue
                 if child.getText() == "]":
                     continue
-                array_sizes.append(int(child.getText()))
+
+                node = self.visit(child)
+                if not isinstance(node, (IntNode, CharNode)):
+                    self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid array definition!")
+                    return None
+
+                array_sizes.append(int(node.value))
 
             # Check if array is valid with the given sizes
             if not self.checkArraySizes(rvalue, array_sizes):

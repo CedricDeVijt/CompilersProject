@@ -155,6 +155,11 @@ class MIPSVisitor:
             return 'int'
         return 'char'
 
+    def has_address(self, node):
+        if len(self.get_pointer_size(node)) != 0:
+            return True
+        return False
+
     def handle_function_call(self, rval):
         symbols = self.scope.lookup(rval.value) if self.scope.lookup(rval.value) is not None else []
         if isinstance(symbols, Symbol):
@@ -884,6 +889,9 @@ class MIPSVisitor:
                 break
             i += 1
         for arg in args:
+            if isinstance(arg, CharNode):
+                arg = chr(int(arg.value))
+
             if isinstance(arg, str):
                 self.data.append(f"printf_string_{self.printf_string}: .asciiz \"{arg}\"")
                 self.code.append(f"li $v0, 4")
@@ -1018,8 +1026,10 @@ class MIPSVisitor:
             return [address]
         # Load value
         self.code.append(f"l.s $f0, -{address}($gp)")
+        # Load 1 into $f1
+        self.code.append("li.s $f1, 1.0")
         # Add value
-        self.code.append(f"fadd $f0, $f0, {value}")
+        self.code.append(f"add.s $f0, $f0, $f1")
         # Save to memory
         self.code.append(f"s.s $f0, -{address}($gp)")
         # Return
@@ -1090,8 +1100,10 @@ class MIPSVisitor:
         self.code.append(f"s.s $f0, -{self.variableAddress}($gp)")
         # Increment temporary memory
         self.variableAddress += 4
+        # Load 1 into $f1
+        self.code.append("li.s $f1, 1.0")
         # Add value
-        self.code.append(f"fadd $f0, $f0, {value}")
+        self.code.append(f"add.s $f0, $f0, $f1")
         # Save to memory
         self.code.append(f"s.s $f0, -{address}($gp)")
         # Return
@@ -1169,6 +1181,29 @@ class MIPSVisitor:
         elif isinstance(right, float):
             # Load the value as a float
             self.code.append(f"li.s $f1, {right}")
+
+        if type1 == 'float' or type2 == 'float':
+            if self.has_address(node.children[0]) and not self.has_address(node.children[1]):
+                # Load -4 in $f2
+                self.code.append(f"li.s $f2, -4.0")
+                # Multiply $f1 by $f2
+                self.code.append("mul.s $f1, $f1, $f2")
+            elif self.has_address(node.children[1]) and not self.has_address(node.children[0]):
+                # Load -4 in $f2
+                self.code.append(f"li.s $f2, -4.0")
+                # Multiply $f0 by $f2
+                self.code.append("mul.s $f0, $f0, $f2")
+        else:
+            if self.has_address(node.children[0]) and not self.has_address(node.children[1]):
+                # Load -4 in $t2
+                self.code.append(f"li $t2, -4")
+                # Multiply $t1 by $t2
+                self.code.append("mul $t1, $t1, $t2")
+            elif self.has_address(node.children[1]) and not self.has_address(node.children[0]):
+                # Load -4 in $t2
+                self.code.append(f"li $t2, -4")
+                # Multiply $t0 by $t2
+                self.code.append("mul $t0, $t0, $t2")
 
         return visitor(node)
 
