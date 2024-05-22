@@ -432,7 +432,8 @@ class MIPSVisitor:
         self.variableAddress += 4
         rvalue = self.visit(node.rvalue)
         if isinstance(rvalue, str):
-            rvalue = ord(rvalue)
+            self.visit_ArrayDefinitionNode(node)
+            return
         if isinstance(rvalue, int):
             # Load int
             code.append(f"li $t0, {rvalue}")
@@ -501,6 +502,15 @@ class MIPSVisitor:
 
     def assignArrayElement(self, node, var_type):
         code = []
+        # c strings
+        if isinstance(node, StringNode):
+            string = self.visit(node)
+            string = string.replace('"', '')
+            for i in string:
+                self.code.append(f"li $t0, {ord(i)}")
+                self.code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
+            return
         # recursive method to assign array elements to memory
         if isinstance(node.array[0], ArrayNode):
             for i in node.array:
@@ -565,12 +575,19 @@ class MIPSVisitor:
             self.code.extend(code)
 
     def visit_ArrayDefinitionNode(self, node):
-        var_type = node.type.value
+        if isinstance(node.type, list):
+            var_type = 'char'
+        else:
+            var_type = node.type.value
         # create and save symbol
         symbol = Symbol(node.lvalue.value, var_type, 'array')
+        if isinstance(node.type, list):
+            symbol.dimensions = [len(self.visit(node.rvalue))-2]
+        else:
+            symbol.dimensions = node.size
+        if isinstance(node.rvalue, StringNode):
+            symbol.cString = True
         symbol.memAddress = self.variableAddress
-        # Increment address by 4 bytes
-        symbol.dimensions = node.size
         if self.scope.get_symbol(name=node.lvalue.value) is None:
             self.scope.add_symbol(symbol)
 
@@ -904,27 +921,41 @@ class MIPSVisitor:
                 continue
             visited_arg = self.visit(arg)
             if isinstance(visited_arg, list):
-                memAddress = visited_arg[0]
-                if self.get_highest_type(arg) == 'char' or self.get_highest_type(arg) == 'int':
-                    # Load from memory
-                    self.code.append(f"lw $t0, -{memAddress}($gp)")
-                    # Put in $a0
-                    self.code.append(f"move $a0, $t0")
-                    if self.get_highest_type(arg) == 'char':
-                        # Print string
+                symbol = self.scope.lookup(name=arg.value)
+                address = visited_arg[0]
+                if hasattr(symbol, 'dimensions'):
+                    for i in range(symbol.dimensions[0]):
+                        # Load from memory
+                        self.code.append(f"lw $t0, -{address}($gp)")
+                        # Put in $a0
+                        self.code.append(f"move $a0, $t0")
+                        # Print char
                         self.code.append("li $v0, 11")
-                    else:
-                        # Print int
-                        self.code.append("li $v0, 1")
-                    self.code.append("syscall")
-                elif self.get_highest_type(arg) == 'float':
-                    # Load from memory
-                    self.code.append(f"l.s $f0, -{memAddress}($gp)")
-                    # Move float to $f12
-                    self.code.append("mov.s $f12, $f0")
-                    # Print float
-                    self.code.append("li $v0, 2")
-                    self.code.append("syscall")
+                        self.code.append("syscall")
+                        # increment address
+                        address += 4
+                else:
+                    memAddress = visited_arg[0]
+                    if self.get_highest_type(arg) == 'char' or self.get_highest_type(arg) == 'int':
+                        # Load from memory
+                        self.code.append(f"lw $t0, -{memAddress}($gp)")
+                        # Put in $a0
+                        self.code.append(f"move $a0, $t0")
+                        if self.get_highest_type(arg) == 'char':
+                            # Print string
+                            self.code.append("li $v0, 11")
+                        else:
+                            # Print int
+                            self.code.append("li $v0, 1")
+                        self.code.append("syscall")
+                    elif self.get_highest_type(arg) == 'float':
+                        # Load from memory
+                        self.code.append(f"l.s $f0, -{memAddress}($gp)")
+                        # Move float to $f12
+                        self.code.append("mov.s $f12, $f0")
+                        # Print float
+                        self.code.append("li $v0, 2")
+                        self.code.append("syscall")
             elif isinstance(visited_arg, str):
                 self.data.append(f"printf_string_{self.printf_string}: .asciiz {visited_arg}")
                 self.code.append("li $v0, 4")
