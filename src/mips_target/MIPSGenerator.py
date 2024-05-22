@@ -910,7 +910,48 @@ class MIPSVisitor:
         for arg in args:
             if isinstance(arg, CharNode):
                 arg = chr(int(arg.value))
+            if isinstance(arg, ArrayIdentifierNode):
+                symbol = self.scope.lookup(name=arg.value)
+                dimensions = symbol.dimensions
+                dimensions.reverse()
+                address = symbol.memAddress
+                # Clear $t0
+                self.code.append(f"li $t0, {address}")
+                for i in range(len(arg.indices)):
+                    if self.get_highest_type(arg.indices[i]) != 'float':
+                        add = self.visit(arg.indices[i])
+                        if isinstance(arg.indices[i], IntNode):
+                            add *= 4
+                            # Add to $t0
+                            self.code.append(f"add $t0, $t0, {add}")
+                            continue
+                        if isinstance(add, list):
+                            # Load from memory
+                            self.code.append(f"lw $t1, -{add[0]}($gp)")
+                            for j in range(0, len(dimensions) - i - 1):
+                                # Multiply by dimensions
+                                self.code.append(f"mul $t1, $t1, {dimensions[j]}")
+                            # Multiply by 4
+                            self.code.append("mul $t1, $t1, 4")
+                            # Add to $t0
+                            self.code.append("add $t0, $t0, $t1")
+                    else:
+                        raise Exception("WHAT THE FUCK HAPPENED HERE THEN")
 
+                # Subtract address from $gp
+                self.code.append("sub $t0, $gp, $t0")
+                # Load from memory
+                self.code.append(f"lw $t0, 0($t0)")
+                # Put in $a0
+                self.code.append("move $a0, $t0")
+                if self.get_highest_type(arg) == 'char':
+                    # Print string
+                    self.code.append("li $v0, 11")
+                else:
+                    # Print int
+                    self.code.append("li $v0, 1")
+                self.code.append("syscall")
+                continue
             if isinstance(arg, str):
                 self.data.append(f"printf_string_{self.printf_string}: .asciiz \"{arg}\"")
                 self.code.append(f"li $v0, 4")
