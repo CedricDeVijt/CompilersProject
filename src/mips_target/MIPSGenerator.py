@@ -381,9 +381,11 @@ class MIPSVisitor:
             if i == 'int' or i == 'char':
                 code.append(f"li $t0, 0")
                 code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
             elif i == 'float':
                 code.append(f"li.s $f0, 0.0")
                 code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                self.variableAddress += 4
 
         if self.scope.is_global():
             self.global_code.extend(code)
@@ -489,6 +491,15 @@ class MIPSVisitor:
                     # Load as float
                     code.append(f"l.s $f0, -{address}($gp)")
                 # Save to memory
+                code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+
+        if isinstance(node.rvalue, StructMemberNode):
+            address = self.visit(node.rvalue)
+            if var_type == 'char' or var_type == 'int':
+                code.append(f"lw $t0, -{address}($gp)")
+                code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+            elif var_type == 'float':
+                code.append(f"l.s $f0, -{address}($gp)")
                 code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
 
         if self.scope.is_global():
@@ -820,6 +831,14 @@ class MIPSVisitor:
         elif isinstance(node.rvalue, CharNode):
             code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
             code.append(f"sw $t0, -{address}($gp)")
+        elif isinstance(node.rvalue, StructMemberNode):
+            address = self.visit(node.rvalue)
+            if type == 'char' or type == 'int':
+                code.append(f"lw $t0, -{address}($gp)")
+                code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+            elif type == 'float':
+                code.append(f"l.s $f0, -{address}($gp)")
+                code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
         else:
             if type == 'float':
                 code.append(f"l.s $f0, -{self.visit(node.rvalue)[0]}($gp)")
