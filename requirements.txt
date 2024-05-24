@@ -2,5 +2,5 @@ antlr4-python3-runtime==4.13.0
 graphviz
 llvmlite
 pytest
-pytest-xdist
+pytest-xdist==3.6.1
 coverage
