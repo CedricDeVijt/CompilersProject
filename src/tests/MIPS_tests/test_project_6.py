@@ -8,6 +8,11 @@ def test_p6_array():
     mips_output_compare(root, source_file)
 
 
+def test_p6_array_assignment_loop():
+    source_file = "p6_array_assignment_loop.c"
+    mips_output_compare(root, source_file)
+
+
 #def test_p6_array_assignment_complete():
 #    source_file = "p6_array_assignment_complete.c"
 #    mips_output_compare_with_expected_output(root, source_file, "src/tests/mips_tests/expected_output/p6_array_assignment_complete_expected_output.txt")
