@@ -107,6 +107,42 @@ class GrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by GrammarParser#structPostFixIncrement.
+    def enterStructPostFixIncrement(self, ctx:GrammarParser.StructPostFixIncrementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structPostFixIncrement.
+    def exitStructPostFixIncrement(self, ctx:GrammarParser.StructPostFixIncrementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#structPostFixDecrement.
+    def enterStructPostFixDecrement(self, ctx:GrammarParser.StructPostFixDecrementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structPostFixDecrement.
+    def exitStructPostFixDecrement(self, ctx:GrammarParser.StructPostFixDecrementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#structPreFixIncrement.
+    def enterStructPreFixIncrement(self, ctx:GrammarParser.StructPreFixIncrementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structPreFixIncrement.
+    def exitStructPreFixIncrement(self, ctx:GrammarParser.StructPreFixIncrementContext):
+        pass
+
+
+    # Enter a parse tree produced by GrammarParser#structPreFixDecrement.
+    def enterStructPreFixDecrement(self, ctx:GrammarParser.StructPreFixDecrementContext):
+        pass
+
+    # Exit a parse tree produced by GrammarParser#structPreFixDecrement.
+    def exitStructPreFixDecrement(self, ctx:GrammarParser.StructPreFixDecrementContext):
+        pass
+
+
     # Enter a parse tree produced by GrammarParser#functionParams.
     def enterFunctionParams(self, ctx:GrammarParser.FunctionParamsContext):
         pass

@@ -38,6 +38,10 @@ structDefinition: 'struct' IDENTIFIER '{' (((type identifier) | arrayDeclaration
 structStatement: structVariable
                | structVariableDefinition
                | structAssignment
+               | structPostFixIncrement
+               | structPostFixDecrement
+               | structPreFixIncrement
+               | structPreFixDecrement
                ;
 
 structVariable: 'struct' IDENTIFIER IDENTIFIER;
@@ -47,6 +51,12 @@ structVariableDefinition: 'struct' IDENTIFIER IDENTIFIER '=' '{' (rvalue | struc
 structMember: IDENTIFIER '.' IDENTIFIER ('[' rvalue ']')*;
 
 structAssignment: structMember '=' rvalue;
+
+structPostFixIncrement: structMember INCREMENT;
+structPostFixDecrement: structMember DECREMENT;
+
+structPreFixIncrement: INCREMENT structMember;
+structPreFixDecrement: DECREMENT structMember;
 
 functionParams: (pointer | type) (addr | identifier)
       | functionParams COMMA functionParams;
@@ -170,7 +180,7 @@ preFixIncrement: INCREMENT lvalue;
 preFixDecrement: DECREMENT lvalue;
 
 arrayStatement: arrayDeclaration
-//              | arrayAssignment
+              | arrayAssignment
               | arrayDefinition
               ;
 

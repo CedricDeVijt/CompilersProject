@@ -1510,13 +1510,13 @@ class ASTGenerator(Visitor):
             if symbol is None:
                 self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
 
-        elif isinstance(rval, StructMemberNode):
-            symbol = self.scope.lookup(rval.identifier.value)
+        elif isinstance(rval, (StructDefinitionNode, StructMemberNode)):
+            symbol = self.scope.lookup(rval.lvalue.value)
             if symbol is None:
                 self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
 
         elif isinstance(rval, FunctionCallNode):
-            symbol = self.scope.lookup(rval.identifier.value)
+            symbol = self.scope.lookup(rval.value)
             if symbol is None:
                 self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
 
@@ -2216,6 +2216,46 @@ class ASTGenerator(Visitor):
             return StructMemberNode(line=ctx.start.line, column=ctx.start.column, original=original,
                                     struct_var_name=struct_var_name, struct_member_name=struct_member_name,
                                     type=member_type, array_size=array_sizes)
+
+    def visitStructPostFixDecrement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        struct_member = self.visit(children[0])
+
+        return StructPostFixNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), struct_member=struct_member, op="dec")
+
+    def visitStructPostFixIncrement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        struct_member = self.visit(children[0])
+
+        return StructPostFixNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), struct_member=struct_member, op="inc")
+
+
+    def visitStructPreFixDecrement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        struct_member = self.visit(children[1])
+
+        return StructPreFixNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), struct_member=struct_member, op="dec")
+
+    def visitStructPreFixIncrement(self, ctx):
+        children = []
+        for line in ctx.getChildren():
+            children.append(line)
+
+        struct_member = self.visit(children[1])
+
+        return StructPreFixNode(line=ctx.start.line, column=ctx.start.column, original=ctx.getText(), struct_member=struct_member, op="inc")
+
+
+
 
     def visitScanfStatement(self, ctx):
         children = []

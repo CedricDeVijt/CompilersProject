@@ -733,3 +733,17 @@ class StructDefinitionNode(Node):
         self.type = type
         self.lvalue = lvalue
         self.rvalue = rvalue
+
+
+class StructPostFixNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, struct_member: StructMemberNode, op: str, children=None):
+        super().__init__(value="StructMember", line=line, column=column, original_code=original, children=children)
+        self.struct_member = struct_member
+        self.op = op
+
+
+class StructPreFixNode(Node):
+    def __init__(self, line: int, column: int, original: str | None, struct_member: StructMemberNode, op: str, children=None):
+        super().__init__(value="StructMember", line=line, column=column, original_code=original, children=children)
+        self.struct_member = struct_member
+        self.op = op
