@@ -1246,6 +1246,9 @@ class MIPSVisitor:
         # Return
         return [self.variableAddress - 4]
 
+    def visit_StructPostFixNode(self, node):
+        ...
+
     def visit_ScopeNode(self, node, return_address):
         self.scope.open_scope()
         for statement in node.children:
