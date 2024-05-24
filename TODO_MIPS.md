@@ -42,7 +42,7 @@
 - [x] (**mandatory**) Loops
 - [x] (**mandatory**) Anonymous scopes
 - [x] (**mandatory**) Switch statements
-- [ ] (**mandatory**) Enumerations
+- [x] (**mandatory**) Enumerations
 
 # project 5
 
@@ -81,7 +81,7 @@
   - [x] (**mandatory**) Assignment of complete arrays or array rows
   - [x] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays
-  - [ ] (**mandatory**) C-strings
+  - [x] (**mandatory**) C-strings
   - [x] (**mandatory**) Including stdio.h
 - Semantical Analysis
   - [x] (**mandatory**) Type checking arrays
