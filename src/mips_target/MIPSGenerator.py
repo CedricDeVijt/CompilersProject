@@ -1,3 +1,4 @@
+import copy
 import struct
 
 from src.parser.AST import *
@@ -748,7 +749,7 @@ class MIPSVisitor:
     def visit_ArrayAssignmentNode(self, node):
         code = []
         symbol = self.scope.lookup(name=node.lvalue.value)
-        dimensions = symbol.dimensions
+        dimensions = copy.deepcopy(symbol.dimensions)
         dimensions.reverse()
         address = symbol.memAddress
         # Set $t0 to start of array
@@ -757,6 +758,10 @@ class MIPSVisitor:
             if self.get_highest_type(node.lvalue.indices[i]) != 'float':
                 add = self.visit(node.lvalue.indices[i])
                 if isinstance(add, int):
+                    for j in range(0, len(dimensions) - i - 1):
+                        # Multiply by dimensions
+                        add *= dimensions[j]
+                    # Multiply by 4
                     add *= 4
                     # Add to $t0
                     self.code.append(f"add $t0, $t0, {add}")
@@ -965,7 +970,7 @@ class MIPSVisitor:
                 arg = chr(int(arg.value))
             if isinstance(arg, ArrayIdentifierNode):
                 symbol = self.scope.lookup(name=arg.value)
-                dimensions = symbol.dimensions
+                dimensions = copy.deepcopy(symbol.dimensions)
                 dimensions.reverse()
                 address = symbol.memAddress
                 # Set $t0 to start of array
@@ -974,6 +979,10 @@ class MIPSVisitor:
                     if self.get_highest_type(arg.indices[i]) != 'float':
                         add = self.visit(arg.indices[i])
                         if isinstance(add, int):
+                            for j in range(0, len(dimensions) - i - 1):
+                                # Multiply by dimensions
+                                add *= dimensions[j]
+                            # Multiply by 4
                             add *= 4
                             # Add to $t0
                             self.code.append(f"add $t0, $t0, {add}")
