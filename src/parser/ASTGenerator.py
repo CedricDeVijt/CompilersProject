@@ -1494,6 +1494,41 @@ class ASTGenerator(Visitor):
                 else:
                     children.append(child)
         rval = children[0]
+
+        if isinstance(rval, IdentifierNode):
+            symbol = self.scope.lookup(rval.value)
+            if symbol is None:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
+
+        elif isinstance(rval, DerefNode):
+            symbol = self.scope.lookup(rval.identifier.value)
+            if symbol is None:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
+
+        elif isinstance(rval, ArrayIdentifierNode):
+            symbol = self.scope.lookup(rval.value)
+            if symbol is None:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value + "\' not declared yet!")
+
+        elif isinstance(rval, StructMemberNode):
+            symbol = self.scope.lookup(rval.identifier.value)
+            if symbol is None:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
+
+        elif isinstance(rval, FunctionCallNode):
+            symbol = self.scope.lookup(rval.identifier.value)
+            if symbol is None:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.identifier.value + "\' not declared yet!")
+
+        elif isinstance(rval, AddrNode):
+            symbol = self.scope.lookup(rval.value.value)
+            if symbol is None:
+                self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Variable \'" + rval.value.value + "\' not declared yet!")
+
+        else:
+            self.errors.append(f"line {ctx.start.line}:{ctx.start.column} Invalid switch statement!")
+
+
         cases = children[1:]
         ifNodes = []
         # Count default cases
