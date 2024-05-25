@@ -176,7 +176,6 @@ class MIPSVisitor:
         return 'char'
 
     def visit_ProgramNode(self, node):
-        a = 5
         for child in node.children:
             self.visit(child)
 
