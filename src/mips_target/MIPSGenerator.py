@@ -239,6 +239,7 @@ class MIPSVisitor:
             # Add param to scope
             if self.scope.get_symbol(name=symbol.name) is None:
                 self.scope.add_symbol(symbol)
+        variables_before = self.variableAddress
         for statement in node.body:
             if not isinstance(statement, CommentNode) and not isinstance(statement, ScopeNode):
                 # Add comment for code
@@ -262,11 +263,16 @@ class MIPSVisitor:
                 symbols = symbol
                 break
 
+        if isinstance(symbols, list):
+            return
+
         # Save previous arguments to stack
-        # for i in range(0, len(node.arguments)):
-        #     self.code.append(f"lw $t0, -{symbols.paramsAddresses[i]}($gp)")
-        #     self.code.append("sub $sp, $sp, 4")
-        #     self.code.append("sw $t0, 0($sp)")
+        for i in range(0, len(node.arguments)):
+            self.code.append(f"lw $t0, -{symbols.paramsAddresses[i]}($gp)")
+            self.code.append("sub $sp, $sp, 4")
+            self.code.append("sw $t0, 0($sp)")
+        # Save variables changed in function to stack
+        ...
         # Load arguments into their addresses
         for arg in node.arguments:
             arg_type = self.get_highest_type(arg)
@@ -293,11 +299,13 @@ class MIPSVisitor:
         # Restore $ra from stack
         self.code.append("lw $ra, 0($sp)")
         self.code.append("add $sp, $sp, 4")
+        # Restore variables changed in function from stack
+        ...
         # Restore arguments from stack
-        # for i in range(len(node.arguments), 0, -1):
-        #     self.code.append(f"lw $t0, 0($sp)")
-        #     self.code.append("add $sp, $sp, 4")
-        #     self.code.append(f"sw $t0, -{symbols.paramsAddresses[i - 1]}($gp)")
+        for i in range(len(node.arguments), 0, -1):
+            self.code.append(f"lw $t0, 0($sp)")
+            self.code.append("add $sp, $sp, 4")
+            self.code.append(f"sw $t0, -{symbols.paramsAddresses[i - 1]}($gp)")
         # Return return value
         return [symbols.return_address]
 
