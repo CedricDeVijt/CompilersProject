@@ -239,7 +239,6 @@ class MIPSVisitor:
             # Add param to scope
             if self.scope.get_symbol(name=symbol.name) is None:
                 self.scope.add_symbol(symbol)
-        variables_before = self.variableAddress
         for statement in node.body:
             if not isinstance(statement, CommentNode) and not isinstance(statement, ScopeNode):
                 # Add comment for code
