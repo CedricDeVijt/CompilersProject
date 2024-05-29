@@ -1252,9 +1252,59 @@ class MIPSVisitor:
         # Return
         return [self.variableAddress - 4]
 
-    def visit_StructPostFixNode(self, node):
-        ...
+    def visit_StructPreFixNode(self, node):
+        symbol = self.scope.lookup(name=node.struct_member.struct_var_name)
+        struct_name = symbol.struct_name
+        types = self.structs[struct_name][0]
+        vars = self.structs[struct_name][1]
+        index = vars.index(node.struct_member.struct_member_name)
+        address = symbol.memAddress + index * 4
+        type = types[index]
 
+        if type == 'float':
+            # Load from memory
+            self.code.append(f"l.s $f0, -{address}($gp)")
+            if node.op == 'inc':
+                self.code.append("add.s $f0, $f0, 1.0")
+            else:
+                self.code.append("sub.s $f0, $f0, 1.0")
+            self.code.append(f"s.s $f0, -{address}($gp)")
+            return [address]
+        # Load from memory
+        self.code.append(f"lw $t0, -{address}($gp)")
+        if node.op == 'inc':
+            self.code.append("add $t0, $t0, 1")
+        else:
+            self.code.append("sub $t0, $t0, 1")
+        self.code.append(f"sw $t0, -{address}($gp)")
+        return [address]
+
+    def visit_StructPostFixNode(self, node):
+        symbol = self.scope.lookup(name=node.struct_member.struct_var_name)
+        struct_name = symbol.struct_name
+        types = self.structs[struct_name][0]
+        vars = self.structs[struct_name][1]
+        index = vars.index(node.struct_member.struct_member_name)
+        address = symbol.memAddress + index * 4
+        type = types[index]
+
+        if type == 'float':
+            # Load from memory
+            self.code.append(f"l.s $f0, -{address}($gp)")
+            if node.op == 'inc':
+                self.code.append("add.s $f0, $f0, 1.0")
+            else:
+                self.code.append("sub.s $f0, $f0, 1.0")
+            self.code.append(f"s.s $f0, -{address}($gp)")
+            return [address]
+        # Load from memory
+        self.code.append(f"lw $t0, -{address}($gp)")
+        if node.op == 'inc':
+            self.code.append("add $t0, $t0, 1")
+        else:
+            self.code.append("sub $t0, $t0, 1")
+        self.code.append(f"sw $t0, -{address}($gp)")
+        return [address]
     def visit_ScopeNode(self, node, return_address):
         self.scope.open_scope()
         for statement in node.children:
