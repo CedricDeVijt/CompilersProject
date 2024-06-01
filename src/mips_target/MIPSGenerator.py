@@ -243,6 +243,11 @@ class MIPSVisitor:
                 # Add comment for code
                 self.code.append(f"# {statement.original}")
             self.visit(statement, func_symbol.return_address)
+            if isinstance(statement, FunctionCallNode):
+                # Load from stack
+                self.code.append("lw $v0, 0($sp)")
+                # Increment stack pointer
+                self.code.append("add $sp, $sp, 4")
         # Close function scope
         self.scope.close_scope()
 
@@ -269,8 +274,6 @@ class MIPSVisitor:
             self.code.append(f"lw $t0, -{symbols.paramsAddresses[i]}($gp)")
             self.code.append("sub $sp, $sp, 4")
             self.code.append("sw $t0, 0($sp)")
-        # Save variables changed in function to stack
-        ...
         # Load arguments into their addresses
         for arg in node.arguments:
             arg_type = self.get_highest_type(arg)
@@ -297,15 +300,16 @@ class MIPSVisitor:
         # Restore $ra from stack
         self.code.append("lw $ra, 0($sp)")
         self.code.append("add $sp, $sp, 4")
-        # Restore variables changed in function from stack
-        ...
         # Restore arguments from stack
         for i in range(len(node.arguments), 0, -1):
             self.code.append(f"lw $t0, 0($sp)")
             self.code.append("add $sp, $sp, 4")
             self.code.append(f"sw $t0, -{symbols.paramsAddresses[i - 1]}($gp)")
-        # Return return value
-        return [symbols.return_address]
+        # Save return value to stack
+        self.code.append("sub $sp, $sp, 4")
+        self.code.append("sw $v0, 0($sp)")
+        # Return value
+        return "$v0"
 
     def visit_ReturnNode(self, node, return_address):
         if node.return_type != 'void':
@@ -409,16 +413,36 @@ class MIPSVisitor:
             self.scope.add_symbol(symbol)
 
         for i in range(len(self.structs[struct_name][0])):
-            if self.structs[struct_name][0][i] == 'int':
-                code.append(f"li $t0, {self.visit(node.rvalue[i])}")
+            rvalue = self.visit(node.rvalue[i])
+            if isinstance(node.rvalue[i], FunctionCallNode):
+                # Load from stack
+                code.append("lw $t0, 0($sp)")
+                # Increment stack pointer
+                code.append("addi $sp, $sp, 4")
+                if self.get_highest_type(i) == 'float':
+                    code.append("mtc1 $t0, $f0")
+                    code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                else:
+                    code.append(f"sw $t0, -{self.variableAddress}($gp)")
+            elif isinstance(rvalue, list):
+                # Load from address
+                code.append(f"lw $t0, -{rvalue[0]}($gp)")
+                if self.structs[struct_name][0][i] == 'float':
+                    code.append(f"mtc1 $t0, $f0")
+                    code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                else:
+                    code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                    self.variableAddress += 4
+            elif self.structs[struct_name][0][i] == 'int':
+                code.append(f"li $t0, {rvalue}")
                 code.append(f"sw $t0, -{self.variableAddress}($gp)")
                 self.variableAddress += 4
             elif self.structs[struct_name][0][i] == 'float':
-                code.append(f"li.s $f0, {self.visit(node.rvalue[i])}")
+                code.append(f"li.s $f0, {rvalue}")
                 code.append(f"s.s $f0, -{self.variableAddress}($gp)")
                 self.variableAddress += 4
             elif self.structs[struct_name][0][i] == 'char':
-                code.append(f"li $t0, {ord(self.visit(node.rvalue[i]))}")
+                code.append(f"li $t0, {ord(rvalue)}")
                 code.append(f"sw $t0, -{self.variableAddress}($gp)")
                 self.variableAddress += 4
 
@@ -441,7 +465,18 @@ class MIPSVisitor:
         self.variableAddress += 4
         rvalue = self.visit(node.rvalue)
         if isinstance(rvalue, str):
-            rvalue = ord(rvalue)
+            if len(rvalue) == 1:
+                rvalue = ord(rvalue)
+            else:
+                # Load from stack
+                code.append("lw $t0, 0($sp)")
+                # Increment stack pointer
+                code.append("addi $sp, $sp, 4")
+                if self.get_highest_type(node.type) == 'float':
+                    code.append("mtc1 $t0, $f0")
+                    code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                else:
+                    code.append(f"sw $t0, -{symbol.memAddress}($gp)")
         if isinstance(rvalue, int):
             # Load int
             code.append(f"li $t0, {rvalue}")
@@ -534,9 +569,28 @@ class MIPSVisitor:
                 self.assignArrayElement(i, var_type)
         else:
             for i in node.array:
-                if var_type == 'float':
+                visited = self.visit(i)
+                if isinstance(i, FunctionCallNode):
+                    # Load from stack
+                    code.append("lw $t0, 0($sp)")
+                    # Increment stack pointer
+                    code.append("addi $sp, $sp, 4")
+                    if self.get_highest_type(i) == 'float':
+                        code.append("mtc1 $t0, $f0")
+                        code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                    else:
+                        code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                elif isinstance(visited, list):
+                    # Load from address
+                    code.append(f"lw $t0, -{visited[0]}($gp)")
+                    if self.get_highest_type(i) == 'float':
+                        code.append("mtc1 $t0, $f0")
+                        code.append(f"s.s $f0, -{self.variableAddress}($gp)")
+                    else:
+                        code.append(f"sw $t0, -{self.variableAddress}($gp)")
+                elif var_type == 'float':
                     # Store 0 in variable
-                    code.append(f"li.s $f0, {self.visit(i)}")
+                    code.append(f"li.s $f0, {visited}")
                     # Save to memory
                     code.append(f"s.s $f0, -{self.variableAddress}($gp)")
                     # Increment address by 4 bytes
@@ -544,9 +598,9 @@ class MIPSVisitor:
                 else:
                     # Store value in memory
                     if var_type == 'char':
-                        code.append(f"li $t0, {ord(self.visit(i))}")
+                        code.append(f"li $t0, {ord(visited)}")
                     else:
-                        code.append(f"li $t0, {self.visit(i)}")
+                        code.append(f"li $t0, {visited}")
                     # Save to memory
                     code.append(f"sw $t0, -{self.variableAddress}($gp)")
                     # Increment address by 4 bytes
@@ -616,12 +670,21 @@ class MIPSVisitor:
             if symbol is not None:
                 rvalue = self.visit(node.rvalue)
                 var_type = self.get_highest_type(symbol.type)
-                if isinstance(rvalue, str):
+                if isinstance(node.rvalue, FunctionCallNode):
+                    # Load from stack
+                    code.append("lw $t0, 0($sp)")
+                    # Increment stack pointer
+                    code.append("add $sp, $sp, 4")
+                    if var_type == 'float':
+                        code.append("mtc1 $t0, $f0")
+                        code.append(f"s.s $f0, -{symbol.memAddress}($gp)")
+                    else:
+                        code.append(f"sw $t0, -{symbol.memAddress}($gp)")
+                elif isinstance(rvalue, str):
                     rvalue = ord(rvalue)
                 if isinstance(rvalue, int):
                     # Load int
                     code.append(f"li $t0, {rvalue}")
-
                     if self.get_highest_type(symbol.type[len(symbol.type) - 1]) == 'float':
                         # Move to $f0
                         code.append(f"mtc1 $t0, $f0")
@@ -788,32 +851,36 @@ class MIPSVisitor:
         # Subtract address from $gp
         self.code.append("sub $t0, $gp, $t0")
 
-        # # Print address as int
-        # self.code.append("move $a0, $t0")
-        # self.code.append("li $v0, 1")
-        # self.code.append("syscall")
-        # # Print end line
-        # self.code.append("li $a0, 13")
-        # self.code.append("li $v0, 11")
-        # self.code.append("syscall")
-        # # Print value in $t0
-        # self.code.append("lw $t1, 0($t0)")
-        # self.code.append("move $a0, $t1")
-        # self.code.append("li $v0, 1")
-        # self.code.append("syscall")
-        # # Print end line
-        # self.code.append("li $a0, 13")
-        # self.code.append("li $v0, 11")
-        # self.code.append("syscall")
+        visited = self.visit(node.rvalue)
 
-        if symbol.type == 'float':
+        if isinstance(node.rvalue, FunctionCallNode):
+            # Load from stack
+            code.append("lw $t1, 0($sp)")
+            # Increment stack pointer
+            code.append("add $sp, $sp, 4")
+            if self.get_highest_type(node.rvalue) == 'float':
+                code.append("mtc1 $t1, $f0")
+                code.append(f"s.s $f0, 0($t0)")
+            else:
+                code.append(f"sw $t1, 0($t0)")
+            return
+
+        elif isinstance(visited, list):
+            # Load from address
+            code.append(f"lw $t1, -{visited[0]}($gp)")
+            if self.get_highest_type(i) == 'float':
+                code.append("mtc1 $t1, $f0")
+                code.append(f"s.s $f0, 0($t0)")
+            else:
+                code.append(f"sw $t1, 0($t0)")
+        elif symbol.type == 'float':
             # Load literal float
-            code.append(f"li.s $f0, {self.visit(node.rvalue)}")
+            code.append(f"li.s $f0, {visited}")
             # Save to memory
             code.append(f"s.s $f0, 0($t0)")
         else:
             # Load literal int/char
-            code.append(f"li $t1, {self.visit(node.rvalue)}")
+            code.append(f"li $t1, {visited}")
             # Save to memory
             code.append(f"sw $t1, 0($t0)")
 
@@ -833,17 +900,39 @@ class MIPSVisitor:
         address = symbol.memAddress + index * 4
         type = types[index]
 
-        if isinstance(node.rvalue, IntNode):
-            code.append(f"li $t0, {self.visit(node.rvalue)}")
+        visited = self.visit(node.rvalue)
+
+        if isinstance(node.rvalue, FunctionCallNode):
+            # Load from stack
+            code.append("lw $t0, 0($sp)")
+            # Increment stack pointer
+            code.append("add $sp, $sp, 4")
+            if self.get_highest_type(node.rvalue) == 'float':
+                code.append("mtc1 $t0, $f0")
+                code.append(f"s.s $f0, -{address}($gp)")
+            else:
+                code.append(f"sw $t0, -{address}($gp)")
+            return
+        elif isinstance(visited, list):
+            # Load from address
+            code.append(f"lw $t0, -{visited[0]}($gp)")
+            if type == 'float':
+                code.append("mtc1 $t0, $f0")
+                code.append(f"s.s $f0, -{address}($gp)")
+            else:
+                code.append(f"sw $t0, -{address}($gp)")
+
+        elif isinstance(node.rvalue, IntNode):
+            code.append(f"li $t0, {visited}")
             code.append(f"sw $t0, -{address}($gp)")
         elif isinstance(node.rvalue, FloatNode):
-            code.append(f"li.s $f0, {self.visit(node.rvalue)}")
+            code.append(f"li.s $f0, {visited}")
             code.append(f"s.s $f0, -{address}($gp)")
         elif isinstance(node.rvalue, CharNode):
-            code.append(f"li $t0, {ord(self.visit(node.rvalue))}")
+            code.append(f"li $t0, {ord(visited)}")
             code.append(f"sw $t0, -{address}($gp)")
         elif isinstance(node.rvalue, StructMemberNode):
-            address = self.visit(node.rvalue)
+            address = visited
             if type == 'char' or type == 'int':
                 code.append(f"lw $t0, -{address}($gp)")
                 code.append(f"sw $t0, -{symbol.memAddress}($gp)")
@@ -1066,11 +1155,33 @@ class MIPSVisitor:
                     self.code.append("li $v0, 2")
                     self.code.append("syscall")
             elif isinstance(visited_arg, str):
-                self.data.append(f"printf_string_{self.printf_string}: .asciiz {visited_arg}")
-                self.code.append("li $v0, 4")
-                self.code.append(f"la $a0, printf_string_{self.printf_string}")
-                self.code.append("syscall")
-                self.printf_string += 1
+                if visited_arg == "$v0":
+                    # Load from stack
+                    self.code.append("lw $t0, 0($sp)")
+                    # Increment stack pointer
+                    self.code.append("addi $sp, $sp, 4")
+                    if self.get_highest_type(arg) == 'float':
+                        # Move to coproc1
+                        self.code.append("mtc1 $t0, $f12")
+                        # Print float
+                        self.code.append("li $v0, 2")
+                        self.code.append("syscall")
+                    else:
+                        # Move to $a0
+                        self.code.append("move $a0, $t0")
+                        if self.get_highest_type(arg) == 'char':
+                            # Print string
+                            self.code.append("li $v0, 11")
+                        else:
+                            # Print int
+                            self.code.append("li $v0, 1")
+                        self.code.append("syscall")
+                else:
+                    self.data.append(f"printf_string_{self.printf_string}: .asciiz {visited_arg}")
+                    self.code.append("li $v0, 4")
+                    self.code.append(f"la $a0, printf_string_{self.printf_string}")
+                    self.code.append("syscall")
+                    self.printf_string += 1
             elif isinstance(visited_arg, int) and not isinstance(arg, ArrayIdentifierNode) and not isinstance(arg, StructMemberNode):
                 self.code.append("li $v0, 1")
                 self.code.append(f"li $a0, {visited_arg}")
@@ -1323,6 +1434,27 @@ class MIPSVisitor:
         left = self.visit(node.children[0])
         right = self.visit(node.children[1])
 
+        if right == "$v0":
+            # Load from stack
+            self.code.append("lw $t1, 0($sp)")
+            # Increment stack pointer
+            self.code.append("addi $sp, $sp, 4")
+            if type1 == 'float' or type2 == 'float':
+                # Move to coproc1
+                self.code.append("mtc1 $t1, $f1")
+                # Convert to float
+                self.code.append("cvt.s.w $f1, $f1")
+        if left == "$v0":
+            # Load from stack
+            self.code.append("lw $t0, 0($sp)")
+            # Increment stack pointer
+            self.code.append("addi $sp, $sp, 4")
+            if type1 == 'float' or type2 == 'float':
+                # Move to coproc1
+                self.code.append("mtc1 $t0, $f0")
+                # Convert to float
+                self.code.append("cvt.s.w $f0, $f0")
+
         # Left
         if isinstance(left, list):
             address = left[0]
@@ -1337,7 +1469,7 @@ class MIPSVisitor:
             else:
                 # Load the value as a float
                 self.code.append(f"l.s $f0, -{address}($gp)")
-        elif isinstance(left, str) or isinstance(left, int):
+        elif (isinstance(left, str) and left != "$v0") or isinstance(left, int):
             if isinstance(left, str):
                 left = ord(left)
             # Load the value as an int
@@ -1365,7 +1497,7 @@ class MIPSVisitor:
             else:
                 # Load the value as a float
                 self.code.append(f"l.s $f1 -{address}($gp)")
-        elif isinstance(right, str) or isinstance(right, int):
+        elif (isinstance(right, str) and right != "$v0") or isinstance(right, int):
             if isinstance(right, str):
                 right = ord(right)
             # Load the value as an int
