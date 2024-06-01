@@ -1068,8 +1068,8 @@ class MIPSVisitor:
                 dimensions = copy.deepcopy(symbol.dimensions)
                 dimensions.reverse()
                 address = symbol.memAddress
-                # Set $t0 to start of array
-                self.code.append(f"li $t0, {address}")
+                # Set $t2 to start of array
+                self.code.append(f"li $t2, {address}")
                 for i in range(len(arg.indices)):
                     if self.get_highest_type(arg.indices[i]) != 'float':
                         add = self.visit(arg.indices[i])
@@ -1079,24 +1079,24 @@ class MIPSVisitor:
                                 add *= dimensions[j]
                             # Multiply by 4
                             add *= 4
-                            # Add to $t0
-                            self.code.append(f"add $t0, $t0, {add}")
-                            continue
-                        if isinstance(add, list):
+                            # Add to $t2
+                            self.code.append(f"add $t2, $t2, {add}")
+                        elif isinstance(add, list):
                             # Load from memory
-                            self.code.append(f"lw $t1, -{add[0]}($gp)")
+                            self.code.append(f"lw $t3, -{add[0]}($gp)")
                             for j in range(0, len(dimensions) - i - 1):
                                 # Multiply by dimensions
-                                self.code.append(f"mul $t1, $t1, {dimensions[j]}")
+                                self.code.append(f"mul $t3, $t3, {dimensions[j]}")
                             # Multiply by 4
-                            self.code.append("mul $t1, $t1, 4")
-                            # Add to $t0
-                            self.code.append("add $t0, $t0, $t1")
+                            self.code.append("mul $t3, $t3, 4")
+                            # Add to $t2
+                            self.code.append("add $t2, $t2, $t3")
                     else:
                         raise Exception("WHAT THE FUCK HAPPENED HERE THEN")
 
                 # Subtract address from $gp
-                self.code.append("sub $t0, $gp, $t0")
+                self.code.append("sub $t0, $gp, $t2")
+                # Print address
                 # Load from memory
                 self.code.append(f"lw $t0, 0($t0)")
                 # Put in $a0
