@@ -1305,6 +1305,7 @@ class MIPSVisitor:
             self.code.append("sub $t0, $t0, 1")
         self.code.append(f"sw $t0, -{address}($gp)")
         return [address]
+
     def visit_ScopeNode(self, node, return_address):
         self.scope.open_scope()
         for statement in node.children:
