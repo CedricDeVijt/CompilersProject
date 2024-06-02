@@ -12,12 +12,6 @@ int main(){
     for (int i = 0; i < 5; i++){
         for (int j = 0; j < 3; j++){
             for (int k = 0; k < 4; k++){
-                values1[i][j][k] = 5;
-                printf("values1[%d][%d][%d] = %d\n", i, j, k, values1[i][j][k]);
-                printf("values1[%d][%d][%d] = %d\n", i, j, k, values1[i][j][k]);
-                printf("values1[%d][%d][%d] = %d\n", i, j, k, values1[i][j][k]);
-                printf("values1[%d][%d][%d] = %d\n", i, j, k, values1[i][j][k]);
-                printf("values1[%d][%d][%d] = %d\n", i, j, k, values1[i][j][k]);
                 printf("values1[%d][%d][%d] = %d\n", i, j, k, values1[i][j][k]);
                 printf("values1[%d][%d][%d] = %d\n", i, j, k, values1[i][j][k]);
                 printf("values1[%d][%d][%d] = %d\n\n", i, j, k, values1[i][j][k]);
