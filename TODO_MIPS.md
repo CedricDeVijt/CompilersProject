@@ -49,13 +49,13 @@
 - Functionality
   - [x] (**mandatory**) Function scopes
   - [x] (**mandatory**) Local and global variables
-  - [ ] (**mandatory**) Functions
-    - [ ] Defining functions
-    - [ ] Calling functions
-    - [ ] Function arguments (basic types, pointers, constness, pass-by-value and pass-by-reference)
-    - [ ] Return values
-    - [ ] Void function
-    - [ ] Missing main -> error.
+  - [x] (**mandatory**) Functions
+    - [x] Defining functions
+    - [x] Calling functions
+    - [x] Function arguments (basic types, pointers, constness, pass-by-value and pass-by-reference)
+    - [x] Return values
+    - [x] Void function
+    - [x] Missing main -> error.
   - [ ] (**optional**) Overloading of functions on the amount and type of parameters
   - [x] (**mandatory**) Define `#define` 
   - [x] (**mandatory**) Includes `#include`
@@ -82,7 +82,7 @@
   - [x] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays
   - [x] (**mandatory**) C-strings
-  - [x] (**mandatory**) Including stdio.h
+  - [x] (**optional**) Including stdio.h
 - Semantical Analysis
   - [x] (**mandatory**) Type checking arrays
   - [x] (**mandatory**) Type of specified index is int when accessing arrays
