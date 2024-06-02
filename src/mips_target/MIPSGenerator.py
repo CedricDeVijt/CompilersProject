@@ -2165,9 +2165,6 @@ class MIPSVisitor:
         # Start of the while loop
         self.code.append(f"{start_label}:")
 
-        # Open a new scope for the while loop
-        self.scope.open_scope()
-
         # Condition
         address = self.visit(node.condition)
         if isinstance(address, list):
@@ -2208,8 +2205,6 @@ class MIPSVisitor:
         # End of the while loop
         self.code.append(f"{end_label}:")
 
-        # Close the scope for the while loop
-        self.scope.close_scope()
 
     def visit_BreakNode(self, node):
         # Use the current while_count to jump to the correct endwhile label
