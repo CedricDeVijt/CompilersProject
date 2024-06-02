@@ -1443,7 +1443,7 @@ class ASTGenerator(Visitor):
             else:
                 node.children[0].body.insert(len(node.children[0].body) - 1, children[2])
         self.scope.close_scope()
-        return node if children[0] is None else [children[0], node]
+        return node if children[0] is None else [ScopeNode(line=ctx.start.line, column=ctx.start.column, original=original, children = [children[0], node])]
 
     def visitForCondition(self, ctx):
         children = []
