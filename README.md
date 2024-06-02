@@ -9,11 +9,12 @@
 ## Project Video
 
 [LLVM Video](https://youtu.be/8hy_M8X0pR4)
+[MIPS Video](https://youtu.be/8hy_M8X0pR4)
 
 ## Project Description
 
-This project is a compiler for `C`. The compiler is written in python and generates MIPS assembly
-code. The compiler is able to parse the input code, generate an abstract syntax tree (AST), perform semantic analysis,
+This project is a compiler for `C`. The compiler is written in python with use of ANTRL for the lexing and parsing.
+The compiler is able to parse the input code, generate an abstract syntax tree (AST), perform semantic analysis,
 generate LLVM IR code, and generate MIPS assembly code.
 
 ## Project Structure
@@ -21,10 +22,12 @@ generate LLVM IR code, and generate MIPS assembly code.
 The project is structured as follows:
 
 - `src/` contains the source code for the compiler
-- `tests/` contains the test cases for the compiler
+- `src/tests/` contains the test input files and python scripts to run the tests
 - `test.sh` is a shell script that runs all the tests
-- `README.md` contains the project description and team members
-- `TODO_AST.md` contains the requirements for the project
+- `README.md` contains the project description
+- `TODO_AST.md` contains the AST requirements for the project
+- `TODO_LLVM.md` contain all the features that are implemented for the LLVM code generation
+- `TODO_MIPS.md` contain all the features that are implemented for the MIPS code generation
 
 ## ANTLR Grammar
 

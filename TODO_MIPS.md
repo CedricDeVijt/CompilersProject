@@ -56,7 +56,7 @@
     - [x] Return values
     - [x] Void function
     - [x] Missing main -> error.
-  - [ ] (**optional**) Overloading of functions on the amount and type of parameters
+  - [x] (**optional**) Overloading of functions on the amount and type of parameters
   - [x] (**mandatory**) Define `#define` 
   - [x] (**mandatory**) Includes `#include`
   - [x] (**optional**) Include guards `#ifdef`, `#ifndef`, `#endif`
@@ -82,7 +82,7 @@
   - [x] (**mandatory**) Array initialization
   - [ ] (**optional**) Dynamic arrays
   - [x] (**mandatory**) C-strings
-  - [x] (**optional**) Including stdio.h
+  - [x] <span style="color:red">(**optional**) Including stdio.h</span>
 - Semantical Analysis
   - [x] (**mandatory**) Type checking arrays
   - [x] (**mandatory**) Type of specified index is int when accessing arrays
