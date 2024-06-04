@@ -10,7 +10,7 @@
 
 [LLVM Video](https://youtu.be/8hy_M8X0pR4)
 
-[MIPS Video](https://youtu.be/ka_HtTPM2lk)
+[MIPS Video](https://youtu.be/jrK7WDNMP8c)
 
 ## Project Description
 
